@@ -1,0 +1,916 @@
+{
+  "width": 64,
+  "height": 96,
+  "baseline": 75,
+  "bones": [
+    {
+      "name": "root",
+      "parent": null,
+      "pivot": [
+        32,
+        48
+      ],
+      "end": [
+        32,
+        46
+      ],
+      "z": -1
+    },
+    {
+      "name": "arm_far",
+      "parent": "torso",
+      "pivot": [
+        35,
+        36
+      ],
+      "end": [
+        35,
+        43
+      ],
+      "z": 1,
+      "image": "parts/arm_far.png",
+      "bounds": [
+        33,
+        35,
+        38,
+        46
+      ],
+      "drift": "arms"
+    },
+    {
+      "name": "forearm_far",
+      "parent": "arm_far",
+      "pivot": [
+        35,
+        43
+      ],
+      "end": [
+        35,
+        50
+      ],
+      "z": 2,
+      "image": "parts/forearm_far.png",
+      "bounds": [
+        33,
+        42,
+        38,
+        53
+      ],
+      "drift": "arms"
+    },
+    {
+      "name": "hand_far",
+      "parent": "forearm_far",
+      "pivot": [
+        35,
+        50
+      ],
+      "end": [
+        35,
+        54
+      ],
+      "z": 3,
+      "image": "parts/hand_far.png",
+      "bounds": [
+        33,
+        49,
+        38,
+        56
+      ],
+      "drift": "arms"
+    },
+    {
+      "name": "thigh_far",
+      "parent": "pelvis",
+      "pivot": [
+        35,
+        50
+      ],
+      "end": [
+        34,
+        61
+      ],
+      "z": 4,
+      "image": "parts/thigh_far.png",
+      "bounds": [
+        32,
+        49,
+        39,
+        64
+      ]
+    },
+    {
+      "name": "shin_far",
+      "parent": "thigh_far",
+      "pivot": [
+        34,
+        61
+      ],
+      "end": [
+        35,
+        72
+      ],
+      "z": 5,
+      "image": "parts/shin_far.png",
+      "bounds": [
+        32,
+        60,
+        38,
+        75
+      ]
+    },
+    {
+      "name": "foot_far",
+      "parent": "shin_far",
+      "pivot": [
+        35,
+        72
+      ],
+      "end": [
+        39,
+        75
+      ],
+      "z": 6,
+      "image": "parts/foot_far.png",
+      "bounds": [
+        33,
+        71,
+        41,
+        76
+      ]
+    },
+    {
+      "name": "thigh_near",
+      "parent": "pelvis",
+      "pivot": [
+        30,
+        50
+      ],
+      "end": [
+        28,
+        61
+      ],
+      "z": 7,
+      "image": "parts/thigh_near.png",
+      "bounds": [
+        26,
+        48,
+        34,
+        64
+      ]
+    },
+    {
+      "name": "shin_near",
+      "parent": "thigh_near",
+      "pivot": [
+        28,
+        61
+      ],
+      "end": [
+        27,
+        72
+      ],
+      "z": 8,
+      "image": "parts/shin_near.png",
+      "bounds": [
+        25,
+        60,
+        31,
+        75
+      ]
+    },
+    {
+      "name": "foot_near",
+      "parent": "shin_near",
+      "pivot": [
+        27,
+        72
+      ],
+      "end": [
+        30,
+        75
+      ],
+      "z": 9,
+      "image": "parts/foot_near.png",
+      "bounds": [
+        25,
+        71,
+        33,
+        76
+      ]
+    },
+    {
+      "name": "abdomen",
+      "parent": "root",
+      "pivot": [
+        32,
+        47
+      ],
+      "end": [
+        32,
+        42
+      ],
+      "z": 10,
+      "image": "parts/abdomen.png",
+      "bounds": [
+        29,
+        41,
+        37,
+        50
+      ]
+    },
+    {
+      "name": "pelvis",
+      "parent": "root",
+      "pivot": [
+        32,
+        48
+      ],
+      "end": [
+        32,
+        51
+      ],
+      "z": 11,
+      "image": "parts/pelvis.png",
+      "bounds": [
+        27,
+        45,
+        39,
+        55
+      ]
+    },
+    {
+      "name": "torso",
+      "parent": "abdomen",
+      "pivot": [
+        32,
+        42
+      ],
+      "end": [
+        31,
+        35
+      ],
+      "z": 12,
+      "image": "parts/torso.png",
+      "bounds": [
+        28,
+        33,
+        39,
+        44
+      ],
+      "drift": "chest"
+    },
+    {
+      "name": "neck",
+      "parent": "torso",
+      "pivot": [
+        33,
+        34
+      ],
+      "end": [
+        33,
+        31
+      ],
+      "z": 13,
+      "image": "parts/neck.png",
+      "bounds": [
+        30,
+        30,
+        36,
+        37
+      ],
+      "drift": "chest"
+    },
+    {
+      "name": "arm_near",
+      "parent": "torso",
+      "pivot": [
+        28,
+        36
+      ],
+      "end": [
+        26,
+        43
+      ],
+      "z": 14,
+      "image": "parts/arm_near.png",
+      "bounds": [
+        25,
+        34,
+        31,
+        46
+      ],
+      "drift": "arms"
+    },
+    {
+      "name": "forearm_near",
+      "parent": "arm_near",
+      "pivot": [
+        26,
+        43
+      ],
+      "end": [
+        25,
+        50
+      ],
+      "z": 15,
+      "image": "parts/forearm_near.png",
+      "bounds": [
+        23,
+        42,
+        29,
+        53
+      ],
+      "drift": "arms"
+    },
+    {
+      "name": "hand_near",
+      "parent": "forearm_near",
+      "pivot": [
+        25,
+        50
+      ],
+      "end": [
+        24,
+        54
+      ],
+      "z": 16,
+      "image": "parts/hand_near.png",
+      "bounds": [
+        22,
+        49,
+        28,
+        56
+      ],
+      "drift": "arms"
+    },
+    {
+      "name": "head",
+      "parent": "neck",
+      "pivot": [
+        33,
+        32
+      ],
+      "end": [
+        33,
+        24
+      ],
+      "z": 17,
+      "image": "parts/head.png",
+      "bounds": [
+        29,
+        22,
+        38,
+        33
+      ],
+      "anchor": "head",
+      "drift": "chest"
+    },
+    {
+      "name": "hair_back",
+      "parent": "head",
+      "pivot": [
+        32,
+        30
+      ],
+      "end": [
+        25,
+        34
+      ],
+      "z": -2,
+      "image": "parts/hair_back.png",
+      "bounds": [
+        18,
+        20,
+        39,
+        49
+      ],
+      "sway": "mass",
+      "anchor": "head",
+      "drift": "chest"
+    },
+    {
+      "name": "hair_front",
+      "parent": "head",
+      "pivot": [
+        33,
+        32
+      ],
+      "end": [
+        33,
+        24
+      ],
+      "z": 19,
+      "image": "parts/hair_front.png",
+      "bounds": [
+        29,
+        20,
+        39,
+        33
+      ],
+      "sway": "mass",
+      "anchor": "head",
+      "drift": "chest"
+    }
+  ],
+  "palette": [
+    "#230521",
+    "#471e41",
+    "#66296c",
+    "#84433c",
+    "#af7268",
+    "#e9a499",
+    "#9a675a",
+    "#ffffff",
+    "#4a5b88",
+    "#6d4c39",
+    "#a26209",
+    "#df9d42",
+    "#422a1f",
+    "#282c58",
+    "#9589a2",
+    "#d0c6e7",
+    "#cf8e82",
+    "#3a1236",
+    "#7e3a85",
+    "#191228",
+    "#2a1f3f",
+    "#3d2e58",
+    "#53406e",
+    "#6d5686",
+    "#8c2f3f",
+    "#b34952",
+    "#6b5f6b",
+    "#94889a",
+    "#c2b8c4",
+    "#e4dce1",
+    "#a8998f",
+    "#4b5d8c",
+    "#6b4a34",
+    "#96654f"
+  ],
+  "outfits": [
+    {
+      "name": "wraps_neck",
+      "bone": "neck",
+      "slot": "wraps",
+      "image": "outfits/wraps/neck.png",
+      "bounds": [
+        30,
+        30,
+        36,
+        37
+      ],
+      "z": 13.25
+    },
+    {
+      "name": "wraps_torso",
+      "bone": "torso",
+      "slot": "wraps",
+      "image": "outfits/wraps/torso.png",
+      "bounds": [
+        28,
+        33,
+        39,
+        44
+      ],
+      "z": 12.25
+    },
+    {
+      "name": "wraps_abdomen",
+      "bone": "abdomen",
+      "slot": "wraps",
+      "image": "outfits/wraps/abdomen.png",
+      "bounds": [
+        29,
+        41,
+        37,
+        50
+      ],
+      "z": 10.25
+    },
+    {
+      "name": "wraps_pelvis",
+      "bone": "pelvis",
+      "slot": "wraps",
+      "image": "outfits/wraps/pelvis.png",
+      "bounds": [
+        27,
+        45,
+        39,
+        55
+      ],
+      "z": 11.25
+    },
+    {
+      "name": "wraps_arm_near",
+      "bone": "arm_near",
+      "slot": "wraps",
+      "image": "outfits/wraps/arm_near.png",
+      "bounds": [
+        25,
+        34,
+        31,
+        46
+      ],
+      "z": 14.25
+    },
+    {
+      "name": "wraps_forearm_near",
+      "bone": "forearm_near",
+      "slot": "wraps",
+      "image": "outfits/wraps/forearm_near.png",
+      "bounds": [
+        23,
+        42,
+        29,
+        53
+      ],
+      "z": 15.25
+    },
+    {
+      "name": "wraps_arm_far",
+      "bone": "arm_far",
+      "slot": "wraps",
+      "image": "outfits/wraps/arm_far.png",
+      "bounds": [
+        33,
+        35,
+        38,
+        46
+      ],
+      "z": 1.25
+    },
+    {
+      "name": "wraps_forearm_far",
+      "bone": "forearm_far",
+      "slot": "wraps",
+      "image": "outfits/wraps/forearm_far.png",
+      "bounds": [
+        33,
+        42,
+        38,
+        53
+      ],
+      "z": 2.25
+    },
+    {
+      "name": "wraps_thigh_near",
+      "bone": "thigh_near",
+      "slot": "wraps",
+      "image": "outfits/wraps/thigh_near.png",
+      "bounds": [
+        26,
+        48,
+        34,
+        64
+      ],
+      "z": 7.25
+    },
+    {
+      "name": "wraps_shin_near",
+      "bone": "shin_near",
+      "slot": "wraps",
+      "image": "outfits/wraps/shin_near.png",
+      "bounds": [
+        25,
+        60,
+        31,
+        75
+      ],
+      "z": 8.25
+    },
+    {
+      "name": "wraps_thigh_far",
+      "bone": "thigh_far",
+      "slot": "wraps",
+      "image": "outfits/wraps/thigh_far.png",
+      "bounds": [
+        32,
+        49,
+        39,
+        64
+      ],
+      "z": 4.25
+    },
+    {
+      "name": "wraps_shin_far",
+      "bone": "shin_far",
+      "slot": "wraps",
+      "image": "outfits/wraps/shin_far.png",
+      "bounds": [
+        32,
+        60,
+        38,
+        75
+      ],
+      "z": 5.25
+    },
+    {
+      "name": "reference_arm_far",
+      "bone": "arm_far",
+      "slot": "top",
+      "image": "outfits/reference/arm_far.png",
+      "bounds": [
+        34,
+        35,
+        38,
+        39
+      ],
+      "drift": "cloth"
+    },
+    {
+      "name": "reference_thigh_far",
+      "bone": "thigh_far",
+      "slot": "bottom",
+      "image": "outfits/reference/thigh_far.png",
+      "bounds": [
+        32,
+        49,
+        39,
+        54
+      ],
+      "drift": "hem"
+    },
+    {
+      "name": "reference_shin_far",
+      "bone": "shin_far",
+      "slot": "boots",
+      "image": "outfits/reference/shin_far.png",
+      "bounds": [
+        33,
+        68,
+        38,
+        75
+      ]
+    },
+    {
+      "name": "reference_foot_far",
+      "bone": "foot_far",
+      "slot": "boots",
+      "image": "outfits/reference/foot_far.png",
+      "bounds": [
+        33,
+        71,
+        41,
+        76
+      ]
+    },
+    {
+      "name": "reference_thigh_near",
+      "bone": "thigh_near",
+      "slot": "bottom",
+      "image": "outfits/reference/thigh_near.png",
+      "bounds": [
+        26,
+        48,
+        34,
+        54
+      ],
+      "drift": "hem"
+    },
+    {
+      "name": "reference_shin_near",
+      "bone": "shin_near",
+      "slot": "boots",
+      "image": "outfits/reference/shin_near.png",
+      "bounds": [
+        25,
+        68,
+        30,
+        75
+      ]
+    },
+    {
+      "name": "reference_foot_near",
+      "bone": "foot_near",
+      "slot": "boots",
+      "image": "outfits/reference/foot_near.png",
+      "bounds": [
+        25,
+        71,
+        33,
+        76
+      ]
+    },
+    {
+      "name": "reference_pelvis",
+      "bone": "pelvis",
+      "slot": "bottom",
+      "image": "outfits/reference/pelvis.png",
+      "bounds": [
+        27,
+        45,
+        39,
+        55
+      ],
+      "drift": "hem"
+    },
+    {
+      "name": "reference_torso",
+      "bone": "torso",
+      "slot": "top",
+      "image": "outfits/reference/torso.png",
+      "bounds": [
+        28,
+        33,
+        39,
+        44
+      ],
+      "drift": "cloth"
+    },
+    {
+      "name": "reference_arm_near",
+      "bone": "arm_near",
+      "slot": "top",
+      "image": "outfits/reference/arm_near.png",
+      "bounds": [
+        26,
+        34,
+        31,
+        39
+      ],
+      "drift": "cloth"
+    },
+    {
+      "name": "cloak_body",
+      "bone": "torso",
+      "slot": "cloak",
+      "z": 30,
+      "image": "outfits/cloak/cloak_body.png",
+      "bounds": [
+        19,
+        31,
+        42,
+        59
+      ],
+      "sway": "cape",
+      "drift": "cloak",
+      "covers": [
+        "hair_back",
+        "arm_near",
+        "forearm_near",
+        "hand_near",
+        "arm_far",
+        "forearm_far",
+        "hand_far"
+      ]
+    },
+    {
+      "name": "cloak_hood",
+      "bone": "head",
+      "slot": "cloak",
+      "z": 31,
+      "image": "outfits/cloak/cloak_hood.png",
+      "bounds": [
+        23,
+        18,
+        40,
+        33
+      ]
+    }
+  ],
+  "referenceOffset": [
+    19,
+    20
+  ],
+  "referenceSize": [
+    26,
+    56
+  ],
+  "angles": "radians relative to bind pose; positive clockwise",
+  "space": "global bind pivots; parent-relative runtime transforms",
+  "anatomyRevision": 7,
+  "sway": {
+    "mass": {
+      "anchor": "head",
+      "joints": [
+        [
+          25,
+          34
+        ],
+        [
+          22,
+          40
+        ],
+        [
+          22,
+          45
+        ],
+        [
+          23,
+          48
+        ]
+      ],
+      "links": [
+        "mid",
+        "tail",
+        "tip"
+      ]
+    },
+    "cape": {
+      "anchor": "torso",
+      "joints": [
+        [
+          32,
+          35
+        ],
+        [
+          31,
+          43
+        ],
+        [
+          30,
+          51
+        ],
+        [
+          29,
+          58
+        ]
+      ],
+      "links": [
+        "shoulder",
+        "skirt",
+        "hem"
+      ]
+    }
+  },
+  "channels": [
+    "chest",
+    "arms",
+    "cloth",
+    "hem",
+    "cloak"
+  ],
+  "ramps": {
+    "hair": {
+      "base": 2,
+      "tones": [
+        17,
+        1,
+        2,
+        18
+      ]
+    },
+    "wraps": {
+      "base": 28,
+      "tones": [
+        26,
+        27,
+        28,
+        29,
+        30
+      ]
+    },
+    "top": {
+      "base": 11,
+      "tones": [
+        10,
+        11
+      ]
+    },
+    "bottom": {
+      "base": 13,
+      "tones": [
+        13,
+        31,
+        14,
+        15
+      ]
+    },
+    "boots": {
+      "base": 32,
+      "tones": [
+        12,
+        32,
+        33
+      ]
+    },
+    "cloak": {
+      "base": 21,
+      "tones": [
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25
+      ]
+    }
+  },
+  "eyes": {
+    "row": 27,
+    "sockets": [
+      [
+        32,
+        33
+      ],
+      [
+        35,
+        36
+      ]
+    ],
+    "iris": 8
+  }
+}

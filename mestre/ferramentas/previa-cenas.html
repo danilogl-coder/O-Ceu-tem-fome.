@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Prévia das cenas</title>
+  <style>
+    :root{color-scheme:dark}
+    body{background:#110a14;color:#e8cde3;font:12px Consolas,monospace;margin:18px}
+    h1{font:bold 18px Georgia,serif;color:#f497dc;margin:0 0 4px}
+    p{color:#b581b3;margin:0 0 14px}
+    label{margin-right:14px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:14px;margin-top:14px}
+    figure{margin:0;background:#1b0b20;border:1px solid #5c244f;padding:6px}
+    figcaption{padding:4px 2px 0;color:#f3b4e8}
+    canvas{display:block;width:100%;image-rendering:pixelated}
+  </style>
+  <script src="../pixel-kit.js"></script><script src="../scene-engine.js"></script><script src="../sobreposicoes.js"></script>
+  <script src="../cena-escritorio.js"></script><script src="../cena-campo.js"></script><script src="../cena-modelo.js"></script>
+</head>
+<body>
+  <h1>Prévia das cenas</h1>
+  <p>Ferramenta de arte: cada cena em todas as iluminações, sem personagem. Útil ao criar uma cena nova a partir de cena-modelo.js.</p>
+  <label>Câmera <input id="camera" type="range" min="0" max="1000" value="400"></label>
+  <label>Clima <select id="weather"><option value="">padrão</option><option value="chuva">chuva</option></select></label>
+  <label><input id="props" type="checkbox"> todos os objetos</label>
+  <div id="out" class="grid"></div>
+  <script>
+    const stage = new SceneStage();
+    stage.time = 3;
+    const cells = [];
+    for (const scene of SceneLibrary.list()) for (const preset of scene.presets) {
+      const fig = document.createElement('figure'), c = document.createElement('canvas');
+      c.width = 480; c.height = 270;
+      fig.append(c, Object.assign(document.createElement('figcaption'), {textContent: `${scene.name} · ${preset.label}`}));
+      document.querySelector('#out').append(fig);
+      cells.push({scene, preset, canvas: c});
+    }
+    function draw() {
+      const u = Number(document.querySelector('#camera').value) / 1000;
+      for (const {scene, preset, canvas} of cells) {
+        const room = scene.kind === 'room' ? scene.room : null;
+        const state = {preset: preset.id, weather: document.querySelector('#weather').value || undefined};
+        if (document.querySelector('#props').checked) state.props = new Set(scene.props.map(p => p.id));
+        stage.renderStill(canvas, scene.id, state, room ? room.x0 + (room.x1 - room.x0 - 480) * u : 0);
+      }
+    }
+    for (const el of document.querySelectorAll('input,select')) el.addEventListener('input', draw);
+    draw();
+    setInterval(() => { stage.time += .1; draw(); }, 100);
+    // Automation hook used while painting: render one still and return it.
+    window.render = (sceneId, state, camera, time = 3) => {
+      stage.time = time; stage.load(sceneId, state);
+      const c = document.createElement('canvas'); c.width = 480; c.height = 270;
+      const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+      stage.drawBack(g, camera); stage.drawFront(g, camera); stage.finishFrame(g, c);
+      return {data: c.toDataURL(), ms: 0};
+    };
+  </script>
+</body>
+</html>

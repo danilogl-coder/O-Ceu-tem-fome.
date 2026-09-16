@@ -1,0 +1,624 @@
+{
+  "errors": [],
+  "state": {
+    "mode": "play",
+    "clip": "ragdoll",
+    "ragdoll": true,
+    "recovering": false,
+    "recoveryProgress": 0,
+    "recoveryType": null,
+    "recoveryPhase": null,
+    "renderOrigin": {
+      "x": 187.05489166666666,
+      "y": 77
+    },
+    "camera": 0,
+    "dragging": false,
+    "contacts": 1,
+    "grab": null,
+    "paused": false,
+    "time": 1.9999999999999953,
+    "facing": 1,
+    "playerX": 255.41861360823077,
+    "elevation": 50.28200668646656,
+    "velocityX": 37.3200515728422,
+    "velocityY": -61.392391382864844,
+    "grounded": true,
+    "fallen": null,
+    "breath": 0,
+    "blink": 1,
+    "lifeClock": 20.991666666666116,
+    "hair": -0.01801281466100191,
+    "hairSway": 3.1912914192111836,
+    "hairForce": [
+      14.290528636269869,
+      -30
+    ],
+    "hairPhysics": true,
+    "breeze": 1,
+    "life": true,
+    "pointer": null,
+    "gaze": 0,
+    "gesture": null,
+    "fatigue": 0.18867723576689666,
+    "breathDepth": 1.0856599975599435,
+    "breathLift": 0,
+    "weight": 0.9415812919430459,
+    "drift": {
+      "arms": [
+        0,
+        0
+      ],
+      "chest": [
+        0,
+        0
+      ],
+      "cloth": [
+        0,
+        0
+      ],
+      "hem": [
+        0,
+        0
+      ],
+      "cloak": [
+        0,
+        0
+      ]
+    },
+    "hairRows": [
+      {
+        "curve": "mass",
+        "offsets": [
+          [
+            34,
+            0,
+            0
+          ],
+          [
+            38,
+            0,
+            0
+          ],
+          [
+            42,
+            0,
+            0
+          ],
+          [
+            46,
+            0,
+            0
+          ],
+          [
+            48,
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "curve": "cape",
+        "offsets": [
+          [
+            34,
+            0,
+            0
+          ],
+          [
+            38,
+            0,
+            0
+          ],
+          [
+            42,
+            0,
+            0
+          ],
+          [
+            46,
+            0,
+            0
+          ],
+          [
+            48,
+            0,
+            0
+          ]
+        ]
+      }
+    ],
+    "inventory": {
+      "cols": 10,
+      "rows": 6,
+      "used": 7,
+      "capacity": 60,
+      "revision": 6,
+      "entries": [
+        {
+          "id": 1,
+          "def": "bandage",
+          "x": 0,
+          "y": 0,
+          "rot": 0,
+          "qty": 1,
+          "w": 2,
+          "h": 1,
+          "label": "Bandagem"
+        },
+        {
+          "id": 2,
+          "def": "splint",
+          "x": 2,
+          "y": 0,
+          "rot": 0,
+          "qty": 1,
+          "w": 3,
+          "h": 1,
+          "label": "Tala"
+        },
+        {
+          "id": 3,
+          "def": "antibiotic",
+          "x": 5,
+          "y": 0,
+          "rot": 0,
+          "qty": 2,
+          "w": 1,
+          "h": 2,
+          "label": "Antibiótico"
+        }
+      ]
+    },
+    "treatment": null,
+    "treatmentResult": "completed",
+    "health": {
+      "vitalState": "dead",
+      "suspended": false,
+      "prognosis": null,
+      "deathCause": "Decapitação",
+      "time": 20.704500000011777,
+      "causes": [],
+      "blood": 0,
+      "vitality": 0,
+      "bleeding": 0,
+      "dead": true,
+      "incapacitated": true,
+      "amputated": true,
+      "mobility": {
+        "crawl": false,
+        "limp": true,
+        "limpSide": "near",
+        "limpSeverity": 0.55,
+        "severity": {
+          "near": 0.55,
+          "far": 0
+        },
+        "speed": 0,
+        "jump": false
+      },
+      "vision": {
+        "right": 0,
+        "left": 0,
+        "blind": true
+      },
+      "status": "Morto · sem sinais vitais",
+      "organs": {
+        "brain": {
+          "hp": 0,
+          "maxHp": 100,
+          "detached": false
+        },
+        "heart": {
+          "hp": 100,
+          "maxHp": 100,
+          "detached": false
+        },
+        "lung_right": {
+          "hp": 100,
+          "maxHp": 100,
+          "detached": false
+        },
+        "lung_left": {
+          "hp": 100,
+          "maxHp": 100,
+          "detached": false
+        },
+        "liver": {
+          "hp": 100,
+          "maxHp": 100,
+          "detached": false
+        },
+        "kidney_right": {
+          "hp": 100,
+          "maxHp": 100,
+          "detached": false
+        },
+        "kidney_left": {
+          "hp": 100,
+          "maxHp": 100,
+          "detached": false
+        }
+      },
+      "parts": {
+        "head": {
+          "hp": 0,
+          "maxHp": 100,
+          "boneHp": 0,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": true,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false,
+          "severedRoot": true
+        },
+        "neck": {
+          "hp": 80,
+          "maxHp": 100,
+          "boneHp": 100,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 100,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false,
+          "stumps": [
+            "head"
+          ]
+        },
+        "torso": {
+          "hp": 80.03354150000064,
+          "maxHp": 100,
+          "boneHp": 100,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 99.8658339999993,
+          "bleed": 0,
+          "bandaged": true,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false,
+          "stumps": [
+            "arm_near"
+          ]
+        },
+        "abdomen": {
+          "hp": 100,
+          "maxHp": 100,
+          "boneHp": 100,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false
+        },
+        "pelvis": {
+          "hp": 100,
+          "maxHp": 100,
+          "boneHp": 100,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false
+        },
+        "arm_near": {
+          "hp": 0,
+          "maxHp": 100,
+          "boneHp": 0,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": true,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false,
+          "severedRoot": true
+        },
+        "forearm_near": {
+          "hp": 0,
+          "maxHp": 100,
+          "boneHp": 0,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 29.671752499999705,
+          "cut": 34.518524000000056,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": true,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false
+        },
+        "hand_near": {
+          "hp": 0,
+          "maxHp": 100,
+          "boneHp": 0,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": true,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false
+        },
+        "arm_far": {
+          "hp": 100,
+          "maxHp": 100,
+          "boneHp": 100,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false
+        },
+        "forearm_far": {
+          "hp": 100,
+          "maxHp": 100,
+          "boneHp": 100,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false
+        },
+        "hand_far": {
+          "hp": 100,
+          "maxHp": 100,
+          "boneHp": 100,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false
+        },
+        "thigh_near": {
+          "hp": 100,
+          "maxHp": 100,
+          "boneHp": 100,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false
+        },
+        "shin_near": {
+          "hp": 75,
+          "maxHp": 100,
+          "boneHp": 0.6446880000009508,
+          "fracture": true,
+          "splinted": true,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false
+        },
+        "foot_near": {
+          "hp": 100,
+          "maxHp": 100,
+          "boneHp": 100,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false
+        },
+        "thigh_far": {
+          "hp": 100,
+          "maxHp": 100,
+          "boneHp": 100,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false
+        },
+        "shin_far": {
+          "hp": 100,
+          "maxHp": 100,
+          "boneHp": 100,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false
+        },
+        "foot_far": {
+          "hp": 100,
+          "maxHp": 100,
+          "boneHp": 100,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 0,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 0,
+          "necrosis": 0,
+          "untreatedTime": 0,
+          "treated": false
+        },
+        "eye_right": {
+          "hp": 0,
+          "maxHp": 100,
+          "boneHp": null,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 99.80771249999958,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 30.766000000047814,
+          "necrosis": 0,
+          "untreatedTime": 7.6915000000119536,
+          "treated": false
+        },
+        "eye_left": {
+          "hp": 0,
+          "maxHp": 100,
+          "boneHp": null,
+          "fracture": false,
+          "splinted": false,
+          "bruise": 99.81563499999959,
+          "cut": 0,
+          "bleed": 0,
+          "bandaged": false,
+          "missing": false,
+          "cooldown": 0,
+          "infection": 29.498400000047795,
+          "necrosis": 0,
+          "untreatedTime": 7.374600000011949,
+          "treated": false
+        }
+      }
+    },
+    "healthClock": {
+      "running": true,
+      "time": 20.904700000011772,
+      "count": 1
+    },
+    "reaction": null,
+    "pain": null,
+    "limp": null,
+    "organDebris": [],
+    "crawl": null,
+    "bloodParticles": 0,
+    "bloodStains": 52,
+    "detached": [
+      "head",
+      "arm_near",
+      "forearm_near",
+      "hand_near"
+    ],
+    "detachedPieces": [
+      {
+        "name": "arm_near",
+        "x": 168.0907737413915,
+        "y": 221.8499861778153,
+        "angle": 1.2137934282398304
+      },
+      {
+        "name": "forearm_near",
+        "x": 182.41741010650367,
+        "y": 222.59077175617165,
+        "angle": 1.4050804366869634
+      },
+      {
+        "name": "hand_near",
+        "x": 193.5239831073459,
+        "y": 221.9234140381354,
+        "angle": 1.5299352303658336
+      },
+      {
+        "name": "head",
+        "x": 263.9073973698485,
+        "y": 141.0690265391769,
+        "angle": -0.020896926509934605
+      }
+    ],
+    "draggingDetached": false,
+    "hidden": []
+  }
+}

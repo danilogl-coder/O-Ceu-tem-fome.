@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 224 184" shape-rendering="crispEdges">
+  <defs>
+    <pattern id="grain" width="12" height="8" patternUnits="userSpaceOnUse"><path d="M2 2h2v1H2zM9 6h1v1H9z" fill="#b77b44" opacity=".22"/><path d="M6 4h2v1H6z" fill="#2d1b14" opacity=".3"/></pattern>
+    <pattern id="lining" width="4" height="4" patternUnits="userSpaceOnUse"><path fill="#24221c" d="M0 0h4v4H0z"/><path fill="#2a281f" d="M0 0h1v1H0zM2 2h1v1H2z"/></pattern>
+  </defs>
+  <!-- Back handle: square leather loops with a worn top edge. -->
+  <path fill="#100e0c" d="M69 30V10h5V4h76v6h5v20h-12V15H81v15z"/>
+  <path fill="#75482c" d="M73 30V12h5V8h68v4h5v18h-5V15h-5v-3H83v3h-5v15z"/>
+  <path fill="#b2814e" d="M79 8h66v2H79zM73 14h2v13h-2z"/>
+  <!-- Shadow, gussets and stepped silhouette. -->
+  <path fill="#080909" opacity=".65" d="M24 32h180v8h8v18h8v87h-8v15h-12v10H32v-6H20v-12H8V58h8V42h8z"/>
+  <path fill="#271b15" d="M28 26h168v6h12v16h8v94h-8v14h-16v8H32v-8H16v-14H8V48h8V32h12z"/>
+  <path fill="#65412b" d="M28 30h168v6h8v16h8v86h-8v14h-14v8H34v-8H20v-14h-8V52h8V36h8z"/>
+  <path fill="#8a5935" d="M28 30h168v5H28zM20 39h7v108h-7zM197 39h7v108h-7zM33 150h159v10H33z"/>
+  <path fill="#3d2b21" d="M12 63h7v64h-7zM205 63h7v64h-7zM34 156h156v4H34z"/>
+  <path fill="url(#grain)" d="M24 34h176v120H24z"/>
+  <!-- Rolled rim enclosing the actual 160 x 96 inventory surface. -->
+  <path fill="#b07948" d="M34 34h156v4h8v8h4v98h-8v8H30v-8h-8V46h4v-8h8z"/>
+  <path fill="#8c5936" d="M35 38h154v4h5v6h4v92h-8v8H34v-8h-8V48h4v-6h5z"/>
+  <path fill="#37281d" d="M32 44h160v4h4v96h-4v4H32v-4h-4V48h4z"/>
+  <path fill="url(#lining)" d="M32 48h160v96H32z"/>
+  <path fill="#151510" d="M32 48h160v3H35v93h-3z"/>
+  <path fill="#56452e" d="M35 143h157v1H35zM191 51h1v92h-1z"/>
+  <!-- Saddle stitches, drawn as hard pixel dashes. -->
+  <path d="M38 37h148M25 52v84M199 52v84M39 151h146" fill="none" stroke="#d2a46a" stroke-width="1" stroke-dasharray="3 3"/>
+  <path fill="#d5a66a" d="M30 40h2v2h-2zM192 40h2v2h-2zM28 143h2v2h-2zM194 143h2v2h-2z"/>
+  <!-- Reinforcement straps and brass buckles. -->
+  <path fill="#34231a" d="M46 24h18v21H46zM160 24h18v21h-18zM46 149h18v18H46zM160 149h18v18h-18z"/>
+  <path fill="#895433" d="M49 24h12v21H49zM163 24h12v21h-12zM49 149h12v15H49zM163 149h12v15h-12z"/>
+  <path fill="#d1a455" d="M47 29h16v10H47zM161 29h16v10h-16zM47 153h16v10H47zM161 153h16v10h-16z"/>
+  <path fill="#493324" d="M50 31h10v5H50zM164 31h10v5h-10zM50 155h10v5H50zM164 155h10v5h-10z"/>
+  <path fill="#f0c784" d="M54 30h2v8h-2zM168 30h2v8h-2zM54 154h2v8h-2zM168 154h2v8h-2z"/>
+  <!-- Front handle folds down; the grid remains entirely unobstructed. -->
+  <path fill="#1b1711" d="M73 153h10v16h58v-16h10v19h-5v8H78v-8h-5z"/>
+  <path fill="#825131" d="M76 154h4v18h64v-18h4v20h-5v3H81v-3h-5z"/>
+  <path fill="#ba8750" d="M83 173h58v2H83zM76 155h1v15h-1z"/>
+  <!-- Rivets and a stitched blank leather label. -->
+  <path fill="#b98949" d="M16 55h2v2h-2zM206 55h2v2h-2zM16 134h2v2h-2zM206 134h2v2h-2z"/>
+  <path fill="#36271c" d="M92 149h40v12H92z"/><path fill="#a06d40" d="M94 151h36v8H94z"/>
+  <path fill="#ce9d60" d="M97 153h2v1h-2zM102 153h2v1h-2zM107 153h2v1h-2zM112 153h2v1h-2zM117 153h2v1h-2zM122 153h2v1h-2z"/>
+</svg>

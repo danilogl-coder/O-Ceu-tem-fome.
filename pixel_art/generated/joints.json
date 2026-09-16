@@ -1,0 +1,282 @@
+[
+  {
+    "name": "root",
+    "joint": "root",
+    "parent": null,
+    "pivot": [
+      32,
+      48
+    ],
+    "end": [
+      32,
+      46
+    ],
+    "independent": true
+  },
+  {
+    "name": "arm_far",
+    "joint": "shoulder",
+    "parent": "torso",
+    "pivot": [
+      35,
+      36
+    ],
+    "end": [
+      35,
+      43
+    ],
+    "independent": true
+  },
+  {
+    "name": "forearm_far",
+    "joint": "elbow",
+    "parent": "arm_far",
+    "pivot": [
+      35,
+      43
+    ],
+    "end": [
+      35,
+      50
+    ],
+    "independent": true
+  },
+  {
+    "name": "hand_far",
+    "joint": "wrist",
+    "parent": "forearm_far",
+    "pivot": [
+      35,
+      50
+    ],
+    "end": [
+      35,
+      54
+    ],
+    "independent": true
+  },
+  {
+    "name": "thigh_far",
+    "joint": "hip",
+    "parent": "pelvis",
+    "pivot": [
+      35,
+      50
+    ],
+    "end": [
+      34,
+      61
+    ],
+    "independent": true
+  },
+  {
+    "name": "shin_far",
+    "joint": "knee",
+    "parent": "thigh_far",
+    "pivot": [
+      34,
+      61
+    ],
+    "end": [
+      35,
+      72
+    ],
+    "independent": true
+  },
+  {
+    "name": "foot_far",
+    "joint": "ankle",
+    "parent": "shin_far",
+    "pivot": [
+      35,
+      72
+    ],
+    "end": [
+      39,
+      75
+    ],
+    "independent": true
+  },
+  {
+    "name": "thigh_near",
+    "joint": "hip",
+    "parent": "pelvis",
+    "pivot": [
+      30,
+      50
+    ],
+    "end": [
+      28,
+      61
+    ],
+    "independent": true
+  },
+  {
+    "name": "shin_near",
+    "joint": "knee",
+    "parent": "thigh_near",
+    "pivot": [
+      28,
+      61
+    ],
+    "end": [
+      27,
+      72
+    ],
+    "independent": true
+  },
+  {
+    "name": "foot_near",
+    "joint": "ankle",
+    "parent": "shin_near",
+    "pivot": [
+      27,
+      72
+    ],
+    "end": [
+      30,
+      75
+    ],
+    "independent": true
+  },
+  {
+    "name": "abdomen",
+    "joint": "lumbar",
+    "parent": "root",
+    "pivot": [
+      32,
+      47
+    ],
+    "end": [
+      32,
+      42
+    ],
+    "independent": true
+  },
+  {
+    "name": "pelvis",
+    "joint": "pelvis",
+    "parent": "root",
+    "pivot": [
+      32,
+      48
+    ],
+    "end": [
+      32,
+      51
+    ],
+    "independent": true
+  },
+  {
+    "name": "torso",
+    "joint": "torso",
+    "parent": "abdomen",
+    "pivot": [
+      32,
+      42
+    ],
+    "end": [
+      31,
+      35
+    ],
+    "independent": true
+  },
+  {
+    "name": "neck",
+    "joint": "cervical",
+    "parent": "torso",
+    "pivot": [
+      33,
+      34
+    ],
+    "end": [
+      33,
+      31
+    ],
+    "independent": true
+  },
+  {
+    "name": "arm_near",
+    "joint": "shoulder",
+    "parent": "torso",
+    "pivot": [
+      28,
+      36
+    ],
+    "end": [
+      26,
+      43
+    ],
+    "independent": true
+  },
+  {
+    "name": "forearm_near",
+    "joint": "elbow",
+    "parent": "arm_near",
+    "pivot": [
+      26,
+      43
+    ],
+    "end": [
+      25,
+      50
+    ],
+    "independent": true
+  },
+  {
+    "name": "hand_near",
+    "joint": "wrist",
+    "parent": "forearm_near",
+    "pivot": [
+      25,
+      50
+    ],
+    "end": [
+      24,
+      54
+    ],
+    "independent": true
+  },
+  {
+    "name": "head",
+    "joint": "head",
+    "parent": "neck",
+    "pivot": [
+      33,
+      32
+    ],
+    "end": [
+      33,
+      24
+    ],
+    "independent": true
+  },
+  {
+    "name": "hair_back",
+    "joint": "scalp",
+    "parent": "head",
+    "pivot": [
+      32,
+      30
+    ],
+    "end": [
+      25,
+      34
+    ],
+    "independent": true
+  },
+  {
+    "name": "hair_front",
+    "joint": "scalp",
+    "parent": "head",
+    "pivot": [
+      33,
+      32
+    ],
+    "end": [
+      33,
+      24
+    ],
+    "independent": true
+  }
+]

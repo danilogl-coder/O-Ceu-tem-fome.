@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Prévia das pistas</title>
+  <style>
+    :root{color-scheme:dark}
+    body{background:#110a14;color:#e8cde3;font:12px Consolas,monospace;margin:18px}
+    h1{font:bold 18px Georgia,serif;color:#f497dc;margin:0 0 4px}
+    p{color:#b581b3;margin:0 0 12px}
+    canvas{display:block;width:960px;height:540px;image-rendering:pixelated;background:#07040b;border:1px solid #5c244f}
+    select,button{font:inherit}
+  </style>
+  <script src="../pixel-kit.js"></script><script src="../scene-engine.js"></script><script src="../sobreposicoes.js"></script>
+  <script src="../cena-escritorio.js"></script><script src="../cena-campo.js"></script>
+  <script src="../pistas-ui.js"></script><script src="../pistas.js"></script><script src="../pistas-tipos.js"></script>
+  <script src="../pista-foto.js"></script><script src="../pista-mesa.js"></script><script src="../pista-computador.js"></script><script src="../pista-mapa.js"></script>
+  <script src="../cinematica-foguete.js"></script><script src="../som-ambiente.js"></script>
+</head>
+<body>
+  <h1>Prévia das pistas</h1>
+  <p>Ferramenta de arte: a cena do escritório com as pistas clicáveis, sem o personagem. Clique nas pistas; <kbd>P</kbd> mostra as áreas.</p>
+  <label>Pista <select id="pista"></select></label> <button id="abrir">Abrir</button> <label>Câmera <input id="camera" type="range" min="-360" max="840" value="0"></label>
+  <canvas id="tela" width="480" height="270" tabindex="0"></canvas>
+  <script>
+    const canvas = document.querySelector('#tela'), ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    const stage = new SceneStage();
+    stage.load('escritorio');
+    const sound = typeof MapAmbience === 'function' ? new MapAmbience() : null;
+    const clues = new ClueSystem({stage, sound});
+    let camera = 0, manual = false, last = performance.now();
+    const sel = document.querySelector('#pista');
+    function fill() { sel.innerHTML = clues.clues().map(c => `<option value="${c.id}">${c.name} · ${c.type}</option>`).join(''); }
+    fill();
+    document.querySelector('#abrir').onclick = () => clues.openById(sel.value);
+    document.querySelector('#camera').oninput = e => { camera = Number(e.target.value); };
+    const point = e => { const r = canvas.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * 480, (e.clientY - r.top) / r.height * 270]; };
+    canvas.addEventListener('pointerdown', e => { const [x, y] = point(e); clues.pointerDown(x, y, {event: e}); canvas.focus(); });
+    canvas.addEventListener('pointermove', e => { const [x, y] = point(e); canvas.style.cursor = clues.pointerMove(x, y) || ''; });
+    canvas.addEventListener('pointerup', e => { const [x, y] = point(e); clues.pointerUp(x, y); });
+    canvas.addEventListener('pointerleave', () => clues.leave());
+    canvas.addEventListener('wheel', e => { if (clues.wheel(e.deltaY)) e.preventDefault(); }, {passive: false});
+    function frame(dt) {
+      stage.step(dt);
+      camera = stage.resolveCamera(camera, dt);
+      ctx.fillStyle = '#07040b'; ctx.fillRect(0, 0, 480, 270);
+      stage.drawBack(ctx, camera); stage.drawFront(ctx, camera);
+      clues.drawMarkers(ctx, camera);
+      stage.finishFrame(ctx, canvas);
+      clues.drawPrivate(ctx, camera);
+    }
+    function loop(now) { if (!manual) { const dt = Math.min(.1, (now - last) / 1000); last = now; frame(dt); } requestAnimationFrame(loop); }
+    requestAnimationFrame(loop);
+    // Automation used while painting: deterministic time, synthetic input, stills.
+    window.preview = {
+      stage, clues,
+      manual(on = true) { manual = on; if (on) { let t = clues.time; clues.tick = () => { clues.time += preview.dt; return preview.dt; }; } },
+      dt: 1 / 30,
+      advance(seconds = 0) { const n = Math.max(1, Math.round(seconds / preview.dt)); for (let i = 0; i < n; i++) frame(preview.dt); },
+      camera(c) { camera = c; },
+      open(id, opts) { return clues.openById(id, opts); },
+      move(x, y) { canvas.style.cursor = clues.pointerMove(x, y) || ''; },
+      click(x, y) { clues.pointerMove(x, y); clues.pointerDown(x, y); clues.pointerUp(x, y); },
+      key(key, code = key.length === 1 ? 'Key' + key.toUpperCase() : key) { clues.keydown({key, code, target: canvas, preventDefault() {}, stopImmediatePropagation() {}, shiftKey: false, ctrlKey: false, altKey: false, metaKey: false, repeat: false}); },
+      type(text) { for (const ch of text) preview.key(ch, /\d/.test(ch) ? 'Digit' + ch : 'Key' + ch.toUpperCase()); },
+      shot() { return canvas.toDataURL(); }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+[
+  {
+    "name": "standing",
+    "type": "standing",
+    "duration": 0.32,
+    "phases": [
+      "balance"
+    ],
+    "maxStep": 0,
+    "maxFootSlip": 0,
+    "maxGap": 0
+  },
+  {
+    "name": "front",
+    "type": "prone",
+    "duration": 2.06,
+    "phases": [
+      "gather",
+      "support",
+      "plant-feet",
+      "push-up",
+      "balance"
+    ],
+    "maxStep": 1.0602565144127807,
+    "maxFootSlip": 2.929642751054232e-14,
+    "maxGap": 2.842170943040401e-14
+  },
+  {
+    "name": "back",
+    "type": "supine",
+    "duration": 2.1799999999999997,
+    "phases": [
+      "sit-up",
+      "support",
+      "plant-feet",
+      "push-up",
+      "balance"
+    ],
+    "maxStep": 1.2168350153964083,
+    "maxFootSlip": 3.1776437161565096e-14,
+    "maxGap": 2.842170943040401e-14
+  },
+  {
+    "name": "upside_down",
+    "type": "inverted",
+    "duration": 2.8099999999999996,
+    "phases": [
+      "untangle",
+      "gather",
+      "support",
+      "plant-feet",
+      "push-up",
+      "balance"
+    ],
+    "maxStep": 1.0959907547405816,
+    "maxFootSlip": 1.7763568394002505e-14,
+    "maxGap": 4.263256414560601e-14
+  },
+  {
+    "name": "crouched",
+    "type": "crouched",
+    "duration": 1.16,
+    "phases": [
+      "plant-feet",
+      "push-up",
+      "balance"
+    ],
+    "maxStep": 1.0000000000021956,
+    "maxFootSlip": 2.929642751054232e-14,
+    "maxGap": 2.842170943040401e-14
+  },
+  {
+    "name": "twisted",
+    "type": "inverted",
+    "duration": 2.9299999999999997,
+    "phases": [
+      "untangle",
+      "sit-up",
+      "support",
+      "plant-feet",
+      "push-up",
+      "balance"
+    ],
+    "maxStep": 1.2449621710028287,
+    "maxFootSlip": 2.842170943040401e-14,
+    "maxGap": 2.842170943040401e-14
+  }
+]

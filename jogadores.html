@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tela dos jogadores</title>
+  <style>
+    :root{color-scheme:dark}
+    html,body{margin:0;height:100%;background:#050308;overflow:hidden}
+    body{display:grid;place-items:center;font:12px Consolas,'Courier New',monospace;color:#f3b4e8}
+    body[data-idle=true]{cursor:none}
+    #tela{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#07040b}
+    .barra{position:fixed;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;padding:6px 8px;background:#140619ee;border:2px solid #9c3e88;box-shadow:4px 4px #09020d;transition:opacity .3s;z-index:2;white-space:nowrap}
+    .barra[data-idle=true]{opacity:0;pointer-events:none}
+    .barra button{font:inherit;color:#f3b4e8;background:#230c28;border:2px solid #743064;border-radius:0;padding:5px 9px;cursor:pointer}
+    .barra button:hover,.barra button:focus-visible{border-color:#ffd18c;outline:none}
+    .barra kbd{font:inherit;border:1px solid #9d468d;padding:0 4px;margin-left:3px}
+    #estado{color:#b581b3;min-width:120px}
+    #estado[data-on=true]{color:#a7d98e}
+  </style>
+</head>
+<body>
+  <canvas id="tela" width="480" height="270" aria-label="Cena do jogo transmitida pelo mestre"></canvas>
+  <div class="barra" id="barra">
+    <span id="estado">aguardando o mestre</span>
+    <button id="telaCheia" type="button">Tela cheia<kbd>F</kbd></button>
+    <button id="escala" type="button">Escala inteira<kbd>E</kbd></button>
+  </div>
+  <script src="mestre/pixel-kit.js"></script>
+  <script src="mestre/sobreposicoes.js"></script>
+  <script src="mestre/pistas-ui.js"></script>
+  <script src="mestre/link.js"></script>
+  <script src="mestre/jogadores.js"></script>
+</body>
+</html>

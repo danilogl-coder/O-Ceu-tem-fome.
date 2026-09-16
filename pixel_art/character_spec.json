@@ -1,0 +1,61 @@
+{
+  "canvas_width": 64,
+  "canvas_height": 96,
+  "head_top": 20,
+  "head_bottom": 32,
+  "shoulder_y": 35,
+  "waist_y": 44,
+  "hip_y": 48,
+  "knee_y": 61,
+  "feet_baseline": 75,
+  "light_direction": "top_left_front",
+  "facing": "right",
+  "projection": "Original reference side-scroller view preserved",
+  "reference": "references/reference.png",
+  "reference_native_size": [
+    26,
+    56
+  ],
+  "method": "Native integer clusters informed by supplied reference; selected exposed skin clusters preserved; face unchanged, hair redrawn",
+  "design": "Reference-aligned torso, waist, pelvis, limbs and relaxed hands; bare mannequin with optional garments",
+  "proportions": "Reference-based arm slant and backward support leg; near shoulder (28,36), elbow (26,43), wrist (25,50); feet baseline75",
+  "shading": "Continuous hand-painted light planes across module overlaps, top-left/front light, warm midtone #cf8e82; hair sheen broken into two short runs; no gradients or blur",
+  "selected_silhouette": "Approved revision 5 body masks preserved exactly; skin lighting revision 6; hair revision 7",
+  "parts": 19,
+  "reference_width": 26,
+  "reference_height": 56,
+  "reference_offset": [
+    19,
+    20
+  ],
+  "bones_including_root": 20,
+  "resolution_note": "Original drawing occupies 26x56; not stretched to fill 64x96",
+  "outfits": "top, bottom, boots; disabled by default",
+  "hair_parts": [
+    "hair_back",
+    "hair_front"
+  ],
+  "anatomy_sources": "anatomy_research.md",
+  "joints": "generated/joints.json",
+  "body_reference": "references/body_reference.png",
+  "body_reference_original": "C:/Users/danil/Desktop/RPG O Ceu tem fome/Referencia/Pixel Art.png",
+  "body_source": "reference_body.py",
+  "skin_source": "skin_lighting.py",
+  "palette_colors": 19,
+  "hair_source": "hair.py",
+  "hair_reference": "references/reference.png",
+  "hair_tones": [
+    "#230521",
+    "#3a1236",
+    "#471e41",
+    "#66296c",
+    "#7e3a85"
+  ],
+  "hair_simulation": "motion.js HairSway: pinned verlet strand written out as one offset per screen row; layers sample unrotated so no pixel can be dropped",
+  "hair_links": [
+    "mid",
+    "tail",
+    "tip"
+  ],
+  "hair_layers": "hair_back is the complete mass behind the body; hair_front repeats the pixels that cover the face"
+}

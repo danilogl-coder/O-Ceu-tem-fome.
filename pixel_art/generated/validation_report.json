@@ -1,0 +1,132 @@
+{
+  "canvas": [
+    64,
+    96
+  ],
+  "reference": [
+    26,
+    56
+  ],
+  "offset": [
+    19,
+    20
+  ],
+  "anatomy_revision": 7,
+  "parts": 19,
+  "bones": 20,
+  "independent_wrists": "PASS",
+  "both_feet_grounded": "PASS",
+  "optional_garment_layers": 24,
+  "format": "PNG RGBA",
+  "alpha_values": [
+    0,
+    255
+  ],
+  "face_asset": "unchanged",
+  "hair_asset": "revision 7, hair.py",
+  "clothing": "separate optional overlays",
+  "rest_renderer": "PASS",
+  "approved_silhouettes": "unchanged",
+  "continuous_skin_joins": 10,
+  "palette_colors": 34,
+  "drift_channels": {
+    "arms": [
+      "arm_far",
+      "arm_near",
+      "forearm_far",
+      "forearm_near",
+      "hand_far",
+      "hand_near"
+    ],
+    "chest": [
+      "hair_back",
+      "hair_front",
+      "head",
+      "neck",
+      "torso"
+    ],
+    "cloak": [
+      "cloak_body"
+    ],
+    "cloth": [
+      "reference_arm_far",
+      "reference_arm_near",
+      "reference_torso"
+    ],
+    "hem": [
+      "reference_pelvis",
+      "reference_thigh_far",
+      "reference_thigh_near"
+    ]
+  },
+  "waist_overlap_rows": 3,
+  "hair_layers": [
+    "hair_back",
+    "hair_front"
+  ],
+  "hair_pixels": 210,
+  "hair_tones": 5,
+  "hair_source": "hair.py",
+  "hair_pieces": 2,
+  "hair_sway": [
+    "mid",
+    "tail",
+    "tip"
+  ],
+  "hair_front_pixels": 54,
+  "eyes_clear_of_hair": "PASS",
+  "head_hair_unit": [
+    "hair_back",
+    "hair_front",
+    "head"
+  ],
+  "cloak_layers": [
+    "cloak_body",
+    "cloak_hood"
+  ],
+  "cloak_z": [
+    30,
+    31
+  ],
+  "cloak_tones": 7,
+  "cloak_sway": [
+    "shoulder",
+    "skirt",
+    "hem"
+  ],
+  "cloak_covers": [
+    "arm_far",
+    "arm_near",
+    "forearm_far",
+    "forearm_near",
+    "hair_back",
+    "hand_far",
+    "hand_near"
+  ],
+  "cloak_source": "cloak.py",
+  "wrap_parts": [
+    "abdomen",
+    "arm_far",
+    "arm_near",
+    "forearm_far",
+    "forearm_near",
+    "neck",
+    "pelvis",
+    "shin_far",
+    "shin_near",
+    "thigh_far",
+    "thigh_near",
+    "torso"
+  ],
+  "wrap_tones": 5,
+  "wrap_source": "wraps.py",
+  "palette_size": 34,
+  "ramps": [
+    "boots",
+    "bottom",
+    "cloak",
+    "hair",
+    "top",
+    "wraps"
+  ]
+}

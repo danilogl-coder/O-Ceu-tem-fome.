@@ -1,0 +1,551 @@
+{
+  "width": 64,
+  "height": 96,
+  "baseline": 75,
+  "bones": [
+    {
+      "name": "root",
+      "parent": null,
+      "pivot": [
+        32,
+        48
+      ],
+      "end": [
+        32,
+        46
+      ],
+      "z": -1
+    },
+    {
+      "name": "arm_far",
+      "parent": "torso",
+      "pivot": [
+        35,
+        36
+      ],
+      "end": [
+        35,
+        43
+      ],
+      "z": 1,
+      "image": "parts/arm_far.png",
+      "bounds": [
+        33,
+        35,
+        38,
+        46
+      ]
+    },
+    {
+      "name": "forearm_far",
+      "parent": "arm_far",
+      "pivot": [
+        35,
+        43
+      ],
+      "end": [
+        35,
+        50
+      ],
+      "z": 2,
+      "image": "parts/forearm_far.png",
+      "bounds": [
+        33,
+        42,
+        38,
+        53
+      ]
+    },
+    {
+      "name": "hand_far",
+      "parent": "forearm_far",
+      "pivot": [
+        35,
+        50
+      ],
+      "end": [
+        35,
+        54
+      ],
+      "z": 3,
+      "image": "parts/hand_far.png",
+      "bounds": [
+        33,
+        49,
+        38,
+        56
+      ]
+    },
+    {
+      "name": "thigh_far",
+      "parent": "pelvis",
+      "pivot": [
+        35,
+        50
+      ],
+      "end": [
+        34,
+        61
+      ],
+      "z": 4,
+      "image": "parts/thigh_far.png",
+      "bounds": [
+        32,
+        49,
+        39,
+        64
+      ]
+    },
+    {
+      "name": "shin_far",
+      "parent": "thigh_far",
+      "pivot": [
+        34,
+        61
+      ],
+      "end": [
+        35,
+        72
+      ],
+      "z": 5,
+      "image": "parts/shin_far.png",
+      "bounds": [
+        32,
+        60,
+        38,
+        75
+      ]
+    },
+    {
+      "name": "foot_far",
+      "parent": "shin_far",
+      "pivot": [
+        35,
+        72
+      ],
+      "end": [
+        39,
+        75
+      ],
+      "z": 6,
+      "image": "parts/foot_far.png",
+      "bounds": [
+        33,
+        71,
+        41,
+        76
+      ]
+    },
+    {
+      "name": "thigh_near",
+      "parent": "pelvis",
+      "pivot": [
+        30,
+        50
+      ],
+      "end": [
+        28,
+        61
+      ],
+      "z": 7,
+      "image": "parts/thigh_near.png",
+      "bounds": [
+        26,
+        48,
+        34,
+        64
+      ]
+    },
+    {
+      "name": "shin_near",
+      "parent": "thigh_near",
+      "pivot": [
+        28,
+        61
+      ],
+      "end": [
+        27,
+        72
+      ],
+      "z": 8,
+      "image": "parts/shin_near.png",
+      "bounds": [
+        25,
+        60,
+        31,
+        75
+      ]
+    },
+    {
+      "name": "foot_near",
+      "parent": "shin_near",
+      "pivot": [
+        27,
+        72
+      ],
+      "end": [
+        30,
+        75
+      ],
+      "z": 9,
+      "image": "parts/foot_near.png",
+      "bounds": [
+        25,
+        71,
+        33,
+        76
+      ]
+    },
+    {
+      "name": "abdomen",
+      "parent": "root",
+      "pivot": [
+        32,
+        47
+      ],
+      "end": [
+        32,
+        42
+      ],
+      "z": 10,
+      "image": "parts/abdomen.png",
+      "bounds": [
+        29,
+        41,
+        37,
+        50
+      ]
+    },
+    {
+      "name": "pelvis",
+      "parent": "root",
+      "pivot": [
+        32,
+        48
+      ],
+      "end": [
+        32,
+        51
+      ],
+      "z": 11,
+      "image": "parts/pelvis.png",
+      "bounds": [
+        27,
+        45,
+        39,
+        55
+      ]
+    },
+    {
+      "name": "torso",
+      "parent": "abdomen",
+      "pivot": [
+        32,
+        42
+      ],
+      "end": [
+        31,
+        35
+      ],
+      "z": 12,
+      "image": "parts/torso.png",
+      "bounds": [
+        28,
+        33,
+        39,
+        44
+      ]
+    },
+    {
+      "name": "neck",
+      "parent": "torso",
+      "pivot": [
+        33,
+        34
+      ],
+      "end": [
+        33,
+        31
+      ],
+      "z": 13,
+      "image": "parts/neck.png",
+      "bounds": [
+        30,
+        30,
+        36,
+        37
+      ]
+    },
+    {
+      "name": "arm_near",
+      "parent": "torso",
+      "pivot": [
+        28,
+        36
+      ],
+      "end": [
+        26,
+        43
+      ],
+      "z": 14,
+      "image": "parts/arm_near.png",
+      "bounds": [
+        25,
+        34,
+        31,
+        46
+      ]
+    },
+    {
+      "name": "forearm_near",
+      "parent": "arm_near",
+      "pivot": [
+        26,
+        43
+      ],
+      "end": [
+        25,
+        50
+      ],
+      "z": 15,
+      "image": "parts/forearm_near.png",
+      "bounds": [
+        23,
+        42,
+        29,
+        53
+      ]
+    },
+    {
+      "name": "hand_near",
+      "parent": "forearm_near",
+      "pivot": [
+        25,
+        50
+      ],
+      "end": [
+        24,
+        54
+      ],
+      "z": 16,
+      "image": "parts/hand_near.png",
+      "bounds": [
+        22,
+        49,
+        28,
+        56
+      ]
+    },
+    {
+      "name": "hair_back",
+      "parent": "head",
+      "pivot": [
+        32,
+        30
+      ],
+      "end": [
+        24,
+        42
+      ],
+      "z": 0,
+      "image": "parts/hair_back.png",
+      "bounds": [
+        19,
+        27,
+        35,
+        49
+      ]
+    },
+    {
+      "name": "head",
+      "parent": "neck",
+      "pivot": [
+        33,
+        32
+      ],
+      "end": [
+        33,
+        24
+      ],
+      "z": 17,
+      "image": "parts/head.png",
+      "bounds": [
+        29,
+        22,
+        38,
+        33
+      ]
+    },
+    {
+      "name": "hair_front",
+      "parent": "head",
+      "pivot": [
+        33,
+        32
+      ],
+      "end": [
+        33,
+        24
+      ],
+      "z": 18,
+      "image": "parts/hair_front.png",
+      "bounds": [
+        27,
+        20,
+        39,
+        32
+      ]
+    }
+  ],
+  "palette": [
+    "#230521",
+    "#471e41",
+    "#66296c",
+    "#84433c",
+    "#af7268",
+    "#e9a499",
+    "#9a675a",
+    "#ffffff",
+    "#4a5b88",
+    "#6d4c39",
+    "#a26209",
+    "#df9d42",
+    "#422a1f",
+    "#282c58",
+    "#9589a2",
+    "#d0c6e7"
+  ],
+  "outfits": [
+    {
+      "name": "reference_arm_far",
+      "bone": "arm_far",
+      "slot": "top",
+      "image": "outfits/reference/arm_far.png",
+      "bounds": [
+        34,
+        35,
+        38,
+        39
+      ]
+    },
+    {
+      "name": "reference_thigh_far",
+      "bone": "thigh_far",
+      "slot": "bottom",
+      "image": "outfits/reference/thigh_far.png",
+      "bounds": [
+        32,
+        49,
+        39,
+        54
+      ]
+    },
+    {
+      "name": "reference_shin_far",
+      "bone": "shin_far",
+      "slot": "boots",
+      "image": "outfits/reference/shin_far.png",
+      "bounds": [
+        33,
+        68,
+        38,
+        75
+      ]
+    },
+    {
+      "name": "reference_foot_far",
+      "bone": "foot_far",
+      "slot": "boots",
+      "image": "outfits/reference/foot_far.png",
+      "bounds": [
+        33,
+        71,
+        41,
+        76
+      ]
+    },
+    {
+      "name": "reference_thigh_near",
+      "bone": "thigh_near",
+      "slot": "bottom",
+      "image": "outfits/reference/thigh_near.png",
+      "bounds": [
+        26,
+        48,
+        34,
+        54
+      ]
+    },
+    {
+      "name": "reference_shin_near",
+      "bone": "shin_near",
+      "slot": "boots",
+      "image": "outfits/reference/shin_near.png",
+      "bounds": [
+        25,
+        68,
+        30,
+        75
+      ]
+    },
+    {
+      "name": "reference_foot_near",
+      "bone": "foot_near",
+      "slot": "boots",
+      "image": "outfits/reference/foot_near.png",
+      "bounds": [
+        25,
+        71,
+        33,
+        76
+      ]
+    },
+    {
+      "name": "reference_pelvis",
+      "bone": "pelvis",
+      "slot": "bottom",
+      "image": "outfits/reference/pelvis.png",
+      "bounds": [
+        27,
+        45,
+        39,
+        55
+      ]
+    },
+    {
+      "name": "reference_torso",
+      "bone": "torso",
+      "slot": "top",
+      "image": "outfits/reference/torso.png",
+      "bounds": [
+        28,
+        33,
+        39,
+        44
+      ]
+    },
+    {
+      "name": "reference_arm_near",
+      "bone": "arm_near",
+      "slot": "top",
+      "image": "outfits/reference/arm_near.png",
+      "bounds": [
+        26,
+        34,
+        31,
+        39
+      ]
+    }
+  ],
+  "referenceOffset": [
+    19,
+    20
+  ],
+  "referenceSize": [
+    26,
+    56
+  ],
+  "angles": "radians relative to bind pose; positive clockwise",
+  "space": "global bind pivots; parent-relative runtime transforms",
+  "anatomyRevision": 5
+}
