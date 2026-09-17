@@ -1,0 +1,102 @@
+/* Mapa do mestre — seções Montar e Exploração (painel-exploracao.js). */
+.gm-sub{font-size:10px;letter-spacing:1.2px;margin:12px 0 6px;color:#e594d3}
+.gm-sub small{font-size:9px;letter-spacing:0;color:#9d7098;margin-left:6px}
+.gm-left{text-align:left!important}
+.gm-tight{margin:0!important;flex-wrap:nowrap!important;gap:4px!important}
+.gm-tight input{min-width:0}
+.gm-window input[type=number],.gm-window input[type=search]{font:inherit;color:#f3b4e8;background:#230c28;border:1px solid #743064;border-radius:0;box-shadow:inset 0 1px #3e163b,0 2px #09020d;min-height:30px;padding:4px 6px;width:100%}
+.gm-checks1{grid-template-columns:1fr!important}
+
+/* Biblioteca de modelos */
+.gm-modelos{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;margin-top:8px}
+.gm-modelo{border:1px solid #743064;background:#230c28;box-shadow:inset 0 1px #3e163b,0 2px #09020d}
+.gm-modelo small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
+.gm-card-actions{display:flex;gap:3px;margin-top:3px}
+.gm-card-actions button{flex:1;font-size:10px!important;min-height:24px!important;padding:1px 3px!important}
+.gm-card canvas[data-carregando=true],.gm-inst canvas[data-carregando=true],.gm-peca canvas[data-carregando=true]{background:repeating-linear-gradient(45deg,#1a0819 0 6px,#240c22 6px 12px)}
+.gm-previa-modelo{margin:8px 0 0}
+.gm-conjuntos{display:flex;flex-direction:column;gap:6px}
+.gm-conjunto{display:flex;align-items:center;gap:8px;border:1px solid #5c244f;background:#1a071d;padding:6px 8px;box-shadow:2px 2px #09020d}
+.gm-conjunto div{display:flex;flex-direction:column;flex:1;min-width:0}
+.gm-conjunto strong{font-size:12px;color:#ffd9f2}.gm-conjunto small{font-size:9px;color:#a77da4;line-height:1.35}
+.gm-conjunto button{font-size:10px;min-height:28px!important;white-space:nowrap}
+
+/* Cenas montadas */
+.gm-instancias{display:flex;flex-direction:column;gap:6px}
+.gm-inst{border:1px solid #5c244f;background:#1a071d;padding:6px 7px;box-shadow:2px 2px #09020d}
+.gm-inst[aria-current=true]{border-color:#ffd18c;box-shadow:inset 0 0 0 1px #ffd18c55,2px 2px #09020d}
+.gm-inst[data-live=true]{background:#241024}
+.gm-inst-head{display:flex;gap:8px;align-items:center}
+.gm-inst-head canvas{width:96px;height:54px;flex-shrink:0;border:1px solid #521f4a;background:#07040b;image-rendering:auto}
+.gm-inst-head div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.gm-window .gm-inst input[type=text]{min-height:26px;padding:2px 6px;font-size:12px;color:#ffd9f2}
+.gm-inst small{font-size:9px;color:#a77da4}.gm-inst small b{color:#ffb3c0;font-weight:normal}
+
+/* Editor: prancheta, objetos, inspetor, peças */
+.gm-prancheta{margin-top:10px}
+.gm-prancheta canvas{cursor:ew-resize;touch-action:none}
+.gm-prancheta canvas:focus-visible{outline:2px solid #ffd2a0;outline-offset:1px}
+.gm-prancheta .gm-row{margin-top:6px}
+.gm-prancheta .gm-row select{min-width:120px}
+.gm-objetos{display:flex;flex-direction:column;gap:2px;max-height:184px;overflow-y:auto;margin-top:6px;padding-right:2px;border:1px solid #3e163b;background:#12050f;scrollbar-width:thin;scrollbar-color:#803570 #140619}
+.gm-window .gm-obj{display:grid;grid-template-columns:10px minmax(0,auto) minmax(0,1fr);align-items:center;gap:7px;text-align:left;min-height:24px;padding:2px 7px;border:0;border-bottom:1px solid #2a0f29;background:transparent;box-shadow:none;font-size:11px}
+.gm-window .gm-obj:hover:not(:disabled){background:#2c0f2c}
+.gm-window .gm-obj[aria-selected=true]{background:#4a1a44;box-shadow:inset 3px 0 #ffd18c;color:#fff0c2}
+.gm-obj b{font-weight:normal;color:#ffd9f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-obj small{font-size:9px;color:#a77da4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-camada{width:8px;height:8px;display:inline-block;box-shadow:1px 1px #09020d}
+.gm-camada[data-camada=parede],.gm-leg[data-l=elevador]{background:#8fd3ff}.gm-camada[data-camada=frente]{background:#ffd18c}.gm-camada[data-camada=chao]{background:#9fe0b0}
+.gm-inspetor .gm-sub{margin-top:10px}
+.gm-insp-sub{margin:2px 0 0;font-size:10px}
+.gm-insp-acoes button{min-height:26px!important;padding:2px 9px!important;font-size:10px}
+.gm-check-campo{align-self:end;min-height:30px}
+.gm-pecas{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:5px;margin-top:8px;max-height:280px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#803570 #140619}
+.gm-window .gm-peca{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 3px;min-height:0;font-size:9px;line-height:1.2;text-align:center}
+.gm-peca canvas{width:72px;height:54px;image-rendering:pixelated;background:#12050f;border:1px solid #3e163b}
+.gm-peca span{color:#f3c6e8;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* Pedidos */
+.gm-pedidos{display:flex;flex-direction:column;gap:8px}
+.gm-pedido{border:2px solid #d0784a;background:#23100f;padding:7px 8px;box-shadow:3px 3px #09020d}
+.gm-pedido[data-tipo=liberar]{border-color:#c05aa8;background:#210b26}
+.gm-pedido .gm-clue-state[data-alert=true]{color:#ffe0c0;border-color:#d0784a;background:#3a1a14}
+.gm-pedido-dica{margin:6px 0 0;font-size:10px}
+.gm-sugestoes{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px;margin-top:6px}
+.gm-sugestao span{font-size:10px!important}
+.gm-sugestao:hover:not(:disabled){border-color:#ffd18c!important}
+
+/* Passagens */
+.gm-clue-state[data-ok=true]{color:#bff0b4;border-color:#4f7a4a;background:#15301a}
+.gm-pas[data-open=true]{border-color:#ffd18c;box-shadow:inset 0 0 0 1px #ffd18c,2px 2px #09020d}
+.gm-pas[data-enabled=false]{opacity:.62}
+.gm-andares{border:1px solid #5c244f;margin:0;padding:4px 8px 8px}
+.gm-andares legend{font-size:9px;letter-spacing:1px;color:#c465af;padding:0 4px}
+.gm-andares legend small{letter-spacing:0;color:#9d7098}
+.gm-andar{display:grid;grid-template-columns:86px minmax(0,1fr) minmax(0,1fr) 28px;gap:4px;margin-top:4px}
+.gm-window .gm-andar input,.gm-window .gm-andar select{min-height:26px;padding:2px 5px;font-size:11px}
+.gm-andar button{min-height:26px!important;padding:0!important}
+
+/* Mapa de conexões */
+.gm-mapa{overflow-x:auto;border:2px solid #5c244f;background:#10040f;line-height:0;scrollbar-width:thin;scrollbar-color:#803570 #140619}
+.gm-mapa canvas{display:block;image-rendering:pixelated}
+.gm-leg{display:inline-block;width:10px;height:10px;margin:0 3px 0 8px;vertical-align:-1px;box-shadow:1px 1px #09020d}
+.gm-leg[data-l=vivo]{background:#ffd18c}.gm-leg[data-l=montada]{background:#9c3e88}.gm-leg[data-l=tranca]{background:#e0605f}.gm-leg[data-l=pedido]{background:#ffb35c}
+.gm-soltas{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:6px;font-size:10px}
+
+/* Eventos */
+.gm-eventos{display:flex;flex-direction:column;gap:6px}
+.gm-evento{border:1px solid #5c244f;background:#1a071d;padding:6px 7px;box-shadow:2px 2px #09020d}
+.gm-evento[data-ativo=false]{opacity:.6}
+.gm-evento-head{display:flex;gap:5px;align-items:center}
+.gm-window .gm-evento-head input[type=text]{flex:1;min-height:26px;padding:2px 6px;color:#ffd9f2}
+.gm-evento-head button{min-height:26px!important;padding:2px 8px!important;font-size:10px}
+.gm-grid3{grid-template-columns:1fr 1fr 1fr!important;margin-top:6px!important}
+.gm-log{max-height:96px;margin-top:6px}
+@media(max-width:600px){.gm-grid3{grid-template-columns:1fr 1fr!important}.gm-andar{grid-template-columns:1fr 1fr}.gm-inst-head canvas{display:none}}
+/* Caixas de marcar dentro das grades: em linha, como no resto do mapa. */
+.gm-grid label.gm-check{flex-direction:row;align-items:center;gap:6px;font-size:11px;color:#f7c6e6}
+.gm-grid .gm-field label.gm-check{margin-top:2px}
+.gm-window input:not([type]){font:inherit;color:#f3b4e8;background:#230c28;border:1px solid #743064;border-radius:0;box-shadow:inset 0 1px #3e163b,0 2px #09020d;min-height:30px;padding:4px 6px;width:100%}
+.gm-mapa canvas{max-width:none!important}
+/* Nove seções no trilho: em telas baixas os botões encolhem para caberem todos. */
+@media(max-height:780px){.gm-window .gm-rail button{min-height:39px;padding:3px 2px 2px;gap:1px;font-size:8px}.gm-rail svg{width:20px;height:20px}.gm-rail{gap:3px}}

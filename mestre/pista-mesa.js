@@ -180,14 +180,20 @@
       {id: 'telefone', label: 'Ao atender o telefone', kind: 'text'},
       {id: 'papel', label: 'Pista aberta pelo papel da mesa', kind: 'clue'},
       {id: 'computador', label: 'Pista aberta pelo computador', kind: 'clue'},
-      {id: 'botao', label: 'Botão NÃO APERTE', kind: 'select', options: [['sim', 'Na mesa'], ['nao', 'Sem botão']]}],
-    defaults: {postit: '', gaveta1: '', gaveta2: '', gaveta3: '', chaveGaveta: 'chaves', telefone: '', papel: 'oficio', computador: 'computador', botao: 'sim'},
+      {id: 'botao', label: 'Botão NÃO APERTE', kind: 'select', options: [['sim', 'Na mesa'], ['nao', 'Sem botão']]},
+      {id: 'senha', label: 'Senha da tampa do botão', kind: 'text'},
+      {id: 'dica', label: 'Dica da senha', kind: 'text'},
+      {id: 'estrago', label: 'Objeto da cena ligado quando o botão é apertado', kind: 'prop'}],
+    defaults: {postit: '', gaveta1: '', gaveta2: '', gaveta3: '', chaveGaveta: 'chaves', telefone: '', papel: 'oficio', computador: 'computador', botao: 'sim', senha: 'Raimundo', dica: 'Meu verdadeiro nome', estrago: 'desastre'},
     create(clue, sys) {
       const mem = sys.memory(clue.id);
-      mem.tampa ??= 'fechada'; mem.apertos ??= 0; mem.gavetas ??= {};
-      return {mem, lift: mem.teclado ? 1 : 0, cover: mem.tampa === 'aberta' ? 1 : 0, drawer: null, drawerT: 0, phone: null, alarm: null, press: 0, caption: null};
+      mem.tampa ??= 'fechada'; mem.apertos ??= 0; mem.gavetas ??= {}; mem.destravada ??= false; mem.apertado ??= false;
+      return {mem, lift: mem.teclado ? 1 : 0, cover: mem.tampa === 'aberta' ? 1 : 0, drawer: null, drawerT: 0, phone: null, alarm: null, press: 0, caption: null, keypad: null};
     },
-    wantsKeys: () => false,
+    // Letters go to the keypad while the password is being typed.
+    wantsKeys: st => !!st.keypad,
+    /* Passwords compare without accents or case: "raimundo" opens "Raimundo". */
+    matches(typed, secret) { const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase(); return !!secret && norm(typed) === norm(secret); },
     get clickOutsideCloses() { return false; },
     render(ctx, ui, st, clue, sys, entry) {
       const d = clue.data, dt = ui.dt, t = ui.t;
@@ -255,10 +261,11 @@
         if (i === 2 && !this.unlocked(st, clue, sys)) { U.rect(ctx, x + 64, y + 2, 8, 6, C('latao', 2)); U.rect(ctx, x + 67, y + 3, 2, 4, C('preto', 0)); }
       }
       // Hover label.
-      const label = hover && (hover.startsWith('gaveta') ? LABELS[hover] : hover === 'luminaria' ? (lampOn ? 'Apagar a luminária' : 'Acender a luminária') : LABELS[hover]);
-      if (label && !st.drawer && !alarm && ui.mouse.x >= 0) U.tooltip(ctx, label, ui.mouse.x, ui.mouse.y - 22);
+      const label = hover && (hover.startsWith('gaveta') ? LABELS[hover] : hover === 'luminaria' ? (lampOn ? 'Apagar a luminária' : 'Acender a luminária') : hover === 'tampa' && clue.data.senha && !st.mem.destravada ? 'Tampa trancada com senha' : hover === 'botaoApertado' ? 'Já apertaram. Não volta.' : LABELS[hover]);
+      if (label && !st.drawer && !alarm && !st.keypad && ui.mouse.x >= 0) U.tooltip(ctx, label, ui.mouse.x, ui.mouse.y - 22);
       if (st.phone) this.drawPhone(ctx, ui, st, clue, sys);
       if (st.drawer !== null) this.drawDrawer(ctx, ui, st, clue, sys);
+      if (st.keypad) this.drawKeypad(ctx, ui, st, clue, sys);
       if (st.caption) {
         st.caption.t += dt;
         const lines = K.wrap(st.caption.text, 220), w = 240, h = lines.length * 10 + 14, x = U.snap(SW / 2 - w / 2), y = SH - h - 44;
@@ -276,9 +283,11 @@
       // Beacon on the corner of the box.
       const flashing = !!st.alarm && Math.floor(t * 8) % 2 === 0;
       U.rect(ctx, X + 128, Y - 10, 12, 12, flashing ? C('vermelho', 6) : C('vermelho', 2)); U.rect(ctx, X + 128, Y + 2, 12, 4, C('metal', 2)); U.rect(ctx, X + 130, Y - 8, 4, 4, flashing ? '#fff2e0' : C('vermelho', 4));
-      // The red mushroom button.
-      const cx = X + 72, cy = Y + 52, down = st.press > 0 || !!st.alarm ? 4 : 0;
-      const hotButton = st.cover > .9 && !st.alarm && ui.region('botao', cx - 30, cy - 30, 60, 56);
+      // The red mushroom button. Once pressed it stays down: no one can press it again until the master resets it.
+      const pressed = !!st.mem.apertado;
+      const cx = X + 72, cy = Y + 52, down = st.press > 0 || !!st.alarm || pressed ? 4 : 0;
+      const hotButton = st.cover > .9 && !st.alarm && !pressed && ui.region('botao', cx - 30, cy - 30, 60, 56);
+      if (pressed) ui.region('botaoApertado', cx - 30, cy - 30, 60, 56, {cursor: 'default', silent: true});
       for (let yy = -24; yy <= 24; yy += 2) for (let xx = -26; xx <= 26; xx += 2) {
         const r = Math.hypot(xx / 26, yy / 22);
         if (r > 1) continue;
@@ -287,14 +296,21 @@
       }
       U.rect(ctx, cx - 12, cy - 16 + down, 8, 4, '#ffd9c8'); U.rect(ctx, cx - 16, cy - 12 + down, 4, 4, '#ffb59a');
       // Label, the part everyone reads.
-      K.drawText(ctx, 'NÃO APERTE', X + 72, Y + 92, {color: Math.floor(t * 1.5) % 2 && !st.alarm ? '#ffd257' : '#fff4d8', scale: 2, align: 'center', shadow: {color: '#1a0406', dx: 1, dy: 1}});
+      K.drawText(ctx, pressed ? 'APERTARAM.' : 'NÃO APERTE', X + 72, Y + 92, {color: pressed ? '#c9b0a0' : Math.floor(t * 1.5) % 2 && !st.alarm ? '#ffd257' : '#fff4d8', scale: 2, align: 'center', shadow: {color: '#1a0406', dx: 1, dy: 1}});
+      if (pressed) { U.rect(ctx, cx - 26, cy - 2 + down, 52, 2, '#3a0a0a'); U.rect(ctx, cx - 30, cy + 22, 60, 4, '#2a2410'); }   // the stem sunk in, scorched rim
       // Tally of past presses, scratched into the plate.
       for (let i = 0; i < Math.min(9, st.mem.apertos); i++) U.rect(ctx, X + 14 + i * 5, Y + 18, 2, 10 + (i % 5 === 4 ? 2 : 0), '#2a2410');
       // Flip cover: hinged at the top, clear plastic.
       const u = ease(st.cover);
+      const locked = !!clue.data.senha && !st.mem.destravada;
       if (u < .98) {
         const h = Math.round((1 - u) * 60 / 2) * 2, top = Y + 12;
         const hot = !st.alarm && ui.region('tampa', X + 26, top, 92, Math.max(h, 12) + 12);
+        if (locked && h > 20) {
+          // A small keypad lock riveted to the front of the cover.
+          U.rect(ctx, X + 62, top + h - 10, 20, 14, C('metal', 2)); U.outline(ctx, X + 62, top + h - 10, 20, 14, C('metal', hot ? 5 : 3), 2);
+          for (let i = 0; i < 6; i++) U.rect(ctx, X + 66 + (i % 3) * 5, top + h - 7 + Math.floor(i / 3) * 5, 3, 3, i === 4 ? C('vermelho', 4) : C('metal', 4));
+        }
         ctx.save(); ctx.globalAlpha = .42;
         U.rect(ctx, X + 30, top + 4, 84, h, hot ? '#cfefff' : '#a9d6ea');
         ctx.globalAlpha = .75;
@@ -312,6 +328,31 @@
         ui.region('tampa', X + 30, Y - 6, 84, 16);
       }
       U.rect(ctx, X + 30, Y + 12, 84, 4, C('metal', 4)); U.rect(ctx, X + 30, Y + 14, 84, 2, C('metal', 1));
+    },
+    /* The keypad on the cover: the hint, the letters typed so far, Enter to try. */
+    drawKeypad(ctx, ui, st, clue, sys) {
+      const kp = st.keypad; kp.t += ui.dt; kp.shake = Math.max(0, kp.shake - ui.dt);
+      const W = 260, H = 96, X = U.snap(SW / 2 - W / 2 + (kp.shake ? Math.round(Math.sin(kp.t * 60) * 4) : 0)), Y = 84;
+      U.veil(ctx, .35);
+      U.rect(ctx, X + 6, Y + 6, W, H, '#05020899');
+      U.frame(ctx, X, Y, W, H, 'escuro');
+      K.drawText(ctx, 'TAMPA TRANCADA', X + W / 2, Y + 8, {color: '#ffd9c8', align: 'center'});
+      const hint = clue.data.dica ? `Dica: ${clue.data.dica}` : 'Uma senha.';
+      K.wrap(hint, W - 24).forEach((line, i) => K.drawText(ctx, line, X + W / 2, Y + 24 + i * 10, {color: '#d9c9ff', align: 'center'}));
+      // The typed word, a cursor blinking after it.
+      const shown = kp.text + (Math.floor(kp.t * 3) % 2 ? '_' : ' ');
+      U.rect(ctx, X + 30, Y + 50, W - 60, 18, kp.wrong ? '#4a0a12' : '#0a0a14'); U.outline(ctx, X + 30, Y + 50, W - 60, 18, kp.wrong ? C('vermelho', 4) : C('metal', 3), 2);
+      K.drawText(ctx, shown.toUpperCase(), X + W / 2, Y + 55, {color: kp.wrong ? '#ff9a9a' : '#e8f4ff', align: 'center'});
+      K.drawText(ctx, kp.wrong ? 'Senha errada.' : 'Digite e aperte Enter · Esc desiste', X + W / 2, Y + 74, {color: kp.wrong ? '#ff9a9a' : '#9a8fb0', align: 'center', font: '3x5'});
+      ui.button(ctx, 'senhaOk', X + W - 60, Y + H - 22, 48, 16, 'ABRIR', {style: 'papel'});
+      ui.region('tecladoSenha', X, Y, W, H, {cursor: 'default', silent: true});
+    },
+    tryPassword(st, clue, sys) {
+      const kp = st.keypad; if (!kp) return;
+      if (this.matches(kp.text, clue.data.senha)) {
+        st.mem.destravada = true; st.mem.tampa = 'aberta'; st.keypad = null;
+        sys.sfx('tranca'); sys.toast('DESTRAVADA', 'A tampa se abre', 'cadeado' in U.ICONS ? 'cadeado' : 'lupa'); sys.emit('change');
+      } else { kp.wrong = true; kp.shake = .35; kp.text = ''; sys.sfx('erro'); }
     },
     drawPhone(ctx, ui, st, clue, sys) {
       st.phone.t += ui.dt;
@@ -387,14 +428,17 @@
       else ui.button(ctx, 'abortar', SW / 2 - 50, 150, 100, 18, 'ABORTAR', {style: 'roxo'});
       if (t >= 2.55 && !A.fired) {
         A.fired = true;
-        st.mem.apertos++; st.mem.tampa = 'fechada';
+        st.mem.apertos++; st.mem.tampa = 'fechada'; st.mem.apertado = true;
+        // The room shows what they did: the scene object the master chose comes on.
+        if (clue.data.estrago) sys.setProp(clue.data.estrago, true);
         sys.emit('change');
-        sys.playCinematic('foguete', {onEnd: () => {}});
+        sys.playCinematic('foguete', {onEnd: () => { st.alarm = null; }});
       }
     },
     action(id, st, clue, sys, info) {
       const d = clue.data;
       if (st.alarm) { if (id === 'abortar') { st.alarm.abort = true; sys.sfx('erro'); } return; }
+      if (st.keypad) { if (id === 'senhaOk') this.tryPassword(st, clue, sys); else if (id !== 'tecladoSenha') st.keypad = null; return; }
       if (st.drawer !== null) {
         if (id === 'fecharGaveta' || id.startsWith('gaveta') && id !== 'gavetaPainel') { st.drawer = null; sys.sfx('gaveta'); }
         return;
@@ -417,11 +461,21 @@
           else { sys.sfx('gaveta'); if (i === 2 && d.chaveGaveta && sys.hasProp(d.chaveGaveta) && !st.mem.gavetas.destrancada) { st.mem.gavetas.destrancada = true; sys.toast('DESTRANCADA', 'Uma das chaves do molho serviu', 'chave' in U.ICONS ? 'chave' : 'cadeado'); } }
           break;
         }
-        case 'tampa': st.mem.tampa = st.mem.tampa === 'aberta' ? 'fechada' : 'aberta'; sys.sfx('tampa'); break;
-        case 'botao': st.press = 1; st.alarm = {t: 0}; sys.sfx('botao'); sys.sfx('alarme'); sys.emit('alarm'); break;
+        case 'tampa':
+          if (d.senha && !st.mem.destravada && st.mem.tampa !== 'aberta') { st.keypad = {text: '', t: 0, wrong: false, shake: 0}; sys.sfx('tranca'); break; }
+          st.mem.tampa = st.mem.tampa === 'aberta' ? 'fechada' : 'aberta'; sys.sfx('tampa'); break;
+        case 'botao': if (st.mem.apertado) break; st.press = 1; st.alarm = {t: 0}; sys.sfx('botao'); sys.sfx('alarme'); sys.emit('alarm'); break;
       }
     },
-    key(e, st) {
+    key(e, st, clue, sys) {
+      if (st.keypad) {
+        const kp = st.keypad;
+        if (e.key === 'Escape') { st.keypad = null; return true; }
+        if (e.key === 'Enter') { this.tryPassword(st, clue, sys); return true; }
+        if (e.key === 'Backspace') { kp.text = kp.text.slice(0, -1); kp.wrong = false; return true; }
+        if (e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && kp.text.length < 24) { kp.text += e.key; kp.wrong = false; return true; }
+        return true;
+      }
       if (st.drawer !== null && e.key === 'Escape') { st.drawer = null; return true; }
       if (st.phone && e.key === 'Escape') { st.phone = null; return true; }
       if (st.alarm) return true;

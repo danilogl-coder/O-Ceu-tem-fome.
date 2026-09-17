@@ -181,11 +181,33 @@
     clockFace(b, WALL.clock.u, WALL.clock.v);
     cooler(b, WALL.cooler.u);
     door(b, WALL.archive.u, WALL.archive.v, WALL.archive.w, {plaque: 'ARQUIVO', ajar: st.props.has('porta_aberta'), note: st.props.has('aviso_porta')});
-    portrait(b, WALL.portrait.u, WALL.portrait.v, st.props.has('retrato_torto'));
+    portrait(b, WALL.portrait.u, WALL.portrait.v, st.props.has('retrato_torto') || st.props.has('desastre'));
     extinguisher(b, WALL.extinguisher.u);
+    if (st.props.has('desastre')) wreck(b, W);
     // Contact shadows along the floor and in the corners.
     b.shade(0, 60, W, 2, -1, .5);
     for (let u = 0; u < 5; u++) { b.shade(u, 0, 1, 62, -1, (5 - u) / 7); b.shade(W - 1 - u, 0, 1, 62, -1, (5 - u) / 7); }
+  }
+  /* What the NÃO APERTE button did to the room: cracks down from the ceiling,
+     soot along the top, plaster fallen off in patches with the lath showing,
+     and a scorch above the desk where the beacon box is. */
+  function wreck(b, W) {
+    const random = rng(77);
+    for (let i = 0; i < 7; i++) {
+      let u = 30 + i * 84 + Math.floor(random() * 40), v = 0;
+      while (v < WALL.rail - 3) {
+        b.px(u, v, 'plaster', 1); if (random() < .45) b.px(u + 1, v, 'plaster', 2);
+        v += 1; if (random() < .55) u += random() < .5 ? -1 : 1;
+        if (random() < .07) for (let k = 1; k < 5; k++) b.px(u + k, v + k, 'plaster', 2);
+      }
+    }
+    for (let u = 0; u < W; u++) for (let v = 0; v < 9; v++) if (bayer(u, v) < (9 - v) / 11) b.px(u, v, 'plaster', 1);
+    for (let i = 0; i < 6; i++) {
+      const u = 20 + i * 96 + Math.floor(random() * 50), v = 9 + Math.floor(random() * 18), w = 8 + Math.floor(random() * 10), h = 5 + Math.floor(random() * 5);
+      b.rect(u, v, w, h, 'plaster', 2); b.speckle(u, v, w, h, 'wood', 1, .55, random); b.hline(u, u + w - 1, v + h - 1, 'plaster', 1);
+      for (let k = 0; k < h; k += 2) b.hline(u + 1, u + w - 2, v + k, 'wood', 2);
+    }
+    b.shadeFn(300, 0, 180, WALL.rail, (u, v) => -Math.max(0, 1 - Math.hypot((u - 90) / 80, v / 34)) * 2.2);
   }
   function pilaster(b, u) {
     b.shade(u - 3, 0, 3, WALL.rail, -1, .45);
@@ -529,6 +551,7 @@
   const BOARD = 22, PLANK = 188;
   const RUG = {X0: -330, X1: 150, d0: 600, d1: 688};
   const PAPERS = [[452, 596, .35], [492, 578, -.5], [528, 604, .15], [410, 572, -.2], [566, 588, .8]];
+  const DEBRIS = [[-300, 640, 3], [-210, 612, 2], [-120, 655, 3.5], [-40, 600, 2], [60, 646, 2.5], [140, 618, 3], [230, 662, 2], [320, 606, 3.5], [430, 640, 2], [520, 622, 3], [640, 656, 2.5], [740, 610, 2], [830, 648, 3], [960, 618, 2.5], [1080, 660, 3], [1200, 630, 2]];
   function paintFloor(X, d, k, u, out, ctx) {
     const r = ctx.room, props = ctx.props;
     const fFar = (r.floorTop + k * 2 - r.H) / r.eye, fNear = (r.floorTop + (k + 1) * 2 - r.H) / r.eye;
@@ -595,6 +618,14 @@
         const px = 1040 - i * 33, pd = i % 2 ? 634 : 648;
         const lx = X - px, ld = (d - pd) * 2.2;
         if (lx * lx / 30 + ld * ld / 30 < 1 && !(lx > -1 && lx < 1)) { out.r = BLOOD; out.l = i > 7 ? 1 : 2; return; }
+      }
+    }
+    if (props.has('desastre')) {
+      // Plaster and glass on the boards, papers blown off the desk.
+      for (const [px, pd, w] of DEBRIS) if (Math.abs(X - px) < w && Math.abs(d - pd) < 2) { out.r = PAPER; out.l = w > 2.5 ? 4 : 5; return; }
+      for (const [px, pd, a] of PAPERS) {
+        const qx = px + 150, ca = Math.cos(a + .7), sa = Math.sin(a + .7), lx = (X - qx) * ca + (d - pd) * 2.4 * sa, ly = -(X - qx) * sa + (d - pd) * 2.4 * ca;
+        if (Math.abs(lx) < 11 && Math.abs(ly) < 15) { out.r = PAPER; out.l = (Math.abs(Math.round(ly)) % 5 === 2 && Math.abs(lx) < 8) ? 2 : 4; return; }
       }
     }
     if (props.has('papeis')) {
@@ -1150,7 +1181,8 @@
       {id: 'porta_aberta', label: 'Arquivo entreaberto', group: 'Tensão'},
       {id: 'retrato_torto', label: 'Retrato torto', group: 'Tensão'},
       {id: 'pegadas', label: 'Pegadas de sangue', group: 'Tensão'},
-      {id: 'sangue', label: 'Poça de sangue', group: 'Tensão'}
+      {id: 'sangue', label: 'Poça de sangue', group: 'Tensão'},
+      {id: 'desastre', label: 'Estrago do botão', group: 'Tensão'}
     ],
     spawns: [
       {id: 'centro', label: 'Centro', x: 240, facing: 1},

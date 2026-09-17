@@ -1,7 +1,7 @@
 'use strict';
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const { Inventory, ITEM_DEFS, footprint, itemIcon, CELL } =
+const { Inventory, ITEM_DEFS, footprint, itemIcon, CELL, entryLabel, entryTag, keyName } =
   require(path.resolve(__dirname, '../inventory.js'));
 
 // --- footprints and rotation -------------------------------------------------
@@ -18,6 +18,60 @@ for (const [id, def] of Object.entries(ITEM_DEFS)) {
   const used = new Set(def.grid.join('').split('').filter(c => c !== '.'));
   for (const ch of used) assert(def.palette[ch], `${id}: cor ${ch} fora da paleta`);
   assert(used.size > 3, `${id}: sprite quase vazio`);
+  // Variants (a clue drawn as a photo, a key drawn as an access card) follow the same rules.
+  for (const [name, grid] of Object.entries(def.variants || {})) {
+    assert.equal(grid.length, def.h * CELL, `${id}.${name}: altura do sprite`);
+    for (const row of grid) assert.equal(row.length, def.w * CELL, `${id}.${name}: largura do sprite`);
+    for (const ch of new Set(grid.join('').replace(/\./g, ''))) assert(def.palette[ch], `${id}.${name}: cor ${ch} fora da paleta`);
+  }
+  // No neutral grey: every colour leans to some hue, the outline included.
+  for (const [ch, hex] of Object.entries(def.palette)) {
+    const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+    assert(Math.max(r, g, b) - Math.min(r, g, b) >= 10, `${id}: a cor ${ch} (${hex}) é cinza neutro`);
+  }
+}
+
+// --- exploration items: money, keys, a spare part, food and drink ----------
+{
+  const expected = { moedas: [1, 1, 50, 'money'], chave: [1, 1, 1, 'key'], fusivel: [1, 1, 3, 'part'],
+    refrigerante: [1, 2, 3, 'food'], agua: [1, 2, 3, 'food'], salgadinho: [1, 1, 4, 'food'],
+    chocolate: [1, 1, 5, 'food'], cafe: [1, 1, 2, 'food'] };
+  for (const [id, [w, h, stack, kind]] of Object.entries(expected)) {
+    const def = ITEM_DEFS[id];
+    assert(def, `${id} existe`);
+    assert.deepEqual([def.w, def.h, def.stack, def.kind], [w, h, stack, kind], `${id}: tamanho, pilha e tipo`);
+    assert(def.label && def.desc, `${id}: nome e descrição`);
+    assert.equal(def.palette.K, '#230521', `${id}: contorno escuro como os outros`);
+    if (kind === 'food') assert.match(def.consumed, /^Você (bebeu|comeu|tomou) /, `${id}: o que a bolsa diz ao consumir`);
+  }
+  assert.equal(ITEM_DEFS.moedas.desc, 'Trocados para máquinas, orelhões e fliperamas.');
+  // Coins stack to fifty and are spent from the smallest pile first.
+  const inv = new Inventory(10, 6);
+  assert.equal(inv.add('moedas', 120), 0);
+  assert.deepEqual(inv.entries.map(e => e.qty), [50, 50, 20]);
+  assert(inv.consume('moedas', 25));
+  assert.deepEqual(inv.entries.map(e => e.qty).sort((a, b) => a - b), [45, 50], 'a pilha de 20 acabou antes');
+  // Keys: one entry each, named after their lock, never stacked.
+  const porao = inv.addEntry('chave', { nome: 'Porão', name: 'Porão' });
+  const cofre = inv.addEntry('chave', { nome: 'Cofre', name: 'Cofre' });
+  const cartao = inv.addEntry('chave', { nome: 'Sala 3', name: 'Sala 3', variant: 'cartao' });
+  assert(porao && cofre && cartao && new Set([porao.id, cofre.id, cartao.id]).size === 3, 'cada chave é uma entrada');
+  assert.equal(inv.merge(porao.id, cofre.id), 0, 'chaves não se juntam');
+  assert.equal(entryLabel(porao), 'Chave · Porão', 'a bolsa diz que chave é');
+  assert.equal(entryLabel(cartao), 'Cartão de acesso · Sala 3', 'o cartão é uma chave desenhada como cartão');
+  assert.equal(entryLabel({ def: 'chave' }), 'Chave', 'chave sem nome');
+  assert.equal(entryTag(porao), 'Porão', 'o quadrado mostra o nome da fechadura');
+  assert.equal(keyName({ def: 'chave', data: { name: 'Antiga' } }), 'Antiga', 'aceita data.name');
+  assert.equal(entryTag({ def: 'moedas', qty: 3 }), '', 'moedas não têm etiqueta');
+  assert.equal(entryLabel({ def: 'pista', data: { name: 'Ofício' } }), 'Ofício', 'pistas continuam com o próprio nome');
+  assert.equal(inv.snapshot().entries.find(e => e.id === porao.id).label, 'Chave · Porão');
+  const card = itemIcon('chave', 0, 'x', 'cartao'), key = itemIcon('chave', 0, 'x');
+  assert(card.includes('<rect') && card !== key, 'o cartão tem desenho próprio');
+  // Food is eaten one at a time from the stack it came from.
+  inv.add('refrigerante', 2);
+  const lata = inv.entries.find(e => e.def === 'refrigerante');
+  assert(inv.consumeEntry(lata.id, 1));
+  assert.equal(inv.count('refrigerante'), 1);
 }
 
 // --- placement rejects overlap and out-of-bounds -----------------------------
@@ -246,4 +300,4 @@ for (const [id, def] of Object.entries(ITEM_DEFS)) {
     assert.equal(occupied.size,inv.used);
   }
 }
-console.log('PASS: footprints, rotation, bounds, stacks, atomic sorting, split, merge, input validation, quantity conservation, SVG');
+console.log('PASS: footprints, rotation, bounds, stacks, atomic sorting, split, merge, input validation, quantity conservation, SVG; sprites and variants on the grid with no neutral grey; coins, named keys (and the access card), fuse and food with their sizes, stacks and kinds');

@@ -3,7 +3,7 @@
 (function(scope){
   'use strict';
   const pct=(n,total)=>(n/total*100)+'%';
-  const hint='Arraste para mover · R gira · Enter pega/solta · Esc cancela';
+  const hint='Arraste para mover · botão direito abre opções · R gira · Esc cancela';
   const typing=el=>/^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName)||el?.isContentEditable;
   class CasePanel {
     constructor(inventory,onChange){
@@ -22,6 +22,14 @@
       this.grid.style.setProperty('--cols',this.inv.cols);
       this.grid.style.setProperty('--rows',this.inv.rows);
       this.grid.addEventListener('pointerdown',e=>this.pick(e));
+      /* Options on the right button: examine a clue or a key, eat or drink,
+         wear or take off the clothes, wield the weapon, drop on the floor,
+         throw away. */
+      this.menu=document.querySelector('#caseMenu');
+      this.grid.addEventListener('contextmenu',e=>{e.preventDefault();const el=e.target.closest('[data-entry]');if(el)this.openMenu(Number(el.dataset.entry),e.clientX,e.clientY);else this.closeMenu();});
+      window.addEventListener('pointerdown',e=>{if(this.menu&&!this.menu.hidden&&!this.menu.contains(e.target))this.closeMenu();},true);
+      this.trash=document.querySelector('#caseTrash');
+      this.trash?.addEventListener('click',()=>this.trashSelected());
       window.addEventListener('pointermove',e=>this.move(e));
       window.addEventListener('pointerup',e=>{
         if(this.drag?.mode==='pointer'&&this.drag.pointerId===e.pointerId){
@@ -84,6 +92,84 @@
     }
     action(selector,run){
       document.querySelector(selector).addEventListener('click',()=>{this.cancel(false);run();});
+    }
+    /* What can be done with an item, by kind. `actions` is wired by the game
+       (examine a clue, dress, wield, drop into the scene); without it the menu
+       offers only the bag's own operations - reading a key's name and eating
+       or drinking need nothing from the game. */
+    options(entry){
+      const def=ITEM_DEFS[entry.def],a=this.actions||{},out=[];
+      if(def.kind==='clue'&&a.examine)out.push({id:'examine',label:'Examinar'});
+      if(def.kind==='key')out.push({id:'examine',label:'Examinar'});
+      if(def.kind==='food')out.push({id:'consume',label:'Consumir'});
+      if(def.kind==='outfit'&&a.wear)out.push(entry.data?.worn?{id:'unwear',label:'Tirar a roupa'}:{id:'wear',label:'Vestir'});
+      if(def.kind==='weapon'&&a.wield)out.push(a.isWielded?.(entry)?{id:'unwield',label:'Guardar'}:{id:'wield',label:'Empunhar'});
+      if(entry.qty>1)out.push({id:'split1',label:'Separar 1'});
+      if(a.drop)out.push({id:'drop',label:'Largar no chão'});
+      out.push({id:'trash',label:'Descartar',danger:true});
+      return out;
+    }
+    openMenu(id,x,y){
+      const entry=this.inv.get(id);if(!entry||!this.menu)return;
+      if(this.isUsing(id)){this.flash('Esse item está em uso.');return;}
+      this.cancel(false);this.select(id);
+      const name=entryLabel(entry);
+      this.menu.innerHTML=`<h4>${name.replace(/</g,'&lt;')}</h4>`+this.options(entry).map(o=>`<button type="button" role="menuitem" data-option="${o.id}"${o.danger?' data-danger':''}>${o.label}</button>`).join('');
+      this.menu.hidden=false;this.menuEntry=id;
+      const w=this.menu.offsetWidth||150,h=this.menu.offsetHeight||100;
+      this.menu.style.left=Math.max(0,Math.min(window.innerWidth-w-4,x))+'px';this.menu.style.top=Math.max(0,Math.min(window.innerHeight-h-4,y))+'px';
+      this.menu.querySelectorAll('[data-option]').forEach(b=>b.addEventListener('click',()=>{const opt=b.dataset.option;this.closeMenu();this.runOption(opt,id);}));
+      this.menu.querySelector('button')?.focus({preventScroll:true});
+    }
+    closeMenu(){if(this.menu){this.menu.hidden=true;this.menu.innerHTML='';}this.menuEntry=null;}
+    runOption(opt,id){
+      const entry=this.inv.get(id);if(!entry)return;
+      const a=this.actions||{};
+      if(opt==='examine'){if(ITEM_DEFS[entry.def].kind==='key')this.examineKey(entry);else a.examine?.(entry);}
+      else if(opt==='consume')this.consume(id);
+      else if(opt==='wear')this.changed(a.wear(entry)?'Roupa vestida.':'Não foi possível vestir.');
+      else if(opt==='unwear')this.changed(a.unwear(entry)?'Roupa tirada.':'Não foi possível tirar.');
+      else if(opt==='wield')this.changed(a.wield(entry)?'Arma empunhada. E golpeia.':'Não dá para empunhar agora.');
+      else if(opt==='unwield')this.changed(a.unwield(entry)?'Arma guardada.':'');
+      else if(opt==='split1'){const next=this.inv.split(entry.id,1);this.changed(next?'Um separado da pilha.':'Sem espaço para separar.',!!next);}
+      else if(opt==='drop'){const ok=a.drop(entry,null);this.changed(ok?'Item largado no chão.':'Não dá para largar agora.',ok);}
+      else if(opt==='trash')this.discard(id);
+    }
+    /* A key is read in the bag itself: selected, its name and lock in the
+       description ("Chave · Porão"). No clue interface opens. */
+    examineKey(entry){
+      if(!this.inv.get(entry?.id))return false;
+      this.selected=entry.id;this.last='';this.render();
+      this.flash(`${entryLabel(entry)}.`);return true;
+    }
+    /* Eating or drinking: one out of that stack, and a line in the footer. */
+    consume(id){
+      const entry=this.inv.get(id),def=entry&&ITEM_DEFS[entry.def];
+      if(def?.kind!=='food')return false;
+      if(this.isUsing(id)){this.flash('Esse item está em uso.');return false;}
+      const eaten={...entry,data:entry.data?JSON.parse(JSON.stringify(entry.data)):undefined,qty:1};
+      if(!this.inv.consumeEntry(id,1))return false;
+      this.actions?.consumed?.(eaten);
+      this.changed(def.consumed||`Você consumiu: ${def.label.toLowerCase()}.`);return true;
+    }
+    /* The bin: the selected item, on a second click within a moment, or
+       whatever is dropped on it. */
+    trashSelected(){
+      const entry=this.inv.get(this.selected);
+      if(!entry){this.flash('Selecione um item para descartar.');return;}
+      if(this.isUsing(entry.id)){this.flash('Esse item está em uso.');return;}
+      if(this.trash.dataset.armed==='true'&&this.armedId===entry.id){this.discard(entry.id);return;}
+      this.trash.dataset.armed='true';this.armedId=entry.id;
+      clearTimeout(this.armTimer);this.armTimer=setTimeout(()=>{this.trash.dataset.armed='false';},2600);
+      this.flash(`Clique de novo na lixeira para descartar ${entryLabel(entry)}.`);
+    }
+    discard(id){
+      const entry=this.inv.get(id);if(!entry)return false;
+      if(this.trash){this.trash.dataset.armed='false';}
+      this.actions?.discarded?.(entry);
+      this.inv.remove(id);
+      if(this.selected===id)this.selected=null;
+      this.changed('Item descartado.');return true;
     }
     changed(message,notify=true){
       this.last='';this.render();if(message)this.flash(message);if(notify)this.onChange();
@@ -212,6 +298,7 @@
       const d=this.drag,source=d&&this.inv.get(d.id);
       if(!source)return {ok:false,message:'O item não está mais na bolsa.'};
       if(d.mode==='pointer'&&Number.isFinite(d.clientX)){
+        if(this.trash&&this.overTrash(d.clientX,d.clientY))return {ok:!this.isUsing(d.id),trash:true,message:'Descartar'};
         const external=this.dropBridge?.preview(d.id,d.clientX,d.clientY);
         if(external)return external;
       }
@@ -224,12 +311,14 @@
       const ok=this.inv.fits(source.def,d.x,d.y,d.rot,source.id);
       return {ok,message:ok?'Posição livre':'O item não cabe nessa posição.'};
     }
+    overTrash(x,y){const r=this.trash.getBoundingClientRect();return x>=r.left-6&&x<=r.right+6&&y>=r.top-6&&y<=r.bottom+6;}
     paint(){
       const d=this.drag;if(!d)return;
       const dest=this.destination(),f=itemFootprint(d.def,d.rot);
+      if(this.trash)this.trash.dataset.over=String(!!dest.trash&&d.moved);
       Object.assign(this.ghost.style,this.box(d.x,d.y,f.w,f.h));
       this.ghost.dataset.ok=String(dest.ok);this.ghost.dataset.merge=String(!!dest.target&&dest.ok);
-      this.ghost.innerHTML=itemIcon(d.def,d.rot,'case-sprite');
+      this.ghost.innerHTML=itemIcon(d.def,d.rot,'case-sprite',entryVariant(this.inv.get(d.id)));
       this.ghost.hidden=!d.moved;
       const r=this.grid.getBoundingClientRect();
       const outside=d.mode==='pointer'&&(d.clientX<r.left||d.clientX>=r.right||d.clientY<r.top||d.clientY>=r.bottom);
@@ -238,7 +327,7 @@
         this.ghost.hidden=true;
         this.carry.style.left=(d.clientX+12)+'px';this.carry.style.top=(d.clientY+12)+'px';
         this.carry.style.width=(f.w*r.width/this.inv.cols)+'px';this.carry.style.height=(f.h*r.height/this.inv.rows)+'px';
-        this.carry.dataset.ok=String(dest.ok);this.carry.innerHTML=itemIcon(d.def,d.rot,'case-sprite');
+        this.carry.dataset.ok=String(dest.ok);this.carry.innerHTML=itemIcon(d.def,d.rot,'case-sprite',entryVariant(this.inv.get(d.id)));
       }
       const el=this.grid.querySelector(`[data-entry="${d.id}"]`);
       if(el)el.classList.toggle('held',d.moved);
@@ -247,7 +336,7 @@
       status.dataset.flash=String(d.moved);
     }
     clearDrag(){
-      const d=this.drag;this.drag=null;this.ghost.hidden=true;
+      const d=this.drag;this.drag=null;this.ghost.hidden=true;if(this.trash)this.trash.dataset.over='false';
       this.carry.hidden=true;this.dropBridge?.clear();
       this.grid.querySelectorAll('.held').forEach(el=>el.classList.remove('held'));
       if(d?.pointerId!==undefined&&this.grid.hasPointerCapture(d.pointerId))this.grid.releasePointerCapture(d.pointerId);
@@ -262,9 +351,10 @@
       if(!d.moved)return;
       let ok=false;
       if(dest.ok){
+        if(dest.trash){this.discard(d.id);return;}
         if(dest.external){
-          ok=this.dropBridge.drop(d.id,dest.region);
-          this.changed(ok?'Usando item no ferimento.':this.treatment?.message,ok);return;
+          ok=this.dropBridge.drop(d.id,dest);
+          this.changed(ok?(dest.scene?'Item largado no cenário.':'Usando item no ferimento.'):(dest.scene?'Não dá para largar aí.':this.treatment?.message),ok);return;
         }
         if(dest.target){ok=this.inv.merge(d.id,dest.target)>0;if(!this.inv.get(d.id))this.selected=dest.target;}
         else ok=this.inv.move(d.id,d.x,d.y,d.rot);
@@ -279,9 +369,9 @@
     }
     renderDetails(){
       const entry=this.inv.get(this.selected),def=entry&&ITEM_DEFS[entry.def];
-      document.querySelector('#caseItemName').textContent=def?def.label:'Selecione um item';
-      document.querySelector('#caseItemDesc').textContent=def?def.desc:'Seus suprimentos, sempre à mão.';
-      document.querySelector('#caseItemIcon').innerHTML=def?itemIcon(entry.def,0):'';
+      document.querySelector('#caseItemName').textContent=def?entryLabel(entry):'Selecione um item';
+      document.querySelector('#caseItemDesc').textContent=def?(entry.data?.desc||def.desc)+(entry.data?.worn?' Está vestida.':this.actions?.isWielded?.(entry)?' Está empunhada.':''):'Seus suprimentos, sempre à mão.';
+      document.querySelector('#caseItemIcon').innerHTML=def?itemIcon(entry.def,0,'item-icon',entryVariant(entry)):'';
       document.querySelector('#caseItemMeta').textContent=def?`${itemFootprint(entry.def,entry.rot).w} × ${itemFootprint(entry.def,entry.rot).h} espaços · ${entry.qty} / ${def.stack} na pilha`:'Clique ou use Tab para inspecionar.';
       const busy=this.isUsing(this.selected);
       document.querySelector('#caseRotate').disabled=!entry||busy;
@@ -307,7 +397,8 @@
       if(this.drag&&!this.inv.get(this.drag.id)){this.clearDrag();this.flash('O item foi consumido durante o movimento.');}
       if(!this.inv.get(this.selected))this.selected=null;
       this.renderUse();
-      const snap=this.inv.snapshot(),stamp=JSON.stringify(snap.entries)+snap.revision+':'+this.selected+':'+(this.treatment?.active?.entryId||0);
+      const wielded=this.actions?.isWielded?[...this.inv.entries].filter(e=>this.actions.isWielded(e)).map(e=>e.id).join(','):'';
+      const snap=this.inv.snapshot(),stamp=JSON.stringify(snap.entries)+snap.revision+':'+this.selected+':'+(this.treatment?.active?.entryId||0)+':'+wielded;
       if(stamp===this.last)return;
       this.last=stamp;
       const activeId=document.activeElement?.dataset.entry;
@@ -316,13 +407,14 @@
       for(const e of snap.entries){
         let el=this.grid.querySelector(`[data-entry="${e.id}"]`);
         if(!el){el=document.createElement('button');el.type='button';el.className='case-item';
-          el.dataset.entry=e.id;el.dataset.item=e.def;this.grid.append(el);}
-        el.setAttribute('aria-label',`${e.label}, ${e.qty} de ${ITEM_DEFS[e.def].stack}, ${e.w} por ${e.h} espaços`);
+          el.dataset.entry=e.id;el.dataset.item=e.def;el.dataset.kind=ITEM_DEFS[e.def].kind||'supply';this.grid.append(el);}
+        el.setAttribute('aria-label',`${e.label}, ${e.qty} de ${ITEM_DEFS[e.def].stack}, ${e.w} por ${e.h} espaços${e.data?.worn?', vestida':''}`);
         el.setAttribute('aria-pressed',String(e.id===this.selected));
         el.setAttribute('aria-busy',String(this.isUsing(e.id)));
-        el.title=`${e.label} — ${ITEM_DEFS[e.def].desc}`;
+        el.dataset.worn=String(!!e.data?.worn);el.dataset.wielded=String(!!this.actions?.isWielded?.(this.inv.get(e.id)));
+        el.title=`${e.label} — ${e.data?.desc||ITEM_DEFS[e.def].desc}`;
         Object.assign(el.style,this.box(e.x,e.y,e.w,e.h));
-        el.innerHTML=itemIcon(e.def,e.rot,'case-sprite')+`<b class="case-qty">${e.qty}</b>`;
+        el.innerHTML=itemIcon(e.def,e.rot,'case-sprite',e.data?.variant||null)+(e.qty>1||!e.data?`<b class="case-qty">${e.qty}</b>`:'')+(entryTag(e)?`<span class="case-name">${entryTag(e).replace(/</g,'&lt;')}</span>`:'')+(el.dataset.wielded==='true'?'<span class="case-name" style="top:auto;bottom:2px">NA MÃO</span>':'');
         if(this.isUsing(e.id))el.insertAdjacentHTML('beforeend','<progress class="case-use-progress" max="1" value="0" aria-label="Tempo de uso do item"></progress>');
       }
       document.querySelector('#caseUsage').textContent=`${snap.used} / ${snap.capacity}`;

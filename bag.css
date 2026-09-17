@@ -84,3 +84,24 @@
   .treatment-layout .case-window{left:8px!important;right:auto!important;top:calc(50dvh + 4px)!important;bottom:auto!important;width:calc(100vw - 16px);max-width:504px;max-height:calc(50dvh - 12px)}
   .case-window .case-heading h2{font-size:18px}
 }
+
+/* Worn clothes: the bundle she has on is outlined in gold and tagged. */
+.case-window .case-item[data-worn=true]{outline:2px solid #ffd2a0;outline-offset:-1px;background:#ffd2a01a}
+.case-window .case-item[data-worn=true]::after{content:'VESTIDA';position:absolute;left:2px;bottom:2px;font:600 8px/1 Consolas,'Courier New',monospace;letter-spacing:1px;color:#210b26;background:#ffd2a0;padding:1px 3px}
+.case-window .case-item .case-name{position:absolute;left:2px;top:2px;font:600 8px/1 Consolas,'Courier New',monospace;color:#f3b4e8;background:#210b26cc;padding:1px 2px;max-width:calc(100% - 4px);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;pointer-events:none}
+/* A key's tag names the lock it opens, in the brass of the key. */
+.case-window .case-item[data-kind=key] .case-name{color:#ffd9a0;border-bottom:1px solid #9c611c}
+/* The bin in the corner of the bag: a drop target, or a button for the selected item. */
+.case-trash{position:absolute;right:6px;bottom:6px;width:30px;height:30px;padding:0;display:grid;place-items:center;background:#210b26;border:2px solid #803570;color:#b581b3;cursor:pointer;z-index:3;box-shadow:2px 2px #100414}
+.case-trash svg{width:18px;height:18px}
+.case-trash:hover,.case-trash[data-over=true]{border-color:#ffd2a0;color:#ffd2a0;background:#3a1440}
+.case-trash[data-armed=true]{border-color:#e05a5a;color:#ff9a9a;animation:case-trash-arm .6s steps(2) infinite}
+@keyframes case-trash-arm{50%{background:#5a1a24}}
+/* Right-click options on an item. */
+.case-menu{position:fixed;z-index:60;min-width:150px;padding:4px;background:#210b26;border:2px solid #a44590;box-shadow:3px 3px #100414;display:grid;gap:2px}
+.case-menu[hidden]{display:none}
+.case-menu h4{margin:0;padding:3px 6px 5px;font:600 10px/1 Consolas,'Courier New',monospace;letter-spacing:1px;color:#ffd2a0;border-bottom:1px solid #803570}
+.case-menu button{display:block;width:100%;text-align:left;padding:5px 8px;margin:0;background:transparent;border:1px solid transparent;box-shadow:none;color:#f3b4e8;font:12px/1.2 Consolas,'Courier New',monospace;cursor:pointer}
+.case-menu button:hover,.case-menu button:focus-visible{background:#3a1440;border-color:#e574cc;outline:none}
+.case-menu button[data-danger]{color:#ff9a9a}
+.case-window .case-item[data-wielded=true]{outline:2px solid #e2bd72;outline-offset:-1px;background:#e2bd7214}

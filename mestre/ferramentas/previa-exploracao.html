@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Prévia · cenas montáveis</title>
+  <style>
+    :root{color-scheme:dark}
+    body{background:#0d0a12;color:#e8cde3;font:12px Consolas,monospace;margin:18px}
+    h1{font:bold 18px Georgia,serif;color:#f497dc;margin:0 0 4px}
+    p{color:#b581b3;margin:0 0 12px}
+    canvas{display:block;image-rendering:pixelated;background:#050408;border:1px solid #5c244f}
+    .row{display:flex;gap:12px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+  </style>
+  <script src="../pixel-kit.js"></script><script src="../scene-engine.js"></script><script src="../sobreposicoes.js"></script>
+  <script src="../montador-paleta.js"></script><script src="../montador.js"></script>
+  <script src="../modulos-estrutura.js"></script>
+  <script src="../modulos-casa.js" onerror="void 0"></script>
+  <script src="../modulos-trabalho.js" onerror="void 0"></script>
+  <script src="../modulos-comercio.js" onerror="void 0"></script>
+  <script src="../modulos-saude.js" onerror="void 0"></script>
+  <script src="../modulos-rua.js" onerror="void 0"></script>
+  <script src="../cenas-genericas.js"></script>
+</head>
+<body>
+  <h1>Prévia · cenas montáveis</h1>
+  <p>Ferramenta de arte: gera cada modelo da biblioteca genérica, em qualquer luz, sem a personagem.</p>
+  <div class="row">
+    <label>Modelo <select id="modelo"></select></label>
+    <label>Luz <select id="luz"></select></label>
+    <label>Semente <input id="semente" type="number" value="7" style="width:90px"></label>
+    <label>Desgaste <input id="desgaste" type="range" min="0" max="3" value="0"></label>
+    <label>Câmera <input id="camera" type="range" min="0" max="1000" value="0"></label>
+  </div>
+  <canvas id="tela" width="480" height="270" style="width:960px;height:540px"></canvas>
+  <script>
+    const canvas = document.querySelector('#tela'), ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    const stage = new SceneStage();
+    Montador.stage = stage;
+    const $ = s => document.querySelector(s);
+    $('#modelo').innerHTML = Montador.modelos().map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
+    let current = null;
+    function build() {
+      if (current) Montador.remover(current.id);
+      current = Montador.criar($('#modelo').value, {semente: Number($('#semente').value) || 1, desgaste: Number($('#desgaste').value)});
+      const scene = SceneLibrary.get(current.id);
+      $('#luz').innerHTML = scene.presets.map(p => `<option value="${p.id}" ${p.id === scene.defaultPreset ? 'selected' : ''}>${p.label}</option>`).join('');
+      stage.load(current.id, {preset: $('#luz').value});
+    }
+    for (const id of ['#modelo', '#semente', '#desgaste']) $(id).addEventListener('change', build);
+    $('#luz').addEventListener('change', () => stage.update({preset: $('#luz').value}, {fade: 0}));
+    build();
+    let last = performance.now(), manual = false;
+    function frame(dt) {
+      stage.step(dt);
+      const room = stage.room, cam = room ? room.x0 + (room.x1 - room.x0 - 480) * Number($('#camera').value) / 1000 : 0;
+      ctx.fillStyle = '#050408'; ctx.fillRect(0, 0, 480, 270);
+      stage.drawBack(ctx, cam); stage.drawFront(ctx, cam); stage.finishFrame(ctx, canvas);
+    }
+    function loop(now) { if (!manual) { frame(Math.min(.1, (now - last) / 1000)); last = now; } requestAnimationFrame(loop); }
+    requestAnimationFrame(loop);
+    window.preview = {
+      stage, Montador,
+      manual(on = true) { manual = on; },
+      /* Uma cena de um modelo, numa luz, com a câmera em u (0–1). */
+      shot(modelo, {semente = 7, desgaste = 0, luz = null, u = 0, props = null, clima = null, t = 3, receita = null} = {}) {
+        manual = true;
+        for (const r of Montador.instancias()) Montador.remover(r.id);
+        const R = receita ? Montador.registrar(receita) : Montador.criar(modelo, {semente, desgaste});
+        const scene = SceneLibrary.get(R.id);
+        const state = {preset: luz || scene.defaultPreset};
+        if (props) state.props = new Set(props);
+        if (clima) state.weather = clima;
+        stage.time = t;
+        stage.load(R.id, state);
+        const room = stage.room, cam = room.x0 + (room.x1 - room.x0 - 480) * u;
+        const t0 = performance.now();
+        ctx.fillStyle = '#050408'; ctx.fillRect(0, 0, 480, 270);
+        stage.drawBack(ctx, cam); stage.drawFront(ctx, cam); stage.finishFrame(ctx, canvas);
+        return {data: canvas.toDataURL(), receita: R, presets: scene.presets.map(p => p.id), ms: performance.now() - t0};
+      },
+      /* Vitrine de módulos: cada peça (com variações de parâmetros) enfileirada
+         numa sala neutra. itens = [{mod, p, estados: [...], nome}]. Devolve
+         vários quadros cobrindo a sala inteira. */
+      vitrine(itens, {luz = 'tarde', casca = {}, conjunto = 'interior', props = null, clima = null, t = 3, gap = 26} = {}) {
+        manual = true;
+        for (const r of Montador.instancias()) Montador.remover(r.id);
+        const room0 = makeRoom({x0: 0, x1: 4000});
+        let x = 70;
+        const objetos = [], estados = [];
+        itens.forEach((it, i) => {
+          const mod = Montador.mod(it.mod);
+          if (!mod) throw new Error('módulo desconhecido: ' + it.mod);
+          const obj = {id: 'v' + i, mod: it.mod, p: it.p || {}, nome: it.nome, v: it.v, int: it.int, pas: it.pas};
+          const w = Montador.larguraMundo(mod, obj, room0);
+          obj.x = Math.round(x + w / 2);
+          if (mod.lateral === 'left') obj.x = 35; else if (mod.lateral === 'right') obj.x = 99999;
+          x += w + gap;
+          objetos.push(obj);
+          for (const e of it.estados || []) estados.push(`${obj.id}.${e}`);
+        });
+        const largura = Math.max(600, Math.round(x + 60));
+        for (const o of objetos) if (o.x === 99999) o.x = largura - 35;
+        const R = Montador.registrar({id: 'vitrine', nome: 'Vitrine', largura, semente: 11, luz: {conjunto, padrao: luz},
+          casca: {parede: 'liso', corParede: 'branco', barra: 'rodape', piso: 'tabuas', corPiso: 'taco', ...casca}, objetos});
+        const scene = SceneLibrary.get(R.id);
+        const state = {preset: luz};
+        const base = new Set(scene.props.filter(p => p.default).map(p => p.id));
+        for (const e of estados) base.add(e);
+        if (props) for (const p of props) { if (p.startsWith('-')) base.delete(p.slice(1)); else base.add(p); }
+        state.props = base;
+        if (clima) state.weather = clima;
+        stage.time = t;
+        stage.load(R.id, state);
+        const room = stage.room, shots = [];
+        for (let cam = room.x0; cam < room.x1 - 480 + 479; cam += 470) {
+          const c = Math.min(cam, room.x1 - 480);
+          ctx.fillStyle = '#050408'; ctx.fillRect(0, 0, 480, 270);
+          stage.drawBack(ctx, c); stage.drawFront(ctx, c); stage.finishFrame(ctx, canvas);
+          shots.push(canvas.toDataURL());
+          if (c === room.x1 - 480) break;
+        }
+        return {shots, largura, clues: scene.clues.map(c => ({id: c.id, type: c.type, anchor: c.anchor}))};
+      }
+    };
+  </script>
+</body>
+</html>

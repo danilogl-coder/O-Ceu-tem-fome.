@@ -37,7 +37,7 @@ fs.mkdirSync(output,{recursive:true});
     await split(band.id,2);
     let bands=await entries('bandage');
     assert.deepEqual(bands.map(e=>e.qty),[1,2]);
-    assert.equal(await page.locator('#caseUsage').textContent(),'9 / 60');
+    assert.equal(await page.locator('#caseUsage').textContent(),'13 / 60');   // 9 of supplies + the 4 of the outfit she wears
     await page.locator('#caseMerge').click();
     assert.deepEqual((await entries('bandage')).map(e=>e.qty),[3]);
 

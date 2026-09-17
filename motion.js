@@ -20,6 +20,8 @@
     trip() { if (this.fallen === null) { this.fallen = 0; this.rising = null; this.jumpBuffer = 0; this.crouch = 0; } }
     // Only ever on purpose, and only once she has actually finished going down.
     rise() { if (this.fallen !== null && this.rising === null && this.fallen >= FALL_PLAY) this.rising = this.fallen; }
+    // How far through the get-up she is, 0..1, or null when not getting up.
+    get risingProgress() { return this.rising === null ? null : clamp((this.fallen - this.rising) / GETUP_TIME, 0, 1); }
     get down() { return this.fallen !== null && this.rising === null && this.fallen >= FALL_PLAY; }
     // A jump from standing gathers itself first. Only from standing: a jump
     // buffered in the air has already been anticipated and must fire on contact.
@@ -31,7 +33,7 @@
         // Down means down. The clock keeps running so the body can go on
         // settling and breathing, but nothing here gets her up.
         this.fallen += dt; direction = 0; sprint = false;
-        if (this.rising !== null && this.fallen > this.rising + FALL_PLAY / FALL_RISE) {
+        if (this.rising !== null && this.fallen > this.rising + GETUP_TIME) {
           this.fallen = null; this.rising = null;
         }
       }
@@ -76,12 +78,11 @@
   /* The fall is 0.9s of clip and then she stays down. `fallen` counts past the
      end and the clip holds its last drawing; nothing stands her back up on its
      own. Getting up is a separate decision — `CharacterPhysics.rise()` — and it
-     plays the same fifteen drawings backwards, a third faster, because standing
-     up from prone really is the fall in reverse and quicker. */
-  const FALL_PLAY = .9, FALL_RISE = 1.35, FALL_STAY = 3.2;
-  const fallClock = (t, rising) => rising !== null
-    ? Math.max(0, FALL_PLAY - (t - rising) * FALL_RISE)
-    : Math.min(t, FALL_PLAY);
+     is a movement of its own, the `getup` clip: hands under the shoulders, push
+     the chest up, knee under, kneel, stand. It used to be the fall played
+     backwards, which floated her at sixty degrees with nothing under her. */
+  const FALL_PLAY = .9, FALL_STAY = 3.2, GETUP_TIME = 1.5;
+  const fallClock = t => Math.min(t, FALL_PLAY);
 
   class Spring {
     constructor() { this.value = 0; this.velocity = 0; }
@@ -159,7 +160,9 @@
         this.span.push(Math.hypot(dx, dy));
         this.bind.push(Math.atan2(dy, dx));
       }
-      this.profile = spec.links.map(name => STRAND_PROFILE[name]);
+      // A link is named from STRAND_PROFILE, or a garment brings its own numbers.
+      this.profile = spec.links.map(name => typeof name === 'object' ? name : STRAND_PROFILE[name]);
+      this.wind = spec.wind ? {...WIND.cape, ...spec.wind} : null;
       this.point = this.local.map(() => [0, 0]);
       this.previous = this.local.map(() => [0, 0]);
       this.settled = false;
@@ -559,18 +562,12 @@
       this.blinking = new Blink();
       this.gaze = new Gaze();
       this.idle = new IdleLife();
-      // Stiffest at the hips, softest at the hem: the parts arrive one after
-      // another rather than all together.
+      // Stiffer at the chest than at the arms: the parts arrive one after
+      // another rather than all together. Clothes have no lag of their own —
+      // they ride on the channel of the part they are worn on (skeleton.js).
       this.chestLag = new Lag(34, 1);
       this.armsLag = new Lag(22, 1.3);
-      // Capped at a pixel: a garment painted as an exact body mask cannot slip
-      // two pixels off the body without showing skin at the seam.
-      this.clothLag = new Lag(15, 1.05);
-      this.hemLag = new Lag(11, 1.2);
-      // Heavy cloth: slower to start than the shirt and slower to settle, on a
-      // period that belongs to nothing else on the character.
-      this.cloakLag = new Lag(9, 1.4);
-      this.lastAccel = 0; this.life = true;
+      this.lastAccel = 0; this.life = true; this.turn = 0; this.lastDirection = undefined;
       this.impact = new Impact();
       this.clipFrame = null; this.clipDrop = 0; this.clipSpeed = 0; this.clipAge = 0;
       /* What the leg solver returns for the drawn pose. The drawn legs are not
@@ -596,7 +593,7 @@
       const t = this.clock;
       this.hairForce = [0, 0];
       for (const strand of this.strands) {
-        const air = WIND[strand.key] || WIND.mass;
+        const air = strand.wind || WIND[strand.key] || WIND.mass;
         /* Ambient air: three slow beats that never repeat on a tidy loop, so
            the cloth keeps drifting even when the character is perfectly still —
            except when it is not hanging in the air at all. Lying face down the
@@ -658,7 +655,7 @@
       this.clock += dt;
       let animation = mode, amount = .7, phaseTime = time;
       if (mode === 'play') {
-        animation = body.fallen !== null ? 'fall'
+        animation = body.fallen !== null ? (body.rising !== null ? 'getup' : 'fall')
           : !body.grounded ? 'jump'
           : Math.abs(body.vx) > RUN_FROM ? 'run'
           : Math.abs(body.vx) > 1 ? 'walk' : 'idle';
@@ -667,29 +664,42 @@
            clips are fed the time that puts them at this many cycles. */
         this.gait += Math.abs(body.vx) * dt / (animation === 'run' ? 96 : 40);
         phaseTime = animation === 'run' ? (this.gait + .17) / 1.9 : this.gait * .8;
-        if (animation === 'fall') phaseTime = fallClock(body.fallen, body.rising);
+        /* A heel lands every half cycle: the near foot on the whole numbers,
+           the far one half way. Whoever listens gets told. */
+        const step = Math.floor(this.gait * 2);
+        if ((animation === 'walk' || animation === 'run') && body.grounded && this.lastStep !== undefined && step !== this.lastStep) this.onFootstep?.({side: step % 2 === 0 ? 'near' : 'far', run: animation === 'run', speed: Math.abs(body.vx)});
+        this.lastStep = step;
+        if (body.landing > .6 && !this.landed) { this.landed = true; this.onFootstep?.({side: 'both', land: true, speed: Math.abs(body.vx)}); }
+        if (body.landing < .2) this.landed = false;
+        if (animation === 'fall') phaseTime = fallClock(body.fallen);
+        if (animation === 'getup') phaseTime = body.fallen - body.rising;
         amount = clamp((body.vy + 110) / 310, .08, .9);
       } else if (mode === 'fall') {
         // The preview shows the whole thing on a loop: down, a long moment on
-        // the floor while she settles and breathes, then up.
-        animation = 'fall';
-        const loop = time % (FALL_PLAY + FALL_STAY + FALL_PLAY / FALL_RISE + 1);
-        phaseTime = fallClock(loop, loop > FALL_PLAY + FALL_STAY ? FALL_PLAY + FALL_STAY : null);
+        // the floor while she settles and breathes, then the get-up, then a
+        // breath standing before it starts again.
+        const loop = time % (FALL_PLAY + FALL_STAY + GETUP_TIME + 1);
+        if (loop < FALL_PLAY + FALL_STAY) { animation = 'fall'; phaseTime = fallClock(loop); }
+        else if (loop < FALL_PLAY + FALL_STAY + GETUP_TIME) { animation = 'getup'; phaseTime = loop - FALL_PLAY - FALL_STAY; }
+        else { animation = 'idle'; phaseTime = loop; }
       } else if (mode === 'jump') {
         amount = clamp((body.vy + 110) / 310, .08, .9);
         if (body.grounded) animation = 'idle';
       }
       const rig = this.rig;
       rig.setAnimation(animation, phaseTime, amount);
-      if (body.landing > .01 && animation !== 'fall' && (mode === 'play' || mode === 'jump')) {
-        rig.rootOffset[1] += body.landing * 1.6;
-        rig.pose.torso = (rig.pose.torso || 0) - body.landing * .07;
+      if (body.landing > .01 && animation !== 'fall' && animation !== 'getup' && (mode === 'play' || mode === 'jump')) {
+        /* Landing. The hips drop and the knees take it, the chest comes
+           forward over the feet — never back, a body that lands leaning back
+           is a body about to sit down — and the arms come forward and out. */
+        const l = body.landing;
+        rig.rootOffset[1] += l * 2.2;
+        const give = (name, v) => rig.pose[name] = (rig.pose[name] || 0) + v;
+        give('torso', l * .12); give('abdomen', l * .04); give('head', -l * .08); give('neck', -l * .05);
+        give('arm_near', -l * .55); give('forearm_near', -l * .4); give('hand_near', l * .1);
+        give('arm_far', -l * .4); give('forearm_far', -l * .35);
         rig.resolve();
-        if (body.grounded) for (const side of ['near','far']) {
-          const foot = rig.world.get(`foot_${side}`);
-          const bind = rig.bones.get(`foot_${side}`);
-          rig.solveLeg(side, [foot.x, bind.pivot[1]]);
-        }
+        if (body.grounded) for (const side of ['near','far']) rig.plantFoot(side, rig.world.get(`foot_${side}`).x);
       }
       /* Blend the base pose first. Breathing/blinking are applied afterwards,
          so clip changes cannot reset their clocks or fade them out.
@@ -743,8 +753,25 @@
         add('torso', -weight * .022);
         add('head', weight * .016);
       }
-      // Gathering before the legs push, and the give when they land.
-      if (live && body.crouch > 0) rig.rootOffset[1] += 1.35;
+      // Gathering before the legs push: hips down, chest forward, arms back.
+      if (live && body.crouch > 0) {
+        rig.rootOffset[1] += 1.35;
+        add('torso', .12); add('abdomen', .04); add('head', -.05);
+        add('arm_near', .38); add('arm_far', .3); add('forearm_near', -.25); add('forearm_far', -.2);
+      }
+      /* Turning round. The sprite mirrors in one frame, which is how pixel art
+         turns, but the body still has to sell it: for a few frames she leans
+         into the new direction, the near arm swings across and the head turns
+         first. The hair does its own part — the wind on it flips sign. */
+      if (live && this.lastDirection !== undefined && direction !== this.lastDirection && body.grounded && this.life) this.turn = .16;
+      this.lastDirection = direction;
+      if (this.turn > 0) {
+        const e = Math.sin(Math.PI * (1 - this.turn / .16));
+        add('torso', .13 * e); add('abdomen', .04 * e); add('head', -.07 * e); add('neck', -.03 * e);
+        add('arm_near', -.4 * e); add('forearm_near', -.35 * e); add('arm_far', .28 * e);
+        rig.rootOffset[1] += .8 * e;
+        this.turn = Math.max(0, this.turn - dt);
+      }
 
       /* The impact is measured, not chosen. The clip carries the body down and
          the floor stops it, and the size of that deceleration is the impulse —
@@ -771,8 +798,6 @@
                sliding forward when she lands. */
             for (const strand of this.strands) strand.kick(slam * .07, -slam * .13);
             this.chestLag.kick(slam * 8); this.armsLag.kick(slam * 12);
-            this.clothLag.kick(slam * 15); this.hemLag.kick(slam * 18);
-          this.cloakLag.kick(slam * 21);
             this.breathing.startle(slam);
           }
         }
@@ -810,7 +835,7 @@
       rig.resolve();
       // A clip that poses its own legs keeps them: planting the feet under a
       // run or a fall would drag them back to where the character is standing.
-      const ownLegs = animation === 'walk' || animation === 'run' || animation === 'fall';
+      const ownLegs = animation === 'walk' || animation === 'run' || animation === 'fall' || animation === 'getup';
       if (grounded && !ownLegs && !(body && body.landing > .01)) {
         const held = {};
         for (const name of Object.keys(this.legRest)) held[name] = rig.pose[name] || 0;
@@ -829,24 +854,17 @@
       if (Math.abs(this.lastAccel) < 40 && Math.abs(accel) > 120) {
         const kick = -Math.sign(accel) * 15;
         this.chestLag.kick(kick); this.armsLag.kick(kick * 1.3);
-        this.clothLag.kick(kick * 1.5); this.hemLag.kick(kick * 1.7);
       }
       this.lastAccel = accel;
       const drive = -clamp(accel * .0022, -1.3, 1.3);
       const step = this.life ? dt : 0;
       const chestX = this.chestLag.step(step, drive);
       const armsX = this.armsLag.step(step, drive * 1.3);
-      const clothX = this.clothLag.step(step, drive * 1.5);
-      const hemX = this.hemLag.step(step, drive * 1.7);
-      const cloakX = this.cloakLag.step(step, drive * 1.9);
       if (rig.drift.size && !this.life) for (const key of rig.drift.keys()) rig.drift.set(key, [0, 0]);
       if (rig.drift.size && this.life) {
         const lift = -breath.lift;
-        rig.drift.set('chest', [chestX, lift]);
-        rig.drift.set('arms', [armsX, lift]);
-        rig.drift.set('cloth', [clothX, lift]);
-        rig.drift.set('hem', [hemX, 0]);
-        if (rig.drift.has('cloak')) rig.drift.set('cloak', [cloakX, 0]);
+        if (rig.drift.has('chest')) rig.drift.set('chest', [chestX, lift]);
+        if (rig.drift.has('arms')) rig.drift.set('arms', [armsX, lift]);
       }
 
       const force = live ? body.vx * direction * .001 + body.acceleration * direction * .00013 + body.vy * .0003 : 0;
@@ -864,8 +882,11 @@
       // picked up breathing. Then solve the hair and resolve again.
       rig.resolve();
       // Lying on the floor: the hair is resting on it, not hanging off her.
-      const floored = animation === 'fall' ? clamp((phaseTime - .55) / .3, 0, 1) : 0;
+      const floored = animation === 'fall' ? clamp((phaseTime - .55) / .3, 0, 1)
+        : animation === 'getup' ? clamp(1 - phaseTime / .6, 0, 1) : 0;
       this.solveHair(dt, live ? body : null, direction, floored);
+      // Whatever every layer added up to, no joint goes past what a body can do.
+      if (rig.clampPose) rig.clampPose();
       rig.resolve();
       this.displayPose = {...rig.pose}; this.displayOffset = [...rig.rootOffset];
       this.animation = animation;
@@ -971,5 +992,6 @@
   scope.PAIN_PROFILES=PAIN_PROFILES;
   scope.CharacterPhysics = CharacterPhysics;
   scope.CharacterMotion = CharacterMotion;
-  if (typeof module !== 'undefined') module.exports = {CharacterPhysics, CharacterMotion, InjuryReaction, PAIN_PROFILES};
+  scope.GETUP_TIME = GETUP_TIME;
+  if (typeof module !== 'undefined') module.exports = {CharacterPhysics, CharacterMotion, InjuryReaction, PAIN_PROFILES, GETUP_TIME, HairSway};
 })(globalThis);

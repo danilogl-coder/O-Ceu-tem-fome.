@@ -2,13 +2,20 @@
 (() => {
   'use strict';
   try {
-    const rig = new Skeleton2D(CHARACTER_ASSET);
+    /* The wardrobe generates every garment, hairstyle and skin tone by code
+       on top of the baked asset; without its script the baked asset is used
+       as it is, which is what the headless tests run. */
+    const asset = typeof Wardrobe !== 'undefined' ? Wardrobe.extend(CHARACTER_ASSET) : CHARACTER_ASSET;
+    const rig = new Skeleton2D(asset);
     const body = new CharacterPhysics(), motion = new CharacterMotion(rig);
     const ragdoll = new CharacterRagdoll(rig);
     const limbDebris=new DetachedLimbs(rig);
     const health = new CharacterHealth(), bloodEffects = new BloodEffects(), organDebris = new OrganDebris();
     const healthClock=new HealthClock([health]),reaction=new InjuryReaction();
     const treatmentMotion=new TreatmentMotion();let treatment=null;
+    /* Things loose in the room, and the weapon in hand. */
+    const weapon=typeof WeaponMotion==='function'?new WeaponMotion():null;
+    let sceneItems=null;
     document.addEventListener('visibilitychange',()=>{if(document.hidden){healthClock.setRunning(false);healthPanel?.render();}});
     motion.health=health;
     ragdoll.healthParts=health.parts;
@@ -17,11 +24,12 @@
     ragdoll.onImpact=(name,speed)=>{
       if(health.impact(name,speed)==='sever')injurePart(name,'sever');
     };
-    let dragPointer = null, ragOrigin = null, lastDraw = null;
+    let dragPointer = null, ragOrigin = null, lastDraw = null, itemPointer = null;
     const STEP = 1/120;
     let accumulator = 0, previewWait = .3;
     const canvas = document.querySelector('#scene'), ctx = canvas.getContext('2d',{willReadFrequently:true});
     const buffer = document.createElement('canvas'); buffer.width = 64; buffer.height = 96;
+    const handBuffer = document.createElement('canvas'); handBuffer.width = 64; handBuffer.height = 96;
     const raster = buffer.getContext('2d');
     ctx.imageSmoothingEnabled = false;
     const $ = selector => document.querySelector(selector);
@@ -37,9 +45,12 @@
     /* Clues live in the scene: clicked on the stage by the master, or from the
        players' window, they open pixel-art interfaces drawn into the picture. */
     const clueSystem = sceneStage && typeof ClueSystem === 'function' ? new ClueSystem({stage: sceneStage, link: masterLink}) : null;
+    /* Exploração: portas, escadas, elevadores e saídas laterais levam de uma
+       cena a outra; ↑/W usa o que estiver ao alcance, um clique leva até lá. */
+    const exploracao = clueSystem && typeof Exploracao === 'function' ? new Exploracao({stage: sceneStage, clues: clueSystem, link: masterLink}) : null;
     let masterPanel = null;
     const DRAG_BUTTON = 0, DRAG_BUTTONS = 1;
-    const labels = {rest:'Base · respiração e piscadas',idle:'Repouso vivo',walk:'Caminhada',run:'Corrida · 15 quadros',fall:'Queda · 15 quadros',jump:'Salto',play:'Controle livre'};
+    const labels = {rest:'Base · respiração e piscadas',idle:'Repouso vivo',walk:'Caminhada',run:'Corrida · 15 quadros',fall:'Queda · 15 quadros · levantar',jump:'Salto',play:'Controle livre'};
     const names = {root:'Raiz',head:'Cabeça',hair_back:'Cabelo — trás',hair_front:'Cabelo — frente',torso:'Tronco',pelvis:'Quadril',arm_near:'Braço próximo',forearm_near:'Antebraço próximo',hand_near:'Mão próxima',thigh_near:'Coxa próxima',shin_near:'Canela próxima',foot_near:'Pé próximo',arm_far:'Braço distante',forearm_far:'Antebraço distante',hand_far:'Mão distante',thigh_far:'Coxa distante',shin_far:'Canela distante',foot_far:'Pé distante'};
     Object.assign(names,{neck:'Pescoço',abdomen:'Abdômen',hand_near:'Mão próxima — punho',hand_far:'Mão distante — punho',forearm_near:'Antebraço próximo — cotovelo',forearm_far:'Antebraço distante — cotovelo'});
     Object.assign(names,{hair_back:'Cabelo — trás (atrás do corpo)',hair_front:'Cabelo — frente (franja)'});
@@ -108,43 +119,25 @@
     $('#boneSelect').addEventListener('change',updateEditor);
     $('#boneAngle').addEventListener('input',e => { edits[$('#boneSelect').value] = Number(e.target.value); updateEditor(); });
     $('#hideBone').addEventListener('change',e => { const name = $('#boneSelect').value; if(e.target.checked) hidden.add(name); else hidden.delete(name); });
-    document.querySelectorAll('[data-outfit]').forEach(el => el.addEventListener('change',() => { if(el.checked) outfit.add(el.dataset.outfit);else outfit.delete(el.dataset.outfit); }));
-
-    /* Colour picking. Each swatch starts as the colour it sets, so the row is
-       also a read-out of what she is wearing. Picking a colour for a garment
-       puts that garment on: choosing a colour for something invisible and
-       watching nothing happen is the sort of thing that makes an interface feel
-       broken. */
-    const hex = ([r,g,b]) => '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
-    const tints = {};
-    const swatch = name => $(`[data-tint="${name}"]`);
-    function paintSwatches() {
-      for (const [name,ramp] of Object.entries(rig.ramps)) if(swatch(name)) swatch(name).value = tints[name] || hex(CHARACTER_ASSET.rgba[ramp.base+1]);
-      const iris = hex(CHARACTER_ASSET.rgba[rig.eyes.iris+1]);
-      for (const eye of ['eyeLeft','eyeRight']) if(swatch(eye)) swatch(eye).value = tints[eye] || iris;
+    /* The wardrobe owns what she wears and what colour it is. It hands the
+       rig the set of slots to draw and the dyes to apply; nothing else here
+       touches either. */
+    let wardrobe = null;
+    if (typeof WardrobePanel === 'function' && asset.wardrobe && $('#wardrobeCanvas')) {
+      wardrobe = new WardrobePanel({asset, rig, Skeleton2D, CharacterMotion, CharacterPhysics, onChange: (slots, tints, info) => {
+        outfit.clear(); for (const slot of slots) outfit.add(slot);
+        rig.restyle(tints);
+        if (info && !info.silent) syncOutfitItem(info);
+      }});
+      $('#wardrobeOpen')?.addEventListener('click', () => wardrobe.show());
     }
-    function applyTints() { rig.restyle(tints); updateEditor(); }
-    document.querySelectorAll('[data-tint]').forEach(el => el.addEventListener('input',() => {
-      const name = el.dataset.tint;
-      tints[name] = el.value;
-      const wearable = $(`[data-outfit="${name}"]`);
-      if (wearable && !wearable.checked) { wearable.checked = true; outfit.add(name); }
-      applyTints();
-    }));
-    $('#resetTint').addEventListener('click',() => {
-      for (const name of Object.keys(tints)) delete tints[name];
-      applyTints(); paintSwatches();
-    });
-    paintSwatches();
     $('#resetPose').addEventListener('click',() => {
-      for (const name of Object.keys(edits)) delete edits[name]; hidden.clear(); outfit.clear();
+      for (const name of Object.keys(edits)) delete edits[name]; hidden.clear();
       motion.hairPhysics=true; motion.breeze=1; motion.life=true;
       $('#hairPhysics').checked=true; $('#lifeToggle').checked=true;
       $('#windLevel').value=100; $('#windValue').textContent='100%';
       for(const strand of motion.strands) strand.reset();
-      document.querySelectorAll('[data-outfit]').forEach(el=>el.checked=false);
-      for(const name of Object.keys(tints)) delete tints[name];
-      rig.restyle(tints); paintSwatches();
+      if (wardrobe) wardrobe.reset(); else { outfit.clear(); rig.restyle({}); }
       $('#isolateBone').checked=false;
       updateEditor();
     });
@@ -169,7 +162,9 @@
       }
     }
     canvas.addEventListener('keydown',e => {
+      if ((e.code==='ArrowUp'||e.code==='KeyW')&&!e.repeat&&exploracao&&!ragdoll.active&&!health.incapacitated&&!treatment.active&&exploracao.interagir({source:'mestre'})) { e.preventDefault(); return; }
       if (CONTROLS.includes(e.code)) { e.preventDefault(); if(!e.repeat) key(e.code,true); }
+      if (e.code==='KeyE'&&!e.repeat&&weapon?.wielding&&!treatment.active&&!ragdoll.active&&!health.incapacitated) { e.preventDefault(); if(mode!=='play')setMode('play'); weapon.attack(); }
     });
     window.addEventListener('keyup',e => key(e.code,false));
     function releaseControls() {keys.clear();body.releaseJump();endDrag();}
@@ -239,6 +234,16 @@
     function beginDrag(event) {
       if(event.button!==DRAG_BUTTON || dragPointer!==null) return;
       const point=scenePoint(event);
+      // A loose item under the pointer is picked up (a click) or carried and thrown (a drag).
+      if(sceneItems&&itemPointer===null&&!clueSystem?.busy){
+        const item=sceneItems.hit(point[0]+camera,point[1]);
+        if(item){
+          event.preventDefault();canvas.focus({preventScroll:true});
+          sceneItems.pick(item,point[0]+camera,point[1]);itemPointer=event.pointerId??'mouse';
+          if(typeof event.pointerId==='number'){try{canvas.setPointerCapture(event.pointerId);}catch{itemPointer='mouse';}}
+          canvas.style.cursor='grabbing';return;
+        }
+      }
       if(clueSystem&&clueSystem.pointerDown(point[0],point[1],{event,characterHit:canGrab(point)})) {
         event.preventDefault();canvas.focus({preventScroll:true});
         if(clueSystem.placement&&typeof event.pointerId==='number') try {canvas.setPointerCapture(event.pointerId);} catch {}
@@ -264,13 +269,23 @@
     }
     canvas.addEventListener('pointerdown',beginDrag);
     canvas.addEventListener('mousedown',beginDrag);
+    function endItemDrag(){
+      if(itemPointer===null)return;
+      const id=itemPointer;itemPointer=null;
+      const result=sceneItems.release();
+      if(result?.kind==='click')pickUpItem(result.item);
+      if(typeof id==='number'&&canvas.hasPointerCapture(id))canvas.releasePointerCapture(id);
+      canvas.style.cursor='';
+    }
     canvas.addEventListener('pointermove',event => {
       pointerAt=scenePoint(event);
+      if(itemPointer!==null){if(!(event.buttons&DRAG_BUTTONS))endItemDrag();else sceneItems.move(pointerAt[0]+camera,pointerAt[1]);return;}
       if(event.pointerId===dragPointer) {
         if(!(event.buttons&DRAG_BUTTONS)) endDrag();else dragTo(pointerAt);
       } else if(dragPointer===null) {
         const grab=canGrab(pointerAt),clueCursor=clueSystem?.pointerMove(pointerAt[0],pointerAt[1],{characterHit:grab});
-        canvas.style.cursor=clueCursor||(grab?'grab':'');
+        const overItem=sceneItems&&!clueSystem?.busy&&sceneItems.hit(pointerAt[0]+camera,pointerAt[1]);
+        canvas.style.cursor=overItem?'grab':clueCursor||(grab?'grab':'');
       }
     });
     canvas.addEventListener('pointerup',event=>{if(clueSystem&&event.button===0){const p=scenePoint(event);clueSystem.pointerUp(p[0],p[1]);}});
@@ -281,9 +296,11 @@
     });
     window.addEventListener('mouseup',event=>{
       if(event.button===DRAG_BUTTON && dragPointer!==null) endDrag();
+      if(event.button===DRAG_BUTTON && itemPointer!==null) endItemDrag();
     });
     for(const event of ['pointerup','pointercancel','lostpointercapture']) canvas.addEventListener(event,e=>{
       if((e.pointerId===dragPointer || dragPointer==='mouse') && (event!=='pointerup' || e.button===DRAG_BUTTON)) endDrag();
+      if((e.pointerId===itemPointer || itemPointer==='mouse') && (event!=='pointerup' || e.button===DRAG_BUTTON)) endItemDrag();
     });
     for (const event of ['pointerleave','pointercancel']) canvas.addEventListener(event,() => { pointerAt = null; clueSystem?.leave(); });
     function rect(x,y,w,h,color) { ctx.fillStyle=color; ctx.fillRect(Math.round(x),Math.round(y),w,h); }
@@ -331,12 +348,14 @@
       camera=sceneStage.centerCamera(body.x);
     }
     let sceneId=null;
+    const roomItems=new Map();
     function sceneChanged(desc) {
       if(!desc) return;
       if(sceneId!==null&&sceneId!==desc.scene){
-        // Blood and loose pieces belong to the room they fell in.
+        // Blood and loose pieces belong to the room they fell in; dropped items wait there too.
         bloodEffects.drops.length=0;bloodEffects.stains.length=0;organDebris.pieces.length=0;
         limbDebris.release();limbDebris.groups.length=0;
+        if(sceneItems){sceneItems.release();roomItems.set(sceneId,sceneItems.items);sceneItems.items=roomItems.get(desc.scene)||[];sceneItems.revision++;}
         if(!ragdoll.active){body.x=sceneStage.clampBody(body.x);camera=sceneStage.resolveCamera(camera,0);}
       }
       sceneId=desc.scene;
@@ -353,7 +372,14 @@
         keys.clear();body.releaseJump();ensureRagdoll();ragdoll.autoRecover=false;ragdoll.recovery=null;ragdoll.readyToStand=false;ragdoll.crawlMotor=null;ragdoll.crawlState=null;
         rig.gaze=0;rig.blink=health.dead?1:0;motion.breath=0;motion.blink=rig.blink;
       }
-      const direction=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0);
+      let direction=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0);
+      const keyDirection=direction;
+      if(exploracao){
+        // A personagem anda sozinha até a porta clicada; qualquer tecla de direção devolve o controle.
+        if(keyDirection)exploracao.cancelarAuto();
+        const auto=!keyDirection&&!ragdoll.active&&!health.incapacitated&&!treatment.active?exploracao.direcao(body.x):0;
+        if(auto){if(mode!=='play')setMode('play');direction=auto;}
+      }
       if (!paused) {
         accumulator+=elapsed;
         while(accumulator>=STEP) {
@@ -392,14 +418,23 @@
           accumulator-=STEP;
         }
       }
+      if(sceneItems&&!paused)sceneItems.step(simulated,{character:characterBox(),onHit:itemHit});
       // Edits are additive to a clean cached pose, including while paused.
       rig.pose={...motion.displayPose};rig.rootOffset=[...motion.displayOffset];
       if(!ragdoll.active)reaction.applyPose(rig,health);
+      rig.raise=null;
+      if(weapon&&!ragdoll.active)weapon.apply(rig,health,paused?0:simulated,{active:!treatment.active&&!health.incapacitated&&(mode==='play'||mode==='rest'||mode==='idle')});
+      else if(weapon)weapon.apply(rig,health,simulated,{active:false});
       if(mode==='play' && !ragdoll.active && !sceneStage?.lookingAt) {
         const screenX=body.x-camera;
         if(screenX<80) camera=body.x-80;else if(screenX>400) camera=body.x-400;
       }
       if(sceneStage && !ragdoll.active) camera=sceneStage.resolveCamera(camera,elapsed);
+      if(exploracao&&sceneStage?.live){
+        const wallL=sceneStage.clampBody(-1e9),wallR=sceneStage.clampBody(1e9),standing=mode==='play'||mode==='rest'||mode==='idle';
+        exploracao.passo(paused?0:elapsed,{x:body.x,livre:standing&&!ragdoll.active&&!health.incapacitated&&!treatment.active&&dragPointer===null,direcao:keyDirection,grounded:body.grounded,
+          borda:keyDirection<0&&body.x<=wallL+.5?-1:keyDirection>0&&body.x>=wallR-.5?1:0});
+      }
       const playerX=body.x, elevation=(mode==='play'||mode==='jump')?body.y:0;
       for (const [name,degrees] of Object.entries(edits)) rig.pose[name]=(rig.pose[name]||0)+degrees*Math.PI/180;
       rig.resolve();
@@ -432,6 +467,9 @@
       for(const [name,p] of health.parts)if(p.missing)visibleHidden.add(name);
       if(health.parts.get('head').missing){visibleHidden.add('hair_back');visibleHidden.add('hair_front');}
       if($('#isolateBone').checked && $('#boneSelect').value!=='root') for(const bone of rig.layers) if(bone.name!==$('#boneSelect').value) visibleHidden.add(bone.name);
+      // The hand that holds the bat is drawn again over it, so the grip reads as a grip.
+      const holding=weapon?.prop?.visible?'hand_'+weapon.side:null;
+      if(holding)visibleHidden.add(holding);
       const width=viewport?viewport.width:64,height=viewport?viewport.height:96;
       rig.headMirror=ragdoll.active&&ragdoll.crawlState?.heading<0?-1:1;
       if(buffer.width!==width || buffer.height!==height) {buffer.width=width;buffer.height=height;}
@@ -445,8 +483,20 @@
       rect(body.x-camera-17,ground-1,34,2,'#20271d');
       ctx.drawImage(buffer,x,y,width*scale,height*scale);
       treatmentMotion.draw(ctx,{originX,originY,facing,scale});
+      if(weapon&&sceneItems){
+        const frame={originX,originY,facing,scale};weapon.draw(ctx,frame,sceneItems.sprite({def:'taco',rot:0}));
+        if(!paused)for(const it of weapon.strike(sceneItems,frame,facing))sceneItems.note('PAF!',it.x,it.y-it.h/2);
+        if(holding){
+          const only=new Set(rig.layers.map(b=>b.name));only.delete(holding);for(const n of visibleHidden)if(n!==holding)only.add(n);
+          const hp=rig.rasterize({facing,hidden:only,outfit,viewport,wounds:health.parts,xray:$('#showBones').checked});
+          if(handBuffer.width!==width||handBuffer.height!==height){handBuffer.width=width;handBuffer.height=height;}
+          handBuffer.getContext('2d').putImageData(new ImageData(sceneStage?sceneStage.tintSprite(hp):hp,width,height),0,0);
+          ctx.drawImage(handBuffer,x,y,width*scale,height*scale);
+        }
+      }
       lastDraw={x,y,pixels,width,height,originX,originY};
       limbDebris.draw(ctx,camera,{outfit,wounds:health.parts,xray:$('#showBones').checked});
+      sceneItems?.draw(ctx,camera,{hover:itemPointer===null&&pointerAt?sceneItems.hit(pointerAt[0]+camera,pointerAt[1]):null});
       const woundPositions=new Map([...health.parts.keys()].map(name=>{
         const boneName=name.startsWith('eye_')?'head':name;
         const b=rig.bones.get(boneName),w=rig.world.get(boneName),lx=(b.end[0]-b.pivot[0])*.5,ly=(b.end[1]-b.pivot[1])*.5;
@@ -470,10 +520,12 @@
       if(sceneStage?.live) {
         sceneStage.drawFront(ctx,camera);
         clueSystem?.drawMarkers(ctx,camera);
+        exploracao?.desenhar(ctx,camera,{x:ragdoll.active?null:body.x,topo:ground-128-elevation});
         sceneStage.setFocus(body.x-camera,ground-(ragdoll.active?24:64)-elevation);
         sceneStage.finishFrame(ctx,canvas);          // everything after this line is seen only by the master
         if(masterPanel?.showMarkers&&!clueSystem?.busy) sceneStage.drawMarkers(ctx,camera);
         clueSystem?.drawPrivate(ctx,camera);
+        exploracao?.desenharPrivado(ctx,camera);
       }
       if(ragdoll.grab) {
         const g=ragdoll.grab,p=ragdoll.point(g.body,g.local);
@@ -489,6 +541,7 @@
         :gesture?`gesto: ${{scratch:'coçar',hairToss:'jogar cabelo',shoulders:'ombros',glance:'olhar'}[gesture]}`
         :`fôlego ${(motion.breathing.depth).toFixed(1)}× · peso ${motion.weight.value>0?'dir':'esq'}`;
       $('#frameLabel').textContent=`${String(Math.floor((time%.8)/.8*48)).padStart(2,'0')} / 48`;
+      wardrobe?.render(elapsed);
       requestAnimationFrame(tick);
     }
     // Supplies the medic starts the scene with: enough to matter, not enough
@@ -501,17 +554,204 @@
     healthPanel.onCase=()=>casePanel.render();
     healthPanel.canUse=()=>paused?'Retome a animação para usar o item.':dragPointer!==null?'Solte o personagem antes de tratar.':(!body.grounded||body.fallen!==null)&&!ragdoll.active?'Espere o personagem se apoiar no chão.':'';
     casePanel.treatment=treatment;
-    casePanel.dropBridge={preview:(...args)=>healthPanel.previewTreatment(...args),drop:(...args)=>healthPanel.startTreatment(...args),clear:()=>healthPanel.clearTreatmentPreview()};
+    /* ---- loose items: dropped, thrown, picked up; the bundle of clothes; the bat. */
+    sceneItems=typeof SceneItems==='function'?new SceneItems({ground,walls:x=>sceneStage?sceneStage.clampBody(x):x}):null;
+    function characterBox(){
+      const feet=ground-((mode==='play'||mode==='jump')?body.y:0);
+      return {x:body.x,top:feet-(ragdoll.active?40:108),bottom:feet,halfWidth:ragdoll.active?22:11,
+        partAt:y=>{const h=feet-y;return ragdoll.active?(h>24?'torso':'thigh_near'):h>84?'head':h>62?'torso':h>44?'abdomen':h>26?'thigh_near':h>8?'shin_near':'foot_near';}};
+    }
+    // A thrown thing lands: a blow measured in the rig's units, and a heavy one knocks her over.
+    function itemHit({item,part,speed,force}){
+      if(health.dead)return;
+      // Thrown things bruise, cut and can break a bone, but never tear anything open: capped below the organ threshold.
+      const blow=Math.min(235,force/3);
+      const result=health.impact(part,Math.max(66,blow));
+      if(result==='sever')injurePart(part,'sever');
+      sceneItems.note(blow>110?'AI!':'ui',body.x,ground-((mode==='play'||mode==='jump')?body.y:0)-112);
+      // The item has already bounced back, so it was travelling the other way.
+      const dir=-Math.sign(item.vx||1);
+      if(blow>=150&&!health.incapacitated){
+        ensureRagdoll();const b=ragdoll.bodies.get(part)||ragdoll.bodies.get('torso');
+        if(b){b.vx+=dir*facing*Math.min(60,blow*.25);b.vy-=Math.min(50,blow*.15);}
+      }else if(!ragdoll.active)body.vx+=dir*Math.min(90,blow*.5);
+    }
+    // What the bag can do with an item, wired to the scene, the wardrobe and the weapon.
+    function dropToScene(id,at){
+      const entry=supplies.get(id);if(!entry||!sceneItems)return false;
+      if(treatment.active?.entryId===id)return false;
+      if(entry.data?.worn){entry.data.worn=false;wardrobe?.stripClothing({silent:true});}
+      if(weapon?.isWielded(entry))weapon.sheathe();
+      supplies.remove(id);
+      const feet=ground-((mode==='play'||mode==='jump')?body.y:0);
+      if(at)sceneItems.spawn(entry,at[0]+camera,Math.min(at[1],feet-8),0,0);
+      else sceneItems.spawn(entry,body.x+facing*12,feet-44,facing*70,-80);
+      casePanel.render();return true;
+    }
+    function pickUpItem(item){
+      if(!sceneItems)return false;
+      if(!sceneItems.reachable(item,body.x)){sceneItems.note('LONGE DEMAIS',item.x,item.y-item.h/2);return false;}
+      const entry=sceneItems.take(item.id);
+      let ok;
+      if(entry.data)ok=!!supplies.addEntry(entry.def,entry.data,entry.qty);
+      else{const left=supplies.add(entry.def,entry.qty);ok=left===0;if(left>0&&left<entry.qty)entry.qty=left;}
+      if(!ok){sceneItems.spawn(entry,item.x,item.y,0,0);sceneItems.note('BOLSA CHEIA',item.x,item.y-item.h/2);return false;}
+      sceneItems.note('GUARDADO',item.x,item.y-item.h/2);
+      casePanel.render();return true;
+    }
+    function syncOutfitItem(info){
+      if(!wardrobe)return;
+      const worn=supplies.entries.find(e=>e.def==='roupa'&&e.data?.worn);
+      if(info.dressed){
+        if(worn){worn.data.outfit=info.clothing;supplies.revision++;}
+        else if(!supplies.addEntry('roupa',{worn:true,outfit:info.clothing,name:'Roupa'}))casePanel.flash('Sem espaço na bolsa para a roupa vestida.');
+      }else if(worn)supplies.remove(worn.id);
+      casePanel.render();
+    }
+    casePanel.actions={
+      examine:entry=>{const d=entry.data||{};const clue=clueSystem?.clue(d.clueId,d.sceneId);if(clue)clueSystem.open(clue,{source:'inventario'});else casePanel.flash('Essa pista não existe mais.');},
+      wear:entry=>{for(const e of supplies.entries)if(e.def==='roupa'&&e.data)e.data.worn=false;entry.data.worn=true;wardrobe?.wearClothing(entry.data.outfit,{silent:true});supplies.revision++;return true;},
+      unwear:entry=>{entry.data.worn=false;wardrobe?.stripClothing({silent:true});supplies.revision++;return true;},
+      wield:entry=>!!weapon&&!treatment.active&&weapon.wield(entry),
+      unwield:()=>{weapon?.sheathe();return true;},
+      isWielded:entry=>!!weapon?.isWielded(entry),
+      drop:(entry,at)=>dropToScene(entry.id,at),
+      discarded:entry=>{if(entry.data?.worn)wardrobe?.stripClothing({silent:true});if(weapon?.isWielded(entry))weapon.sheathe();}
+    };
+    if(wardrobe)syncOutfitItem({dressed:wardrobe.dressed,clothing:wardrobe.clothing()});
+    casePanel.dropBridge={
+      preview:(id,clientX,clientY)=>{
+        const box=canvas.getBoundingClientRect();
+        if(sceneItems&&clientX>=box.left&&clientX<box.right&&clientY>=box.top&&clientY<box.bottom&&!document.elementFromPoint(clientX,clientY)?.closest?.('#healthPanel,#casePanel')){
+          const busy=treatment.active?.entryId===id;
+          return {external:true,ok:!busy,scene:[(clientX-box.left)/box.width*canvas.width,(clientY-box.top)/box.height*canvas.height],message:busy?'Esse item está em uso.':'Largar no cenário'};
+        }
+        return healthPanel.previewTreatment(id,clientX,clientY);
+      },
+      drop:(id,dest)=>dest.scene?dropToScene(id,dest.scene):healthPanel.startTreatment(id,dest.region),
+      clear:()=>healthPanel.clearTreatmentPreview()};
+    /* The master's hand-out desk (Mapa do mestre, seção Itens): any item that needs no
+       story of its own — supplies, weapons, money, keys, spare parts, food; clothes come
+       from the wardrobe and clues from the scene — into the bag, onto the floor in front
+       of her, or, for a weapon, straight into her hand. A key carries the name of the
+       lock it opens. */
+    const KIND_LABEL={weapon:'Arma',supply:'Suprimento',money:'Dinheiro',key:'Chave',part:'Peça',food:'Comida'};
+    const named=(def,qty)=>qty>1?`${def.label} ×${qty}`:def.label;
+    // A key's data: the lock's name ("Porta" when none is given) and, optionally, how it is drawn.
+    const keyData=dados=>{
+      const nome=String(dados?.nome??dados?.name??'').trim()||'Porta',data={nome,name:nome};
+      if(dados?.variant)data.variant=String(dados.variant);
+      if(dados?.desc)data.desc=String(dados.desc);
+      return data;
+    };
+    // Into the bag: stacks top up as usual; an item with data goes in as entries of its own.
+    function bagPut(id,qty,data){
+      if(!data)return supplies.add(id,qty);
+      let left=qty;
+      while(left>0){const n=Math.min(ITEM_DEFS[id].stack||1,left);if(!supplies.addEntry(id,data,n))break;left-=n;}
+      return left;
+    }
+    // Onto the floor: lying down, the long side on the floor, tossed a little ahead of her.
+    function dropInFront(id,qty,data){
+      const def=ITEM_DEFS[id],feet=ground-((mode==='play'||mode==='jump')?body.y:0),rot=def.h>def.w?1:0;
+      for(let left=qty,k=0;left>0;k++){const n=Math.min(def.stack||1,left);sceneItems.spawn({def:id,qty:n,rot,data},body.x+facing*(22+k*16),feet-40,facing*(28+k*10),-70);left-=n;}
+    }
+    const itemDesk={
+      catalog:()=>Object.entries(ITEM_DEFS).filter(([,d])=>d.kind!=='outfit'&&d.kind!=='clue').map(([id,d])=>({id,label:d.label,desc:d.desc,kind:d.kind||'supply',
+        kindLabel:KIND_LABEL[d.kind||'supply']||'Item',w:d.w,h:d.h,stack:d.stack||1,icon:itemIcon(id,0,'gm-item-svg')})),
+      status:()=>{const held=weapon?.snapshot();return {used:supplies.used,capacity:supplies.capacity,floor:sceneItems?sceneItems.count:0,wielded:held?ITEM_DEFS[held.def]?.label||held.def:null};},
+      give(id,qty=1,dados=null){
+        const def=ITEM_DEFS[id];if(!def)return {ok:false,message:'Item desconhecido.'};
+        // A key is one entry per key, named; everything else stacks as it always did.
+        const data=def.kind==='key'?keyData(dados):null;
+        const left=bagPut(id,qty,data),placed=qty-left;casePanel.render();
+        const name=data?entryLabel({def:id,data})+(qty>1?` ×${qty}`:''):named(def,qty);
+        return {ok:placed>0,placed,message:placed===qty?`${name} na bolsa.`:placed?`Só coube ${placed} de ${qty} na bolsa.`:'Bolsa cheia: não coube.'};
+      },
+      drop(id,qty=1,dados=null){
+        const def=ITEM_DEFS[id];if(!def||!sceneItems)return {ok:false,message:'Não há cenário para largar o item.'};
+        const data=def.kind==='key'?keyData(dados):null;
+        dropInFront(id,qty,data);
+        return {ok:true,message:`${data?entryLabel({def:id,data})+(qty>1?` ×${qty}`:''):named(def,qty)} no chão, na frente dela.`};
+      },
+      wield(id){
+        const def=ITEM_DEFS[id];if(def?.kind!=='weapon'||!weapon)return {ok:false,message:'Esse item não se empunha.'};
+        if(weapon.snapshot()?.def===id)return {ok:true,message:`${def.label} já está na mão. E golpeia.`};
+        const entry=supplies.entries.find(e=>e.def===id)||supplies.addEntry(id);
+        if(!entry)return {ok:false,message:`Bolsa cheia: abra espaço para o ${def.label.toLowerCase()}.`};
+        const ok=casePanel.actions.wield(entry);casePanel.render();
+        return {ok,message:ok?`${def.label} na mão. E golpeia.`:`${def.label} na bolsa; agora não dá para empunhar (tratamento em andamento).`};
+      },
+      collect(){
+        if(!sceneItems?.count)return {ok:false,message:'Nada no chão.'};
+        let taken=0,stuck=0;
+        for(const item of [...sceneItems.items]){
+          const entry=sceneItems.take(item.id);
+          if(entry.data){if(supplies.addEntry(entry.def,entry.data,entry.qty))taken++;else{sceneItems.spawn(entry,item.x,item.y,0,0);stuck++;}continue;}
+          const left=supplies.add(entry.def,entry.qty);
+          if(left<entry.qty)taken++;
+          if(left>0){sceneItems.spawn({...entry,qty:left},item.x,item.y,0,0);stuck++;}
+        }
+        casePanel.render();
+        return {ok:taken>0,message:stuck?`Recolhido: ${taken}. Sem espaço para ${stuck}; ficou no chão.`:`${taken} ${taken===1?'item recolhido':'itens recolhidos'} para a bolsa.`};
+      }
+    };
+    /* The bag, for the scene's interactions — a machine takes coins and hands out a
+       can, a door asks for its key, a fuse box takes a fuse: count, spend, give,
+       look for a key, list. The clue system carries it as `itens`.
+         contar(id)            how many of it are in the bag
+         gastar(id,n=1)        spend n, smallest stacks first; false (and nothing
+                               spent) when there are fewer than n
+         dar(id,n=1,dados)     into the bag; what does not fit falls on the floor in
+                               front of her: 'bolsa', 'chao', or false for an unknown item
+         temChave(nome)        a key for that lock, ignoring case and accents; no name: any key
+         entradas()            [{def,qty,data}] */
+    const plainName=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+    const itens={
+      contar:id=>supplies.count(id),
+      gastar(id,n=1){
+        const before=supplies.entries.filter(e=>e.def===id);
+        if(!supplies.consume(id,n))return false;
+        // Whatever left the bag is no longer worn or held.
+        for(const e of before)if(!supplies.get(e.id))casePanel.actions.discarded(e);
+        casePanel.render();return true;
+      },
+      dar(id,n=1,dados=null){
+        const def=ITEM_DEFS[id];if(!def||!Number.isSafeInteger(n)||n<1)return false;
+        const data=def.kind==='key'?keyData(dados):dados&&typeof dados==='object'&&Object.keys(dados).length?dados:null;
+        const left=bagPut(id,n,data);
+        if(left>0&&sceneItems)dropInFront(id,left,data);
+        casePanel.render();
+        return !left?'bolsa':sceneItems?'chao':false;
+      },
+      temChave(nome=''){
+        const want=plainName(nome);
+        return supplies.entries.some(e=>ITEM_DEFS[e.def]?.kind==='key'&&(!want||plainName(keyName(e))===want));
+      },
+      entradas:()=>supplies.entries.map(e=>({def:e.def,qty:e.qty,data:e.data?JSON.parse(JSON.stringify(e.data)):null}))
+    };
+    if(clueSystem)clueSystem.itens=itens;
+    // A small clue clicked in the scene goes into the bag; it is examined from there.
+    if(clueSystem)clueSystem.onPickup=(clue,source)=>{
+      const type=ClueTypes.get(clue.type);
+      const entry=supplies.addEntry('pista',{clueId:clue.id,sceneId:clueSystem.scene()?.id,name:clue.name,variant:clue.type==='documento'?null:clue.type,desc:`${type?.label||'Pista'} encontrado no cenário. Examine para abrir.`});
+      if(!entry){clueSystem.toast('BOLSA CHEIA','Abra espaço para guardar a pista','alerta');return true;}
+      clueSystem.take(clue,source);casePanel.render();return true;
+    };
+    // Items in the bag that came from a room the master reset go back to being clues.
+    clueSystem?.listeners.add(kind=>{if(kind!=='reset')return;for(const e of [...supplies.entries])if(e.def==='pista'&&e.data?.sceneId===clueSystem.scene()?.id)supplies.remove(e.id);for(const [,items] of roomItems)for(let i=items.length-1;i>=0;i--)if(items[i].entry.def==='pista')items.splice(i,1);if(sceneItems)sceneItems.items=sceneItems.items.filter(i=>i.entry.def!=='pista');casePanel.render();});
     window.addEventListener('blur',()=>treatment.cancel('Tratamento interrompido ao sair da janela.'));
     document.addEventListener('visibilitychange',()=>{if(document.hidden)treatment.cancel('Tratamento interrompido ao sair da janela.');});
     window.addEventListener('keydown',e=>{
       if(e.key==='Escape'&&treatment.active&&!casePanel.drag){e.preventDefault();e.stopImmediatePropagation();treatment.cancel();}
     },true);
+    // Footsteps: the motion layer says when a heel lands; the master's ambience plays it.
+    motion.onFootstep=info=>{const sound=masterPanel?.sound;if(sound)sound.footstep({...info,surface:sceneStage?.scene?.id==='campo'?'grama':'madeira'});};
     if(sceneStage) {
       sceneStage.onTeleport=teleport;
       sceneStage.onSceneChanged=sceneChanged;
       if(typeof MasterPanel==='function'&&masterLink) {
-        try { masterPanel=new MasterPanel({stage:sceneStage,link:masterLink,clues:clueSystem}); }
+        try { masterPanel=new MasterPanel({stage:sceneStage,link:masterLink,clues:clueSystem,items:itemDesk,exploracao}); }
         catch(error) { console.error('Mapa do mestre indisponível:',error); if(!sceneStage.live) sceneStage.load('escritorio'); }
       } else sceneStage.load('escritorio');
       sceneChanged(sceneStage.describe());
@@ -526,8 +766,10 @@
       hairRows:motion.strands.map(s=>({curve:s.key,offsets:[34,38,42,46,48].map(y=>[y,+rig.sway.get(s.key)[y*2].toFixed(3),+rig.sway.get(s.key)[y*2+1].toFixed(3)])})),
       inventory:supplies.snapshot(),treatment:treatment.snapshot(),treatmentResult:treatment.lastResult,health:health.snapshot(),healthClock:healthClock.snapshot(),reaction:reaction.active?{...reaction.active}:null,pain:reaction.snapshot(),limp:motion.limp||null,organDebris:organDebris.pieces.map(p=>({...p})),crawl:ragdoll.crawlState||null,bloodParticles:bloodEffects.drops.length,bloodStains:bloodEffects.stains.length,
       detached:[...health.parts].filter(([,p])=>p.missing).map(([name])=>name),detachedPieces:limbDebris.snapshot(),draggingDetached:!!limbDebris.grab,hidden:[...hidden],
-      scene:sceneStage?.describe()||null,players:masterLink?{...masterLink.status,overlay:{curtain:!!masterLink.overlay.curtain,handout:!!masterLink.overlay.handout}}:null,clues:clueSystem?clueSystem.snapshot():null};}};
-    if(sceneStage) Object.assign(window.demo,{stage:sceneStage,link:masterLink,clues:clueSystem,get master(){return masterPanel;}});
+      wardrobe:wardrobe?wardrobe.snapshot():null,outfit:[...outfit],sceneItems:sceneItems?sceneItems.snapshot():[],carryingItem:itemPointer!==null,weapon:weapon?weapon.snapshot():null,scene:sceneStage?.describe()||null,players:masterLink?{...masterLink.status,overlay:{curtain:!!masterLink.overlay.curtain,handout:!!masterLink.overlay.handout}}:null,clues:clueSystem?clueSystem.snapshot():null};}};
+    if(sceneStage) Object.assign(window.demo,{stage:sceneStage,link:masterLink,clues:clueSystem,exploracao,get master(){return masterPanel;}});
+    if(wardrobe) Object.assign(window.demo,{wardrobe});
+    Object.assign(window.demo,{items:sceneItems,weapon,bag:supplies,casePanel,itemDesk,itens});
   } catch(error) {
     const el=document.querySelector('#error');el.hidden=false;el.textContent=`Não foi possível iniciar: ${error.message}`;
     console.error(error);

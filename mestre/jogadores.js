@@ -120,6 +120,12 @@
     if (e.code === 'KeyF') { e.preventDefault(); toggleFullscreen(); }
     if (e.code === 'KeyE') { e.preventDefault(); toggleScale(); }
   });
+  // Soltar a tecla também vai para o mestre enquanto a interface usa o teclado (minijogos).
+  addEventListener('keyup', e => {
+    if (!wantsKeys || e.ctrlKey || e.metaKey || e.altKey) return;
+    e.preventDefault();
+    link.input({kind: 'keyup', key: e.key, code: e.code});
+  });
   document.addEventListener('fullscreenchange', () => { fit(); link.say('ping'); });
   window.playersView = {get state() { return {hasFrame, connected: link.connected, curtain: fade.curtain.value, handout: fade.handout.value, overlay, hot: hot.length, interfaceOpen, wantsKeys}; }};
 })();

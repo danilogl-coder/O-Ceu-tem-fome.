@@ -70,12 +70,24 @@
         const parentName = b.bone.parent === 'root' ? 'pelvis' : b.bone.parent;
         const a = this.bodies.get(parentName);
         if (!a || a === b || a.external || b.external) continue;
-        const limits = b.name.startsWith('shin') ? [-.15,2.5]
-          : b.name.startsWith('forearm') ? [-2.5,.2]
-          : b.name.startsWith('arm') ? [-2.8,2.8]
-          : b.name.startsWith('thigh') ? [-1.8,1.8]
-          : b.name.startsWith('foot') || b.name.startsWith('hand') ? [-.8,.8]
-          : b.name === 'head' || b.name === 'neck' ? [-.55,.55] : [-.4,.4];
+        /* What each joint allows, as the child's angle against its parent.
+           Every limb hangs down and the character faces right, so positive is
+           backwards for a limb and forwards for the spine. The ranges are
+           deliberately lopsided the way a body is: a shoulder reaches far
+           forward and only a little back, a hip folds forward to the chest but
+           barely extends behind, a knee and an elbow go one way only, an ankle
+           points down further than it pulls up. Symmetric limits let a thrown
+           ragdoll fold its legs up behind its back and hang its arms out of
+           the shoulder blades, which is the first thing that reads as a doll. */
+        const limits = b.name.startsWith('shin') ? [-.08,2.5]        // knee: 5° past straight, 143° bent
+          : b.name.startsWith('forearm') ? [-2.5,.1]                  // elbow: 143° bent, 6° past straight
+          : b.name.startsWith('arm') ? [-3.0,1.0]                     // shoulder: 172° forward, 57° back
+          : b.name.startsWith('thigh') ? [-2.1,.5]                    // hip: 120° forward, 29° back
+          : b.name.startsWith('foot') ? [-.45,.9]                     // ankle: 26° up, 52° down
+          : b.name.startsWith('hand') ? [-1.2,1.2]                    // wrist
+          : b.name === 'head' || b.name === 'neck' ? [-.55,.55]       // about 60° together either way
+          : b.name === 'torso' ? [-.35,.55]                           // spine bends further forward than back
+          : b.name === 'abdomen' ? [-.3,.5] : [-.35,.35];
         this.joints.push({a,b,pa:{x:b.bone.pivot[0]-a.center[0],y:b.bone.pivot[1]-a.center[1]},
           pb:{x:-b.local.x,y:-b.local.y}, limits});
       }

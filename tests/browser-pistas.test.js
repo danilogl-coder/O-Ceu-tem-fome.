@@ -74,8 +74,18 @@ const png=(file,dataUrl)=>fs.writeFileSync(path.join(output,file),Buffer.from(da
     assert(/url\(|zoom-in/.test(await players.evaluate(()=>document.querySelector('#tela').style.cursor)),'players see the magnifier cursor over a clue');
     await pclick(...foto);await wait(800);
     s=await clues();
-    assert.equal(s.open[0]?.id,'foto','players open the photo from their window');
+    // A photo is small enough to carry: it goes into the bag first, found by the players.
+    assert.equal(s.open.length,0,'the photo does not open in place');
+    assert(s.taken.includes('foto'),'it was taken from the scene');
     assert.equal(await P(()=>window.demo.clues.found('foto').by),'jogadores');
+    assert(await P(()=>window.demo.state.inventory.entries.some(e=>e.def==='pista'&&e.data.clueId==='foto')),'and lies in the bag');
+    // From the bag, the master examines it for everyone.
+    await page.keyboard.press('i');await wait(200);
+    await page.locator('#caseGrid [data-item="pista"]').click({button:'right'});
+    await page.locator('#caseMenu [data-option="examine"]').click();await wait(600);
+    s=await clues();
+    assert.equal(s.open[0]?.id,'foto','examined from the bag');assert.equal(s.open[0].audience,'todos');
+    await page.keyboard.press('i');await wait(200);
     await players.waitForFunction(()=>window.playersView.state.interfaceOpen);
     await playerShot('jogadores-foto.png');
     await pclick(425,67);await wait(900);
@@ -110,7 +120,15 @@ const png=(file,dataUrl)=>fs.writeFileSync(path.join(output,file),Buffer.from(da
     await shot('mesa-gaveta.png');
     await click(sx(86+34)+160,22+109*2-8);await wait(400);
     await click(410,160);await wait(400);
-    assert.equal(await P(()=>window.demo.clues.memory('mesa').tampa),'aberta','the flip cover opens');
+    // The cover is locked with a password; the hint is the master's, the word is "Raimundo".
+    assert.notEqual(await P(()=>window.demo.clues.memory('mesa').tampa),'aberta','the cover does not open on a click');
+    assert(await P(()=>window.demo.clues.top.state.keypad),'a keypad asks for the password');
+    await shot('mesa-senha.png');
+    await page.keyboard.type('errada');await page.keyboard.press('Enter');await wait(300);
+    assert(await P(()=>window.demo.clues.top.state.keypad?.wrong),'a wrong word is refused');
+    await page.keyboard.type('raimundo');await page.keyboard.press('Enter');await wait(500);
+    assert.equal(await P(()=>window.demo.clues.memory('mesa').tampa),'aberta','the right name opens the flip cover');
+    assert(await P(()=>window.demo.clues.memory('mesa').destravada));
     await move(404,162);await wait(150);await shot('mesa-botao.png');
     await click(404,162);await wait(1200);
     await shot('mesa-alarme.png');
@@ -126,6 +144,19 @@ const png=(file,dataUrl)=>fs.writeFileSync(path.join(output,file),Buffer.from(da
     await page.keyboard.press('Escape');
     await page.waitForFunction(()=>!window.demo.state.clues.cinematic,null,{timeout:3000});
     assert.equal(await P(()=>window.demo.clues.memory('mesa').apertos),1,'the press is remembered');
+    // The button stays pressed and the room shows what they did; the master can rearm it.
+    assert(await P(()=>window.demo.clues.memory('mesa').apertado),'the button stays down');
+    assert(await P(()=>window.demo.stage.state.props.has('desastre')),'the office shows the damage');
+    await click(...centre(await rectOf('mesa')).map((v,i)=>i?v:v-120));await wait(700);
+    assert.equal((await clues()).open[0]?.id,'mesa');
+    await shot('mesa-apertado.png');
+    await click(404,162);await wait(400);
+    assert(!(await P(()=>window.demo.clues.top?.state.alarm)),'it cannot be pressed again');
+    await page.keyboard.press('Escape');await wait(400);
+    await shot('escritorio-estrago.png');
+    await page.keyboard.press('m');await wait(300);await page.locator('#gmTab-mesa').click();await page.locator('#gmButtonReset').click();await wait(300);
+    assert(!(await P(()=>window.demo.clues.memory('mesa').apertado))&&!(await P(()=>window.demo.stage.state.props.has('desastre'))),'rearmed: unpressed, repaired');
+    await page.locator('#gmClose').click();await wait(200);
 
     // Lock on the archive door, typed from the players' window.
     await P(()=>window.demo.stage.teleportTo('arquivo'));await wait(500);
@@ -164,7 +195,13 @@ const png=(file,dataUrl)=>fs.writeFileSync(path.join(output,file),Buffer.from(da
     await page.screenshot({path:path.join(output,'painel-pistas.png'),clip:{x:880,y:0,width:560,height:1000}});
     await page.locator('#gmClose').click();
     await click(...centre(await rectOf(custom.id)));await wait(700);
-    assert.equal((await clues()).open[0]?.id,custom.id,'the master\'s clue opens from the scene');
+    // A note is portable: the master's click puts it in the bag, and it is read from there.
+    assert((await clues()).taken.includes(custom.id),'the master\'s note goes to the bag');
+    await page.keyboard.press('i');await wait(200);
+    await page.locator(`#caseGrid [data-item="pista"]`).last().click({button:'right'});
+    await page.locator('#caseMenu [data-option="examine"]').click();await wait(600);
+    assert.equal((await clues()).open[0]?.id,custom.id,'the master\'s clue opens from the bag');
+    await page.keyboard.press('i');await wait(200);
     await playerShot('jogadores-pista-criada.png');
     await page.keyboard.press('Escape');await wait(700);
 

@@ -78,13 +78,13 @@ fs.mkdirSync(output,{recursive:true});
     // --- starting supplies, each with the footprint its sprite claims --------
     let snap=await bag();
     assert.equal(snap.cols,10);assert.equal(snap.rows,6);assert.equal(snap.capacity,60);
-    assert.deepEqual(snap.entries.map(e=>e.def).sort(),['antibiotic','bandage','splint']);
+    assert.deepEqual(snap.entries.map(e=>e.def).sort(),['antibiotic','bandage','roupa','splint']);
     assert.deepEqual([(await find('bandage')).w,(await find('bandage')).h],[2,1],'bandagem 2x1');
     assert.deepEqual([(await find('splint')).w,(await find('splint')).h],[3,1],'tala 3x1');
     assert.deepEqual([(await find('antibiotic')).w,(await find('antibiotic')).h],[1,2],'antibiotico 1x2');
-    assert.equal(snap.used,7,'3 da tala + 2 da bandagem + 2 do antibiotico');
-    assert.equal(await page.locator('#caseGrid [data-entry]').count(),3);
-    assert.equal(await page.locator('#caseUsage').textContent(),'7 / 60');
+    assert.equal(snap.used,11,'3 da tala + 2 da bandagem + 2 do antibiotico + 4 da roupa vestida');
+    assert.equal(await page.locator('#caseGrid [data-entry]').count(),4);
+    assert.equal(await page.locator('#caseUsage').textContent(),'11 / 60');
     await capture('bolsa');
 
     // --- dragging to a free square moves the item ---------------------------
@@ -97,7 +97,7 @@ fs.mkdirSync(output,{recursive:true});
     assert.equal(moved.rot,0,'sem rotacao no arrasto simples');
 
     // --- R mid-drag drops it turned -----------------------------------------
-    await dragSquare([moved.x,moved.y],[6,1],true);
+    await dragSquare([moved.x,moved.y],[6,2],true);   // below the outfit bundle that sits at 6,0
     moved=await find('splint');
     assert.equal(moved.rot,1,'R durante o arrasto girou a tala');
     assert.deepEqual([moved.w,moved.h],[1,3],'footprint girou junto');
@@ -120,7 +120,7 @@ fs.mkdirSync(output,{recursive:true});
     await page.locator('#caseSort').click();
     snap=await bag();
     assert.equal(snap.used,areaBefore,'organizar nao perde nem duplica area');
-    assert.equal(snap.entries.length,3);
+    assert.equal(snap.entries.length,4);
     for(const e of snap.entries)
       assert(e.x>=0&&e.y>=0&&e.x+e.w<=10&&e.y+e.h<=6,`${e.def} ficou fora da grade`);
     const seen=new Set();

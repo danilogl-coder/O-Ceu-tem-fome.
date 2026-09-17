@@ -43,7 +43,9 @@
     },
     get: id => scenes.get(id),
     list: () => [...scenes.values()],
-    has: id => scenes.has(id)
+    has: id => scenes.has(id),
+    /* Scenes assembled by the master (montador.js) can be removed again. */
+    unregister: id => scenes.delete(id)
   };
 
   /* --------------------------------------------------------------- room */
@@ -205,7 +207,7 @@
 
     // Outside, unlit: the painter chooses the colours of the hour itself.
     out.outside = Object.entries(room.outside).map(([name, factor]) => {
-      const w = Math.ceil((SW + (room.x1 - room.x0) * factor) / S) + 40;
+      const w = Math.ceil((SW + (room.x1 - room.x0) * factor) / S) + 40 + Math.max(0, (room.outsideMargin ?? 40) - 40);
       const buf = new K.PixelBuffer(w, room.wallRows, pal);
       scene.paint.outside?.(buf, name, ctx);
       return {name, factor, canvas: canvas(K.resolve(buf, {variant: 'day'}))};
@@ -290,6 +292,7 @@
       const job = {steps: buildRoomLayerSteps(scene, state, this.doc), done: [done], pace};
       this.builds.set(key, job);
       const pump = () => {
+        if (job.cancelled) return;
         const r = job.steps.next();
         if (!r.done) { setTimeout(pump, job.pace); return; }
         this.builds.delete(key);
@@ -343,9 +346,24 @@
       this.warm();
       return this.live;
     }
+    /* A spawn id of the live scene, a point {x, facing}, or a function that
+       returns one once the scene is live (arrival at a passage). */
     teleportTo(spawnId) {
-      const spawn = this.live?.scene.spawns.find(s => s.id === spawnId);
+      const spawn = typeof spawnId === 'function' ? spawnId(this) : spawnId && typeof spawnId === 'object' ? spawnId : this.live?.scene.spawns.find(s => s.id === spawnId);
       if (spawn && this.onTeleport) this.onTeleport(spawn.x, spawn.facing || 1);
+    }
+    /* A scene definition changed (an assembled scene was edited): forget its
+       cached layers and, if it is live, dissolve into the new picture. */
+    refreshScene(id, {fade = .35} = {}) {
+      const prefix = id + '|';
+      for (const key of [...this.cache.keys()]) if (key.startsWith(prefix)) this.cache.delete(key);
+      if (this.builds) for (const [key, job] of [...this.builds]) if (key.startsWith(prefix)) { job.cancelled = true; this.builds.delete(key); }
+      const def = SceneLibrary.get(id);
+      if (this.live?.scene.id === id && def) {
+        this.live = {...this.live, scene: def};
+        if (this.pending) this.pending = null;
+        this.update({}, {fade});
+      }
     }
     /* Change light, weather, props or clock of the live scene with a dither
        dissolve of the layers (the character is not part of it). */
@@ -561,7 +579,7 @@
       const t = this.time;
       // Outside, far to near, with animation between the planes.
       for (const o of layers.outside) {
-        const dx = Math.round(SW / 2 + (room.x0 - cc) * o.factor) - 40 * S;
+        const dx = Math.round(SW / 2 + (room.x0 - cc) * o.factor) - (room.outsideMargin ?? 40) * S;
         drawSlice(ctx, o.canvas, dx, 0, o.canvas.height);
         if (animated && scene.animate?.outside) scene.animate.outside(this.painter(ctx, dx, 0, scene, layers), o.name, t, state, this);
       }
@@ -778,6 +796,13 @@
       } else if (T.type === 'persiana') {
         const slats = 9, slatH = Math.ceil(SH / slats / S) * S;
         for (let i = 0; i < slats; i++) ctx.fillRect(0, i * slatH, SW, Math.round(slatH * cover / S) * S);
+      } else if (T.type === 'elevador') {
+        // Two steel doors sliding shut from the sides, with a seam of light between them.
+        const half = Math.round(SW / 2 * cover / S) * S;
+        ctx.fillStyle = '#2a2f38'; ctx.fillRect(0, 0, half, SH); ctx.fillRect(SW - half, 0, half, SH);
+        ctx.fillStyle = '#4a525e'; for (let y = 0; y < SH; y += 16) { ctx.fillRect(0, y, half, 2); ctx.fillRect(SW - half, y, half, 2); }
+        ctx.fillStyle = '#121419'; ctx.fillRect(Math.max(0, half - 4), 0, 4, SH); ctx.fillRect(SW - half, 0, 4, SH);
+        if (cover >= 1) { ctx.fillStyle = '#07040b'; ctx.fillRect(0, 0, SW, SH); }
       } else {
         ctx.fillStyle = ctx.createPattern(this.recolor(this.patterns[Math.round(cover * 16)], '#07040b'), 'repeat');
         ctx.fillRect(0, 0, SW, SH);
@@ -805,7 +830,7 @@
 
     /* Still picture of any scene/state for previews and thumbnails. */
     renderStill(target, sceneId, state = {}, camera = 0) {
-      const scene = SceneLibrary.get(sceneId);
+      const scene = sceneId && typeof sceneId === 'object' ? sceneId : SceneLibrary.get(sceneId);
       if (!scene) return;
       const g = target.getContext('2d');
       g.imageSmoothingEnabled = false;

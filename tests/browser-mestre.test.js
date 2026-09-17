@@ -71,8 +71,8 @@ const png=(file,dataUrl)=>fs.writeFileSync(path.join(output,file),Buffer.from(da
     await page.keyboard.press('b');
     await players.waitForFunction(()=>window.playersView.state.curtain<=0);
 
-    // Document handed to the players from the table tab.
-    await page.locator('[data-gm-tab="mesa"]').click();
+    // Document handed to the players from the Jogadores section.
+    await page.locator('[data-gm-tab="tela"]').click();
     await page.locator('#gmDocTitle').fill('Ofício nº 112/87');
     await page.locator('#gmDocBody').fill('Solicitamos a imediata interdição do porão do prédio anexo.');
     await page.locator('#gmDocShow').click();
@@ -81,7 +81,8 @@ const png=(file,dataUrl)=>fs.writeFileSync(path.join(output,file),Buffer.from(da
     await page.keyboard.press('n');
     await players.waitForFunction(()=>window.playersView.state.handout<=0);
 
-    // Clues listed on the table tab: the camera travels to one and comes back.
+    // Clues listed in the Pistas section: the camera travels to one and comes back.
+    await page.locator('[data-gm-tab="mesa"]').click();
     assert(await page.locator('[data-clue="mapa"]').isVisible(),'the map clue is listed');
     await page.locator('[data-clue="mapa"] [data-clue-action="look"]').click();
     await waitScene(()=>window.demo.state.scene.looking);

@@ -3,54 +3,81 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Side Scroller · Personagem modular</title>
+  <title>O Céu tem Fome · RPG de mesa</title>
   <link rel="stylesheet" href="styles.css?v=pain3">
   <link rel="stylesheet" href="hud.css?v=treatment1">
-  <link rel="stylesheet" href="bag.css?v=treatment1">
-  <link rel="stylesheet" href="mestre/painel-mestre.css?v=pistas1">
+  <link rel="stylesheet" href="bag.css?v=explora1">
+  <link rel="stylesheet" href="mestre/painel-mestre.css?v=explora2">
+  <link rel="stylesheet" href="mestre/painel-exploracao.css?v=explora2">
+  <link rel="stylesheet" href="wardrobe.css?v=roupas2">
   <script defer src="assets.js"></script>
-  <script defer src="skeleton.js?v=pain3"></script>
-  <script defer src="motion.js?v=pain3"></script>
-  <script defer src="ragdoll.js?v=pain3"></script>
+  <script defer src="skeleton.js?v=roupas3"></script>
+  <script defer src="motion.js?v=roupas3"></script>
+  <script defer src="ragdoll.js?v=roupas2"></script>
   <script defer src="anatomy.js?v=pain3"></script>
   <script defer src="health.js?v=pain3"></script>
-  <script defer src="inventory.js?v=treatment1"></script>
-  <script defer src="inventory-ui.js?v=treatment1"></script>
+  <script defer src="inventory.js?v=explora1"></script>
+  <script defer src="itens-cena.js?v=itens1"></script>
+  <script defer src="armas.js?v=itens1"></script>
+  <script defer src="inventory-ui.js?v=explora1"></script>
   <script defer src="treatment.js?v=treatment1"></script>
-  <script defer src="treatment-motion.js?v=treatment1"></script>
+  <script defer src="treatment-motion.js?v=tratamento2"></script>
   <script defer src="health-ui.js?v=treatment1"></script>
   <script defer src="mestre/pixel-kit.js?v=pistas1"></script>
-  <script defer src="mestre/scene-engine.js?v=pistas1"></script>
+  <script defer src="mestre/scene-engine.js?v=explora1"></script>
   <script defer src="mestre/sobreposicoes.js?v=pistas1"></script>
-  <script defer src="mestre/cena-escritorio.js?v=pistas1"></script>
+  <script defer src="mestre/cena-escritorio.js?v=itens2"></script>
   <script defer src="mestre/cena-campo.js?v=pistas1"></script>
-  <script defer src="mestre/link.js?v=pistas1"></script>
-  <script defer src="mestre/som-ambiente.js?v=pistas1"></script>
+  <script defer src="mestre/cena-jorge.js?v=jorge1"></script>
+  <script defer src="mestre/montador-paleta.js?v=explora2"></script>
+  <script defer src="mestre/montador.js?v=explora2"></script>
+  <script defer src="mestre/modulos-estrutura.js?v=explora2"></script>
+  <script defer src="mestre/modulos-casa.js?v=explora2"></script>
+  <script defer src="mestre/modulos-trabalho.js?v=explora1"></script>
+  <script defer src="mestre/modulos-comercio.js?v=explora1"></script>
+  <script defer src="mestre/modulos-saude.js?v=explora1"></script>
+  <script defer src="mestre/modulos-rua.js?v=explora2"></script>
+  <script defer src="mestre/cenas-genericas.js?v=explora2"></script>
+  <script defer src="mestre/link.js?v=explora1"></script>
+  <script defer src="mestre/som-ambiente.js?v=explora2"></script>
   <script defer src="mestre/pistas-ui.js?v=pistas1"></script>
-  <script defer src="mestre/pistas.js?v=pistas1"></script>
+  <script defer src="mestre/pistas.js?v=explora1"></script>
   <script defer src="mestre/pistas-tipos.js?v=pistas1"></script>
   <script defer src="mestre/pista-foto.js?v=pistas1"></script>
-  <script defer src="mestre/pista-mesa.js?v=pistas1"></script>
+  <script defer src="mestre/pista-mesa.js?v=itens2"></script>
   <script defer src="mestre/pista-computador.js?v=pistas1"></script>
   <script defer src="mestre/pista-mapa.js?v=pistas1"></script>
+  <script defer src="mestre/caso-jorge.js?v=jorge1"></script>
+  <script defer src="mestre/pista-livros.js?v=jorge1"></script>
+  <script defer src="mestre/pista-pc.js?v=jorge1"></script>
+  <script defer src="mestre/pista-cameras.js?v=jorge1"></script>
+  <script defer src="mestre/pista-mural.js?v=jorge1"></script>
+  <script defer src="mestre/pista-provas.js?v=jorge1"></script>
+  <script defer src="mestre/interacoes-basicas.js?v=explora1"></script>
+  <script defer src="mestre/interacoes-jogos.js?v=explora1"></script>
+  <script defer src="mestre/exploracao.js?v=explora2"></script>
   <script defer src="mestre/cinematica-foguete.js?v=pistas1"></script>
-  <script defer src="mestre/painel-mestre.js?v=pistas1"></script>
-  <script defer src="app.js?v=pistas1"></script>
+  <script defer src="mestre/painel-mestre.js?v=explora2"></script>
+  <script defer src="mestre/painel-exploracao.js?v=explora2"></script>
+  <script defer src="wardrobe.js?v=roupas3"></script>
+  <script defer src="wardrobe-ui.js?v=roupas2"></script>
+  <script defer src="app.js?v=explora1"></script>
 </head>
 <body>
-  <header><a class="brand" href="index.html"><span class="brand-icon">S</span> SIDE SCROLLER <span class="muted">/ PERSONAGEM</span></a><span class="status"><i></i> Raster nativo · 64 × 96</span></header>
+  <header><a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path d="M6 2h1v1h-1zM4 3h2v1h-2zM13 3h1v1h-1zM3 4h3v1h-3zM2 5h3v1h-3zM1 6h4v1h-4zM1 7h4v1h-4zM12 7h1v1h-1zM1 8h5v1h-5zM1 9h5v1h-5zM1 10h6v1h-6zM2 11h7v1h-7zM11 11h1v1h-1zM3 12h9v1h-9zM4 13h7v1h-7z"/></svg></span> O CÉU TEM FOME <span class="muted">/ RPG DE MESA</span></a><span class="status"><i></i> Mesa digital · <kbd>M</kbd> abre o mapa do mestre</span></header>
   <main>
-    <div class="intro"><div><p class="eyebrow">PERSONAGEM MODULAR</p><h1>Anatomia refinada. Cabelo com física.</h1><p>Respiração, peso, olhar, piscar, inércia e cabelo são sistemas separados, cada um no seu próprio ritmo — é a separação que faz o personagem parecer gente parada em vez de boneco balançando. Passe o mouse pela cena: os olhos acompanham.</p></div><a class="download" href="pixel_art/generated/character.png" download="character.png">Baixar sprite PNG ↗</a></div>
+    <div class="intro"><div><p class="eyebrow">RPG DE MESA · MESTRE AO VIVO</p><h1>O Céu tem Fome</h1><p>Um RPG de mesa com mesa digital. O mestre monta os cenários com luz, clima e som, esconde pistas na própria cena e cuida da personagem — ferimentos, bolsa e roupas —, enquanto os jogadores acompanham tudo numa tela só deles.</p></div><button type="button" class="download" id="introMaster">Abrir o mapa do mestre <kbd>M</kbd></button></div>
     <div class="workspace">
-      <section class="stage-card" aria-label="Cena de teste">
-        <div class="bar"><span><i class="live-dot"></i> CENA LATERAL · <span id="sceneLabel">ESCRITÓRIO</span></span><span><span id="lifeReadout" class="muted">fôlego</span> · <span id="hairReadout" class="muted">cabelo 0.0 px</span> · <span id="stateLabel">Base sem roupas</span></span></div>
-        <div class="scene-wrap"><canvas id="scene" width="480" height="270" tabindex="0" aria-label="Cena jogável. A e D para andar; espaço para pular. Segure o botão esquerdo no personagem para arrastar com ragdoll. H abre a saúde, I abre a bolsa."></canvas><div id="visionLoss" aria-hidden="true" hidden></div><button id="healthToggle" class="health-toggle" aria-controls="healthPanel" aria-expanded="false" aria-label="Abrir saúde do personagem" title="Saúde · H"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4H9V6H15V4H22V13H20V15H18V17H16V19H14V21H10V19H8V17H6V15H4V13H2Z"/><path class="pulse" d="M4 12h4l2-4 3 8 2-4h5"/></svg><span id="healthBadge">100%</span></button><button id="bagToggle" class="bag-toggle" aria-controls="casePanel" aria-expanded="false" aria-label="Abrir bolsa de suprimentos" title="Bolsa · I"><img src="pixel_art/hud/bag-closed.svg" alt="" width="32" height="36"><span id="bagBadge">0</span></button><button id="gmToggle" class="gm-toggle" type="button" aria-controls="gmPanel" aria-expanded="false" aria-label="Abrir mapa do mestre" title="Mapa do mestre · M"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3 5 1.5 11 3.5 15 2V13L11 14.5 5 12.5 1 14Z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 1.5V12.5M11 3.5V14.5" stroke="currentColor" stroke-width="1.5"/></svg><span>MESTRE</span></button><div id="gmStageBadge" class="gm-stage-badge" hidden></div></div>
+      <section class="stage-card" aria-label="Cena da mesa">
+        <div class="bar"><span><i class="live-dot"></i> EM CENA · <span id="sceneLabel">ESCRITÓRIO</span></span><span><span id="lifeReadout" class="muted">fôlego</span><span hidden> · <span id="hairReadout" class="muted">cabelo 0.0 px</span></span> · <span id="stateLabel">Base sem roupas</span></span></div>
+        <div class="scene-wrap"><canvas id="scene" width="480" height="270" tabindex="0" aria-label="Cena jogável. A e D para andar; espaço para pular. Segure o botão esquerdo no personagem para arrastar com ragdoll. H abre a saúde, I abre a bolsa, G abre o guarda-roupa."></canvas><div id="visionLoss" aria-hidden="true" hidden></div><button id="healthToggle" class="health-toggle" aria-controls="healthPanel" aria-expanded="false" aria-label="Abrir saúde do personagem" title="Saúde · H"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4H9V6H15V4H22V13H20V15H18V17H16V19H14V21H10V19H8V17H6V15H4V13H2Z"/><path class="pulse" d="M4 12h4l2-4 3 8 2-4h5"/></svg><span id="healthBadge">100%</span></button><button id="bagToggle" class="bag-toggle" aria-controls="casePanel" aria-expanded="false" aria-label="Abrir bolsa de suprimentos" title="Bolsa · I"><img src="pixel_art/hud/bag-closed.svg" alt="" width="32" height="36"><span id="bagBadge">0</span></button><button id="gmToggle" class="gm-toggle" type="button" aria-controls="gmPanel" aria-expanded="false" aria-label="Abrir mapa do mestre" title="Mapa do mestre · M"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3 5 1.5 11 3.5 15 2V13L11 14.5 5 12.5 1 14Z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 1.5V12.5M11 3.5V14.5" stroke="currentColor" stroke-width="1.5"/></svg><span>MESTRE</span></button><div id="gmStageBadge" class="gm-stage-badge" hidden></div><button id="wardrobeToggle" class="wardrobe-toggle" type="button" aria-controls="wardrobePanel" aria-expanded="false" aria-label="Abrir guarda-roupa" title="Guarda-roupa · G"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1v2M8 3 2 7v1h12V7L8 3Z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4 9v5h8V9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>ROUPAS</span></button></div>
+        <section id="wardrobePanel" class="wardrobe-window" hidden aria-label="Guarda-roupa da personagem"><canvas id="wardrobeCanvas" width="320" height="248" aria-label="Guarda-roupa: escolha cabelo, roupas, cores e conjuntos"></canvas><input id="wardrobeColor" type="color" aria-label="Cor personalizada"></section>
         <div class="health-clock"><div><span id="healthClockState">SAÚDE PAUSADA</span><output id="healthClockTime">00:00:00</output></div><button id="healthClockToggle" aria-pressed="false">▶ Iniciar saúde</button><p id="healthGlobalAlert" role="status"></p></div>
         <div class="controls"><div class="modes" aria-label="Animação"><button class="active" data-mode="rest">Base</button><button data-mode="idle">Repouso</button><button data-mode="walk">Andar</button><button data-mode="run">Correr</button><button data-mode="fall">Cair</button><button data-mode="jump">Pular</button><button data-mode="play">Jogar</button></div><button id="pause" title="Pausar animação" aria-label="Pausar animação">Ⅱ</button></div>
         <div class="timeline"><input id="timeline" type="range" min="0" max="1000" value="0" aria-label="Posição no ciclo de animação"><output id="frameLabel">00 / 48</output></div>
-        <div class="stage-footer"><span><kbd>A</kbd> <kbd>D</kbd> mover <kbd>Espaço</kbd> segurar para saltar mais alto</span><label><input id="showBones" type="checkbox"> Esqueleto</label><label><input id="showGrid" type="checkbox"> Grade</label><button id="facing">Virar ←</button></div>
-        <div class="stage-footer"><span><kbd>Botão esquerdo</kbd> segure no personagem e arraste · Solte para arremessar · <kbd>H</kbd> Saúde e ferimentos · <kbd>M</kbd> Mapa do mestre · Clique nas pistas da cena · <kbd>P</kbd> áreas das pistas</span></div>
-        <div class="stage-footer hair-row"><label><input id="lifeToggle" type="checkbox" checked> Vida</label><label><input id="hairPhysics" type="checkbox" checked> Física do cabelo</label><label class="wind">Brisa <output id="windValue">100%</output><input id="windLevel" type="range" min="0" max="200" value="100" aria-label="Intensidade da brisa"></label></div>
+        <div class="stage-footer"><span><kbd>A</kbd> <kbd>D</kbd> mover <kbd>Espaço</kbd> segurar para saltar mais alto</span><label hidden><input id="showBones" type="checkbox"> Esqueleto</label><label hidden><input id="showGrid" type="checkbox"> Grade</label><button id="facing">Virar ←</button></div>
+        <div class="stage-footer"><span>Clique nas pistas da cena · <kbd>Botão esquerdo</kbd> segure a personagem para arrastar e solte para arremessar</span></div>
+        <div class="stage-footer hair-row" hidden><label><input id="lifeToggle" type="checkbox" checked> Vida</label><label><input id="hairPhysics" type="checkbox" checked> Física do cabelo</label><label class="wind">Brisa <output id="windValue">100%</output><input id="windLevel" type="range" min="0" max="200" value="100" aria-label="Intensidade da brisa"></label></div>
         <div class="touch-controls"><button data-key="ArrowLeft" aria-label="Mover para esquerda">←</button><button data-key="ArrowRight" aria-label="Mover para direita">→</button><button data-key="Space">Pular ↑</button><button data-key="ShiftLeft" aria-label="Correr">Correr</button><button data-key="KeyF" aria-label="Cair">Cair</button></div>
       </section>
       <section id="healthPanel" class="health-panel" hidden aria-labelledby="healthTitle">
@@ -73,9 +100,11 @@
         <div class="bag-shell">
           <img class="bag-art" src="pixel_art/hud/bag-interior.svg" alt="" draggable="false" aria-hidden="true">
           <div id="caseGrid" class="case-grid" role="group" aria-label="Interior da bolsa, grade 10 por 6" aria-describedby="caseHint"></div>
+          <button id="caseTrash" class="case-trash" type="button" aria-label="Lixeira: solte um item aqui ou clique com um item selecionado para descartá-lo" title="Lixeira · descartar item"><svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path d="M6 1h4v1h4v2H2V2h4V1z" fill="currentColor"/><path d="M3 5h10l-1 10H4L3 5z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6 7v6M8 7v6M10 7v6" stroke="currentColor" stroke-width="1"/></svg></button>
         </div>
+        <div id="caseMenu" class="case-menu" role="menu" hidden></div>
         <div class="hud-divider" aria-hidden="true"></div>
-        <p id="caseHint" class="case-hint" role="status" aria-live="polite">Arraste para mover · R gira · Enter pega/solta · Esc cancela</p>
+        <p id="caseHint" class="case-hint" role="status" aria-live="polite">Arraste para mover · botão direito abre opções · R gira · Esc cancela</p>
         <div class="case-inspect">
           <div id="caseItemIcon" aria-hidden="true"></div>
           <div class="case-description"><h3 id="caseItemName">Selecione um item</h3><p id="caseItemDesc">Seus suprimentos, sempre à mão.</p><p id="caseItemMeta">Clique ou use Tab para inspecionar.</p></div>
@@ -83,21 +112,35 @@
         </div>
         <div class="case-footer"><div id="caseSupplies" class="case-supplies"></div><button id="caseSort">ORGANIZAR</button></div>
         <details class="case-restock"><summary>Repor suprimentos · demonstração</summary>
-          <div><button data-case-add="bandage">+ Bandagem</button><button data-case-add="splint">+ Tala</button><button data-case-add="antibiotic">+ Antibiótico</button></div>
-          <p>Cada tratamento na aba de saúde gasta um item daqui. São 60 espaços — a tala ocupa 3, a bandagem 2 e o antibiótico 2.</p>
+          <div><button data-case-add="bandage">+ Bandagem</button><button data-case-add="splint">+ Tala</button><button data-case-add="antibiotic">+ Antibiótico</button><button data-case-add="taco">+ Taco</button></div>
+          <p>Cada tratamento na aba de saúde gasta um item daqui. São 60 espaços — a tala ocupa 3, o taco 3, a bandagem 2, o antibiótico 2 e a roupa 4. O mestre entrega qualquer item pela seção Itens do mapa do mestre (<kbd>M</kbd>). Botão direito num item abre as opções (examinar, vestir, empunhar o taco, largar no chão, descartar); arraste um item para fora da bolsa para largá-lo no cenário, ou para a lixeira para jogá-lo fora.</p>
         </details>
       </section>
-      <aside class="inspector">
-        <div class="bar"><span>CORPO + CABELO REFINADO</span><span>×4</span></div>
-        <div class="sprite-preview"><img src="pixel_art/generated/character.png" width="256" height="384" alt="Base corporal sem roupas com cabelo original e peças modulares"></div>
-        <div class="spec"><div><span>Tela</span><strong>64 × 96 px</strong></div><div><span>Área do desenho</span><strong>26 × 56 px</strong></div><div><span>Paleta</span><strong>31 cores · 7 de manto · 5 de faixa</strong></div><div><span>Estrutura</span><strong>19 peças · 20 ossos</strong></div><div><span>Cabelo</span><strong class="green">2 camadas · trás inteiriço</strong></div><div><span>Manto</span><strong class="green">Slot próprio · física própria</strong></div><div><span>Rosto</span><strong class="green">Preservado</strong></div></div>
+      <aside class="inspector table-card" aria-label="Atalhos da mesa">
+        <div class="bar"><span>NA MESA</span><span>atalhos</span></div>
+        <div class="spec">
+          <p class="spec-title">PERSONAGEM</p>
+          <div><span>Andar · saltar</span><strong><kbd>A</kbd><kbd>D</kbd> <kbd>Espaço</kbd></strong></div>
+          <div><span>Saúde e ferimentos</span><strong><kbd>H</kbd></strong></div>
+          <div><span>Bolsa</span><strong><kbd>I</kbd></strong></div>
+          <div><span>Guarda-roupa</span><strong><kbd>G</kbd></strong></div>
+          <div><span>Golpe com o taco na mão</span><strong><kbd>E</kbd></strong></div>
+          <p class="spec-title">MESTRE</p>
+          <div><span>Mapa do mestre</span><strong><kbd>M</kbd></strong></div>
+          <div><span>Escolher cena · enviar na hora</span><strong><kbd>1</kbd>–<kbd>9</kbd> <kbd>Shift</kbd></strong></div>
+          <div><span>Cortina</span><strong><kbd>B</kbd></strong></div>
+          <div><span>Tremor · relâmpago</span><strong><kbd>T</kbd><kbd>L</kbd></strong></div>
+          <div><span>Áreas das pistas</span><strong><kbd>P</kbd></strong></div>
+        </div>
+        <div class="table-actions"><button id="wardrobeOpen" type="button">Abrir guarda-roupa</button><button id="resetPose">Restaurar aparência</button></div>
       </aside>
     </div>
-    <section class="details"><div><p class="eyebrow">INSPEÇÃO DO RIG</p><h2>Uma peça por vez.</h2><p>Selecione um osso para ajustar seu ângulo ou ocultar uma peça. Mãos, antebraços, pescoço e abdômen têm pivôs próprios. As duas camadas de cabelo são deformadas pela física linha a linha, não por ossos.</p><div class="bone-edit"><label>Osso<select id="boneSelect"></select></label><label>Ângulo <output id="angleValue">0°</output><input id="boneAngle" type="range" min="-90" max="90" value="0"></label><label class="check"><input type="checkbox" id="hideBone"> Ocultar peça</label><label class="check"><input type="checkbox" id="isolateBone"> Isolar peça</label><p id="jointInfo"></p><button id="resetPose">Restaurar aparência</button></div><div class="outfits"><span>Roupas opcionais</span><label><input type="checkbox" data-outfit="wraps"> Faixas</label><label><input type="checkbox" data-outfit="top"> Camiseta</label><label><input type="checkbox" data-outfit="bottom"> Short</label><label><input type="checkbox" data-outfit="boots"> Botas</label><label><input type="checkbox" data-outfit="cloak"> Manto com capuz</label></div><div class="tints"><span>Cores</span><div class="swatches"><label><input type="color" data-tint="hair" aria-label="Cor do cabelo"><i>Cabelo</i></label><label><input type="color" data-tint="eyeLeft" aria-label="Cor do olho esquerdo"><i>Olho esq.</i></label><label><input type="color" data-tint="eyeRight" aria-label="Cor do olho direito"><i>Olho dir.</i></label><label><input type="color" data-tint="wraps" aria-label="Cor das faixas"><i>Faixas</i></label><label><input type="color" data-tint="top" aria-label="Cor da camiseta"><i>Camiseta</i></label><label><input type="color" data-tint="bottom" aria-label="Cor do short"><i>Short</i></label><label><input type="color" data-tint="boots" aria-label="Cor das botas"><i>Botas</i></label><label><input type="color" data-tint="cloak" aria-label="Cor do manto"><i>Manto</i></label></div><button id="resetTint" type="button">Cores originais</button></div></div><div class="reference-card"><div class="bar"><span>REFERÊNCIA</span><span>PNG original · ×4</span></div><img src="pixel_art/references/reference.png" width="104" height="224" alt="Referência original enviada"><a href="pixel_art/generated/hair_detail.png" target="_blank">Comparar o cabelo ↗</a></div></section>
-    <p class="asset-links"><a href="pixel_art/generated/articulation_sheet.png" target="_blank">Ver todas as peças e pivôs ↗</a> · <a href="pixel_art/generated/hair_comparison.png" target="_blank">Cabelo antes e depois ↗</a> · <a href="pixel_art/generated/hair_physics.gif" target="_blank">Física do cabelo ↗</a> · <a href="pixel_art/generated/skin_lighting_comparison.png" target="_blank">Pele ↗</a></p>
+    <!-- Ferramentas do protótipo da personagem: fora da vista, mas o jogo ainda as usa. -->
+    <div class="rig-tools" hidden><select id="boneSelect"></select><output id="angleValue">0°</output><input id="boneAngle" type="range" min="-90" max="90" value="0"><input type="checkbox" id="hideBone"><input type="checkbox" id="isolateBone"><p id="jointInfo"></p></div>
     <p id="error" role="alert" hidden></p>
   </main>
   <div id="healthTooltip" class="health-tooltip" role="tooltip" hidden></div>
-  <footer>HTML · CSS · JavaScript <span>Peças PNG + hierarquia de ossos editável</span></footer>
+  <footer>O Céu tem Fome <span>RPG de mesa · mapa do mestre, tela dos jogadores e personagem em pixel art</span></footer>
+  <script>document.querySelector('#introMaster')?.addEventListener('click', () => document.querySelector('#gmToggle')?.click());</script>
 </body>
 </html>

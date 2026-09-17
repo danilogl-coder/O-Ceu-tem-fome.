@@ -26,3 +26,19 @@
 .tints input[type=color]::-moz-color-swatch{border:none;border-radius:50%}
 .tints button{align-self:center;background:none;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:6px 12px;font:inherit;font-size:11px;cursor:pointer}
 .tints button:hover{color:var(--text);border-color:var(--accent)}
+
+/* O Céu tem Fome — página da mesa */
+.brand-icon svg{display:block;width:21px;height:21px;fill:#1d251c}
+button.download{background:none;font:inherit;cursor:pointer}
+button.download:hover{border-color:var(--accent)}
+button.download kbd{margin:0 0 0 6px;color:var(--accent);border-color:#655a3b}
+.table-card .spec{padding:8px 18px 12px}
+.table-card .spec-title{margin:12px 0 2px;font-size:10px;letter-spacing:1.6px;font-weight:700;color:var(--accent)}
+.table-card .spec-title:first-child{margin-top:4px}
+.table-card .spec div{align-items:center}
+.table-card .spec strong{white-space:nowrap}
+.table-card .spec kbd{margin:0 0 0 3px}
+.table-actions{display:flex;flex-wrap:wrap;gap:8px;padding:12px 18px 18px;border-top:1px solid var(--line)}
+.table-actions button{flex:1 1 auto;font-size:12px}
+@media(max-width:720px){.table-card{display:block}}
+.stage-footer[hidden],.stage-footer label[hidden],.rig-tools[hidden]{display:none!important}

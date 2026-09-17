@@ -16,10 +16,42 @@
   const typing = el => !!el && (/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName) || el.isContentEditable);
   const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const TRANSITIONS = [['fade', 'Esmaecer'], ['dissolve', 'Dissolver'], ['iris', 'Íris'], ['persiana', 'Persiana'], ['corte', 'Corte seco']];
+  /* The window's sections, in the order a session uses them: the scene, its
+     mood, the sound, the clues, the character's things, the players' screen,
+     and the session itself. Each shows up as an icon in the rail. */
+  const SECTIONS = [
+    ['cenas', 'Cenas', 'Escolher, prever e enviar cenários'],
+    ['montar', 'Montar', 'Cenas genéricas e conjuntos prontos; mover objetos, cores, luz e interações'],
+    ['ambiente', 'Luz e clima', 'Luz, relógio, clima, objetos e efeitos da cena ao vivo'],
+    ['som', 'Som', 'Som ambiente, música e efeitos das pistas'],
+    ['mesa', 'Pistas', 'Pistas da cena, conclusões, o que foi encontrado e anotações'],
+    ['explorar', 'Exploração', 'Pedidos de improviso, passagens entre cenas, mapa de conexões e eventos'],
+    ['itens', 'Itens', 'Entregar itens para a personagem'],
+    ['tela', 'Jogadores', 'Tela dos jogadores, cortina e documentos'],
+    ['sessao', 'Sessão', 'Salvar, importar, recomeçar e atalhos']
+  ];
+  const RAIL_ICONS = {
+    montar: ['................', '......####......', '......#..#......', '......####......', '...####..####...', '...#..#..#..#...', '...####..####...', '................', '.##############.', '.#..#..##..#..#.', '.##############.', '.#....#..#....#.', '.##############.', '................', '................', '................'],
+    explorar: ['................', '.#########......', '.#.......#......', '.#.#####.#......', '.#.#...#.#...#..', '.#.#...#.#...##.', '.#.#...#.#######', '.#.#..##.#######', '.#.#...#.#...##.', '.#.#...#.#...#..', '.#.#...#.#......', '.#.#####.#......', '.#.......#......', '.#########......', '................', '................'],
+    cenas: ['................', '.##############.', '.#............#.', '.#.........##.#.', '.#.........##.#.', '.#............#.', '.#.....#......#.', '.#....###.....#.', '.#...#####..#.#.', '.#..#######.###.', '.#.############.', '.##############.', '................', '................', '................', '................'],
+    ambiente: ['.......#........', '...#...#...#....', '....#.....#.....', '......###.......', '.....#####......', '.##..#####..##..', '.....#####......', '......###.......', '....#.....#.....', '...#..######....', '.....########...', '....##########..', '...############.', '...############.', '....##########..', '................'],
+    som: ['................', '......#.........', '.....##....#....', '....###.....#...', '..#####..#...#..', '.######...#..#..', '.######...#...#.', '.######...#...#.', '.######...#...#.', '.######...#..#..', '..#####..#...#..', '....###.....#...', '.....##....#....', '......#.........', '................', '................'],
+    mesa: ['................', '....######......', '...#......#.....', '..#..##....#....', '..#.#......#....', '..#........#....', '..#........#....', '..#........#....', '...#......#.....', '....#######.....', '..........###...', '...........###..', '............###.', '.............##.', '................', '................'],
+    itens: ['................', '......####......', '.....#....#.....', '.....#....#.....', '..############..', '.#............#.', '.#..########..#.', '.#..#......#..#.', '.#..########..#.', '.#............#.', '.#............#.', '.#............#.', '.##############.', '................', '................', '................'],
+    tela: ['................', '.##############.', '.#............#.', '.#.##########.#.', '.#.#........#.#.', '.#.#.#......#.#.', '.#.#........#.#.', '.#.#........#.#.', '.#.##########.#.', '.#............#.', '.##############.', '.......##.......', '.....######.....', '................', '................', '................'],
+    sessao: ['................', '.############...', '.#..######..#...', '.#..######..##..', '.#..#...##..#.#.', '.#..######..#.#.', '.#............#.', '.#............#.', '.#..########..#.', '.#..#......#..#.', '.#..#......#..#.', '.#..#......#..#.', '.##############.', '................', '................', '................']
+  };
+  // 16×16 rows of '#' → one SVG path of pixel runs.
+  const pixelPath = rows => rows.map((row, y) => [...row.matchAll(/#+/g)].map(m => `M${m.index} ${y}h${m[0].length}v1h-${m[0].length}z`).join('')).join('');
 
   class MasterPanel {
-    constructor({stage, link, clues = null, doc = document}) {
+    constructor({stage, link, clues = null, items = null, exploracao = null, doc = document}) {
       this.stage = stage; this.link = link; this.clues = clues; this.doc = doc;
+      /* Passagens, cenas montadas, pedidos de improviso e eventos (exploracao.js). */
+      this.exploracao = exploracao;
+      /* The game's hand-out desk: catalogue(), status(), give(), drop(),
+         wield(), collect(). Without it the ITENS tab says so. */
+      this.items = items;
       this.history = [];
       this.editing = null;
       this.session = this.restore();
@@ -41,6 +73,9 @@
         this.applyCluePrefs();
       }
 
+      // As cenas montadas pelo mestre voltam antes de a cena ao vivo ser carregada.
+      root.Montador?.importar(this.session.exploracao?.cenas || []);
+      exploracao?.importar(this.session.exploracao || {});
       const live = this.session.live;
       const sceneId = root.SceneLibrary.has(live.scene) ? live.scene : 'escritorio';
       stage.load(sceneId, {...live, props: live.props ? new Set(live.props) : undefined});
@@ -52,7 +87,7 @@
       this.renderLive(stage.describe());
       this.renderStatus(link.status);
       this.fillDocument(this.session.handout);
-      stage.listeners.add(desc => { this.renderLive(desc); this.sound?.setScene(desc); });
+      stage.listeners.add(desc => { this.renderLive(desc); this.sound?.setScene(desc); this.aoMudarPalcoPainel?.(desc); });
       this.sound?.setScene(stage.describe());
       stage.frameHooks.add((ctx, canvas) => this.onFrame(ctx, canvas));
       link.listeners.add(status => this.renderStatus(status));
@@ -62,6 +97,20 @@
         if (kind === 'change' || kind === 'found') this.save();
       });
       if (this.session.curtain.on) this.setCurtain(true, false);
+      if (exploracao) {
+        exploracao.onViagem = () => { this.remember(); this.save(); };
+        exploracao.on(kind => {
+          if (['cenas', 'ligacoes', 'passagens', 'pedidos', 'eventos', 'importar'].includes(kind)) this.save();
+          if (kind === 'cenas' || kind === 'importar') { this.buildLibrary(); this.syncPreviewControls(); }
+          if (kind === 'pedidos') this.renderChips();
+          this.aoMudarExploracao?.(kind);
+        });
+      }
+      root.Montador?.on((kind, id) => {
+        if (kind === 'editar' || kind === 'dados' || kind === 'remover' || kind === 'registrar') this.save();
+        if (kind === 'remover' || kind === 'registrar') { this.buildLibrary(); this.syncPreviewControls(); }
+        this.aoMudarMontador?.(kind, id);
+      });
     }
 
     /* ---------------------------------------------------------- session */
@@ -69,7 +118,9 @@
       return {v: 1, live: {scene: 'escritorio'}, preview: {scene: 'escritorio', spawn: 'manter', camera: .35},
         transition: {type: 'fade', duration: 1.2}, title: {text: '', subtitle: '', edited: false},
         clues: {}, cluePrefs: {players: true, announce: true, sfx: true}, notes: {}, handout: {title: '', body: '', stamp: '', auto: 0},
-        curtain: {on: false, mode: 'espera', text: ''}, markers: true, tab: 'cenas'};
+        sound: {channels: {}, music: null, musicVolume: .5, volume: .6},
+        curtain: {on: false, mode: 'espera', text: ''}, markers: true, tab: 'cenas', blocks: {},
+        exploracao: {cenas: [], prefs: {}, estados: {}, eventos: {}, pedidos: []}};
     }
     restore() {
       const base = this.defaults();
@@ -77,7 +128,10 @@
         const saved = JSON.parse(root.localStorage?.getItem(STORE) || 'null');
         if (saved && saved.v === 1) return {...base, ...saved, preview: {...base.preview, ...saved.preview}, transition: {...base.transition, ...saved.transition},
           title: {...base.title, ...saved.title}, handout: {...base.handout, ...saved.handout}, curtain: {...base.curtain, ...saved.curtain},
-          cluePrefs: {...base.cluePrefs, ...saved.cluePrefs}, clues: saved.clues && typeof saved.clues === 'object' ? saved.clues : {}};
+          cluePrefs: {...base.cluePrefs, ...saved.cluePrefs}, clues: saved.clues && typeof saved.clues === 'object' ? saved.clues : {},
+          sound: {...base.sound, ...(saved.sound || {}), channels: {...(saved.sound?.channels || {})}},
+          blocks: saved.blocks && typeof saved.blocks === 'object' ? saved.blocks : {}, tab: SECTIONS.some(([id]) => id === saved.tab) ? saved.tab : base.tab,
+          exploracao: saved.exploracao && typeof saved.exploracao === 'object' ? {...base.exploracao, ...saved.exploracao} : base.exploracao};
       } catch {}
       return base;
     }
@@ -87,6 +141,7 @@
         const st = this.stage.state;
         if (st) this.session.live = {scene: st.sceneId, preset: st.preset, weather: st.weather, props: [...st.props], clock: st.clock};
         if (this.clues) this.session.clues = this.clues.exportData();
+        if (this.exploracao || root.Montador) this.session.exploracao = {...(this.exploracao?.exportar() || {}), cenas: root.Montador ? root.Montador.exportar() : []};
         try { root.localStorage?.setItem(STORE, JSON.stringify(this.session)); this.flash('#gmSaveState', 'Sessão salva neste navegador · ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})); }
         catch { this.flash('#gmSaveState', 'Não foi possível salvar neste navegador. Use “Exportar sessão”.'); }
       }, 350);
@@ -109,18 +164,20 @@
           <strong id="gmLiveName">—</strong>
           <span id="gmLiveDetail" class="gm-muted"></span>
           <span class="gm-screen" id="gmScreen" data-state="off"><i aria-hidden="true"></i><b id="gmScreenLabel">Tela dos jogadores fechada</b></span>
-          <div class="gm-row">
+          <div class="gm-row gm-live-actions">
             <button id="gmOpenScreen" type="button" class="gm-accent">Abrir tela dos jogadores</button>
             <button id="gmCurtain" type="button" aria-pressed="false">Cortina <kbd>B</kbd></button>
             <button id="gmBack" type="button" disabled title="Volta ao estado anterior da cena ao vivo">↶ Anterior</button>
           </div>
         </div>
+        <div class="gm-live-chips" id="gmLiveChips" aria-label="Resumo do que está acontecendo"></div>
       </div>
-      <div class="gm-tabs" role="tablist" aria-label="Seções do mapa do mestre">
-        ${[['cenas', 'CENAS'], ['ambiente', 'AMBIENTE'], ['mesa', 'MESA'], ['tela', 'TELA']].map(([id, label], i) =>
-          `<button type="button" role="tab" id="gmTab-${id}" data-gm-tab="${id}" aria-controls="gmPane-${id}" aria-selected="${i === 0}">${label}</button>`).join('')}
-      </div>
-      <section class="gm-pane" id="gmPane-cenas" role="tabpanel" aria-labelledby="gmTab-cenas">
+      <div class="gm-body">
+        <nav class="gm-rail" role="tablist" aria-orientation="vertical" aria-label="Seções do mapa do mestre">
+          ${SECTIONS.map(([id, label, hint], i) => `<button type="button" role="tab" id="gmTab-${id}" data-gm-tab="${id}" aria-controls="gmPane-${id}" aria-selected="${i === 0}" title="${hint}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="${pixelPath(RAIL_ICONS[id])}"/></svg><span>${label}</span></button>`).join('')}
+        </nav>
+        <div class="gm-content" id="gmContent">
+        <section class="gm-pane" id="gmPane-cenas" role="tabpanel" aria-labelledby="gmTab-cenas">
         <div class="gm-library" id="gmLibrary"></div>
         <div class="gm-preview">
           <div class="gm-preview-head"><span>PRÉVIA · SÓ VOCÊ VÊ</span><output id="gmPreviewName"></output></div>
@@ -139,17 +196,29 @@
         <details class="gm-fold"><summary>Objetos da cena na prévia</summary><div id="gmPrevProps" class="gm-checks"></div></details>
         <button id="gmGoLive" type="button" class="gm-primary">ENVIAR AOS JOGADORES <kbd>Ctrl</kbd>+<kbd>Enter</kbd></button>
         <p class="gm-hint">Teclas <kbd>1</kbd>–<kbd>9</kbd> escolhem a cena · <kbd>Shift</kbd>+número envia na hora.</p>
-      </section>
-      <section class="gm-pane" id="gmPane-ambiente" role="tabpanel" aria-labelledby="gmTab-ambiente" hidden>
-        <h3>ILUMINAÇÃO <small>muda ao vivo, com dissolução</small></h3>
+      
+        </section>
+        <section class="gm-pane" id="gmPane-montar" role="tabpanel" aria-labelledby="gmTab-montar" hidden>${this.paneMontar ? this.paneMontar() : '<p class="gm-muted">O montador de cenas não foi carregado.</p>'}</section>
+        <section class="gm-pane" id="gmPane-ambiente" role="tabpanel" aria-labelledby="gmTab-ambiente" hidden>
+        <details class="gm-block" data-block="iluminacao" open>
+          <summary><h3>ILUMINAÇÃO <small>muda ao vivo, com dissolução</small></h3></summary>
+          <div class="gm-block-body">
         <div class="gm-chips" id="gmPresets"></div>
         <div class="gm-grid">
           <label>Relógio da cena<input id="gmClock" type="time"></label>
           <div class="gm-field"><span>Clima</span><div class="gm-chips" id="gmWeathers"></div></div>
         </div>
-        <h3>OBJETOS <small>aparecem e somem para os jogadores</small></h3>
+          </div>
+        </details>
+        <details class="gm-block" data-block="objetos" open>
+          <summary><h3>OBJETOS <small>aparecem e somem para os jogadores</small></h3></summary>
+          <div class="gm-block-body">
         <div id="gmProps" class="gm-props"></div>
-        <h3>EFEITOS</h3>
+          </div>
+        </details>
+        <details class="gm-block" data-block="efeitos" open>
+          <summary><h3>EFEITOS</h3></summary>
+          <div class="gm-block-body">
         <div class="gm-chips">
           <button id="gmShake" type="button">Tremor <kbd>T</kbd></button>
           <button id="gmLightning" type="button">Relâmpago <kbd>L</kbd></button>
@@ -158,41 +227,99 @@
           <button id="gmPulse" type="button" aria-pressed="false">Pulso de tensão</button>
         </div>
         <label class="gm-slider">Raio da escuridão <output id="gmDarkOut">70</output><input id="gmDarkRadius" type="range" min="30" max="170" value="70"></label>
-        <h3>SOM AMBIENTE <small>gerado no navegador, sem arquivos</small></h3>
-        <div class="gm-row"><button id="gmSound" type="button" aria-pressed="false">Ligar som</button><label class="gm-slider gm-inline">Volume<input id="gmVolume" type="range" min="0" max="100" value="60"></label></div>
-        <label class="gm-check"><input type="checkbox" id="gmClueSfx"> Efeitos das pistas e da cinemática (tocam mesmo com o ambiente desligado)</label>
-        <h3>PERSONAGEM</h3>
+          </div>
+        </details>
+        <details class="gm-block" data-block="personagem" open>
+          <summary><h3>PERSONAGEM</h3></summary>
+          <div class="gm-block-body">
         <div class="gm-row"><select id="gmSpawn" aria-label="Ponto de entrada da cena ao vivo"></select><button id="gmTeleport" type="button">Posicionar</button></div>
-      </section>
-      <section class="gm-pane" id="gmPane-mesa" role="tabpanel" aria-labelledby="gmTab-mesa" hidden>
-        <h3>PISTAS DA CENA <small>clique nelas direto na cena · <kbd>P</kbd> mostra as áreas</small></h3>
+          </div>
+        </details>
+        </section>
+        <section class="gm-pane" id="gmPane-som" role="tabpanel" aria-labelledby="gmTab-som" hidden>
+        <details class="gm-block" data-block="som-ambiente" open>
+          <summary><h3>SOM AMBIENTE <small>gerado no navegador, sem arquivos</small></h3></summary>
+          <div class="gm-block-body">
+        <div class="gm-row"><button id="gmSound" type="button" aria-pressed="false">Ligar som</button><label class="gm-slider gm-inline">Volume<input id="gmVolume" type="range" min="0" max="100" value="60"></label></div>
+        <div id="gmChannels" class="gm-props"></div>
+        <label class="gm-check"><input type="checkbox" id="gmClueSfx"> Efeitos das pistas e da cinemática (tocam mesmo com o ambiente desligado)</label>
+          </div>
+        </details>
+        <details class="gm-block" data-block="musica" open>
+          <summary><h3>MÚSICA <small>trilhas curtas em loop · uma de cada vez</small></h3></summary>
+          <div class="gm-block-body">
+        <div class="gm-chips" id="gmMusic"></div>
+        <label class="gm-slider">Volume da música <output id="gmMusicOut">50</output><input id="gmMusicVolume" type="range" min="0" max="100" value="50"></label>
+          </div>
+        </details>
+        </section>
+        <section class="gm-pane" id="gmPane-mesa" role="tabpanel" aria-labelledby="gmTab-mesa" hidden>
+        <details class="gm-block" data-block="pistas" open>
+          <summary><h3>PISTAS DA CENA <small>clique nelas direto na cena · <kbd>P</kbd> mostra as áreas</small></h3></summary>
+          <div class="gm-block-body">
         <div class="gm-row">
           <button id="gmClueNew" type="button" class="gm-accent">+ Nova pista</button>
           <button id="gmClueAreas" type="button" aria-pressed="false">Áreas <kbd>P</kbd></button>
           <button id="gmClueRestore" type="button" title="Traz de volta as pistas originais da cena que foram excluídas ou editadas">Restaurar originais</button>
         </div>
+        <input id="gmClueFilter" class="gm-filter" type="search" placeholder="Filtrar pistas por nome, tipo ou nota…" aria-label="Filtrar pistas" autocomplete="off">
         <form id="gmClueEditor" class="gm-clue-editor" hidden autocomplete="off"></form>
         <div id="gmClues" class="gm-clues"></div>
-        <h3>CONCLUSÕES <small>regra das três pistas: três caminhos para cada descoberta</small></h3>
+          </div>
+        </details>
+        <details class="gm-block" data-block="conclusoes" open>
+          <summary><h3>CONCLUSÕES <small>regra das três pistas: três caminhos para cada descoberta</small></h3></summary>
+          <div class="gm-block-body">
         <div id="gmConclusions" class="gm-conclusions"></div>
         <div class="gm-row"><input id="gmConclusionText" type="text" maxlength="60" placeholder="Nova conclusão"><button id="gmConclusionAdd" type="button">Adicionar</button></div>
-        <h3>ENCONTRADAS <small>na ordem em que apareceram</small></h3>
+          </div>
+        </details>
+        <details class="gm-block" data-block="encontradas" open>
+          <summary><h3>ENCONTRADAS <small>na ordem em que apareceram</small></h3></summary>
+          <div class="gm-block-body">
         <ol id="gmFound" class="gm-found"></ol>
-        <div class="gm-row"><button id="gmFoundReset" type="button" class="gm-danger" title="Esquece o que foi encontrado, gavetas abertas, senhas digitadas e cadeados abertos desta cena">Zerar progresso</button></div>
+        <div class="gm-row"><button id="gmFoundReset" type="button" class="gm-danger" title="Esquece o que foi encontrado, devolve ao cenário as pistas guardadas na bolsa, gavetas abertas, senhas digitadas, cadeados e o botão apertado desta cena">Zerar progresso</button><button id="gmButtonReset" type="button" title="Desaperta o botão NÃO APERTE, tranca a tampa de novo e desfaz o estrago no cenário">Rearmar o botão</button></div>
         <label class="gm-check"><input type="checkbox" id="gmMarkers"> Marcadores de entrada no palco</label>
-        <h3>DOCUMENTO PARA OS JOGADORES</h3>
-        <div class="gm-grid">
-          <label>Título<input id="gmDocTitle" type="text" maxlength="48"></label>
-          <label>Carimbo<input id="gmDocStamp" type="text" maxlength="30" placeholder="opcional"></label>
-          <label class="gm-wide">Texto<textarea id="gmDocBody" rows="5"></textarea></label>
-          <label>Recolher sozinho<select id="gmDocAuto"><option value="0">Não</option><option value="10">em 10 s</option><option value="20">em 20 s</option><option value="45">em 45 s</option></select></label>
-        </div>
-        <div class="gm-row"><button id="gmDocShow" type="button" class="gm-accent">Mostrar aos jogadores</button><button id="gmDocHide" type="button">Recolher <kbd>N</kbd></button></div>
-        <h3>ANOTAÇÕES DA CENA <small>só você vê · salvas por cena</small></h3>
+          </div>
+        </details>
+        <details class="gm-block" data-block="anotacoes" open>
+          <summary><h3>ANOTAÇÕES DA CENA <small>só você vê · salvas por cena</small></h3></summary>
+          <div class="gm-block-body">
         <textarea id="gmNotes" rows="4" placeholder="Ganchos, nomes, segredos…"></textarea>
-      </section>
-      <section class="gm-pane" id="gmPane-tela" role="tabpanel" aria-labelledby="gmTab-tela" hidden>
-        <h3>TELA DOS JOGADORES</h3>
+          </div>
+        </details>
+        </section>
+        <section class="gm-pane" id="gmPane-explorar" role="tabpanel" aria-labelledby="gmTab-explorar" hidden>${this.paneExplorar ? this.paneExplorar() : '<p class="gm-muted">A exploração não foi carregada.</p>'}</section>
+        <section class="gm-pane" id="gmPane-itens" role="tabpanel" aria-labelledby="gmTab-itens" hidden>
+        <details class="gm-block" data-block="adicionar" open>
+          <summary><h3>ADICIONAR ITENS <small>para a personagem · na bolsa, no chão ou direto na mão</small></h3></summary>
+          <div class="gm-block-body">
+        <p class="gm-status" id="gmItemsBag">—</p>
+        <div id="gmItems" class="gm-items"></div>
+        <p class="gm-status gm-items-state" id="gmItemsState" role="status" aria-live="polite"></p>
+          </div>
+        </details>
+        <details class="gm-block" data-block="chao" open>
+          <summary><h3>NO CHÃO DESTA CENA <small>os jogadores veem tudo o que está no chão</small></h3></summary>
+          <div class="gm-block-body">
+        <div class="gm-row"><span id="gmFloorCount" class="gm-muted gm-grow">Nada no chão.</span><button id="gmFloorCollect" type="button" title="Guarda na bolsa tudo o que está solto nesta cena, esteja perto ou longe da personagem">Recolher tudo para a bolsa</button></div>
+          </div>
+        </details>
+        <details class="gm-block" data-block="uso">
+          <summary><h3>COMO A PERSONAGEM USA</h3></summary>
+          <div class="gm-block-body">
+        <ul class="gm-tips">
+          <li><b>Bolsa:</b> <kbd>I</kbd> abre. Botão direito num item mostra as opções — no taco, <b>Empunhar</b> o põe no ombro e <b>Guardar</b> devolve.</li>
+          <li><b>Taco na mão:</b> <kbd>E</kbd> golpeia; o que estiver solto ao alcance sai voando.</li>
+          <li><b>No chão:</b> clique perto da personagem para guardar; segure e solte rápido para arremessar — acerta quem estiver no caminho.</li>
+        </ul>
+          </div>
+        </details>
+        </section>
+        <section class="gm-pane" id="gmPane-tela" role="tabpanel" aria-labelledby="gmTab-tela" hidden>
+        <details class="gm-block" data-block="tela" open>
+          <summary><h3>TELA DOS JOGADORES</h3></summary>
+          <div class="gm-block-body">
         <p class="gm-status" id="gmScreenDetail">Fechada.</p>
         <div class="gm-row"><button id="gmOpenScreen2" type="button" class="gm-accent">Abrir janela</button><button id="gmOpenSecond" type="button">Abrir no segundo monitor</button></div>
         <ul class="gm-tips">
@@ -200,18 +327,48 @@
           <li><b>Discord ou OBS:</b> compartilhe só a janela “Tela dos jogadores”; nenhum controle aparece nela.</li>
           <li>Deixe as duas janelas visíveis: o navegador pode pausar janelas totalmente cobertas.</li>
         </ul>
-        <h3>PISTAS NA TELA DOS JOGADORES</h3>
+          </div>
+        </details>
+        <details class="gm-block" data-block="pistas-na-tela" open>
+          <summary><h3>PISTAS NA TELA DOS JOGADORES</h3></summary>
+          <div class="gm-block-body">
         <label class="gm-check"><input type="checkbox" id="gmCluePlayers"> Jogadores podem clicar nas pistas pela janela deles</label>
         <label class="gm-check"><input type="checkbox" id="gmClueAnnounce"> Anunciar “pista encontrada” na tela</label>
-        <h3>CORTINA</h3>
+          </div>
+        </details>
+        <details class="gm-block" data-block="cortina" open>
+          <summary><h3>CORTINA</h3></summary>
+          <div class="gm-block-body">
         <div class="gm-grid">
           <label>Mostrar<select id="gmCurtainMode"><option value="preto">Tela preta</option><option value="espera">A sessão já vai começar</option><option value="intervalo">Intervalo</option><option value="fim">Fim da sessão</option><option value="mensagem">Mensagem própria</option></select></label>
           <label>Mensagem própria<input id="gmCurtainText" type="text" maxlength="40"></label>
         </div>
-        <h3>SESSÃO</h3>
+          </div>
+        </details>
+        <details class="gm-block" data-block="documento" open>
+          <summary><h3>DOCUMENTO PARA OS JOGADORES</h3></summary>
+          <div class="gm-block-body">
+        <div class="gm-grid">
+          <label>Título<input id="gmDocTitle" type="text" maxlength="48"></label>
+          <label>Carimbo<input id="gmDocStamp" type="text" maxlength="30" placeholder="opcional"></label>
+          <label class="gm-wide">Texto<textarea id="gmDocBody" rows="5"></textarea></label>
+          <label>Recolher sozinho<select id="gmDocAuto"><option value="0">Não</option><option value="10">em 10 s</option><option value="20">em 20 s</option><option value="45">em 45 s</option></select></label>
+        </div>
+        <div class="gm-row"><button id="gmDocShow" type="button" class="gm-accent">Mostrar aos jogadores</button><button id="gmDocHide" type="button">Recolher <kbd>N</kbd></button></div>
+          </div>
+        </details>
+        </section>
+        <section class="gm-pane" id="gmPane-sessao" role="tabpanel" aria-labelledby="gmTab-sessao" hidden>
+        <details class="gm-block" data-block="sessao" open>
+          <summary><h3>SESSÃO</h3></summary>
+          <div class="gm-block-body">
         <p class="gm-status" id="gmSaveState">Salva automaticamente neste navegador.</p>
         <div class="gm-row"><button id="gmExport" type="button">Exportar sessão</button><button id="gmImport" type="button">Importar</button><button id="gmReset" type="button" class="gm-danger">Recomeçar</button><input id="gmImportFile" type="file" accept="application/json,.json" hidden></div>
-        <h3>ATALHOS</h3>
+          </div>
+        </details>
+        <details class="gm-block" data-block="atalhos">
+          <summary><h3>ATALHOS</h3></summary>
+          <div class="gm-block-body">
         <dl class="gm-keys">
           <dt><kbd>M</kbd></dt><dd>abre e fecha o mapa do mestre</dd>
           <dt><kbd>1</kbd>–<kbd>9</kbd></dt><dd>escolhe a cena da prévia</dd>
@@ -221,9 +378,14 @@
           <dt><kbd>N</kbd></dt><dd>recolhe o documento</dd>
           <dt><kbd>T</kbd> · <kbd>L</kbd></dt><dd>tremor · relâmpago</dd>
           <dt><kbd>P</kbd></dt><dd>mostra as áreas das pistas</dd>
+          <dt><kbd>I</kbd> · <kbd>E</kbd></dt><dd>bolsa da personagem · golpe com o taco na mão (itens na seção Itens)</dd>
           <dt><kbd>Esc</kbd></dt><dd>fecha a pista aberta · pula a cinemática</dd>
         </dl>
-      </section>`;
+          </div>
+        </details>
+        </section>
+        </div>
+      </div>`;
     }
 
     /* ---------------------------------------------------------- library & preview */
@@ -239,7 +401,8 @@
         lib.append(card);
         const room = scene.kind === 'room' ? scene.room : null;
         const cam = room ? room.x0 + (room.x1 - room.x0 - 480) * .4 : 0;
-        requestAnimationFrame(() => this.stage.renderStill(card.querySelector('canvas'), scene.id, {}, cam));
+        if (this.miniaturaCena) this.miniaturaCena(card.querySelector('canvas'), scene);
+        else requestAnimationFrame(() => this.stage.renderStill(card.querySelector('canvas'), scene.id, {}, cam));
       });
     }
     choosePreview(sceneId) {
@@ -358,6 +521,28 @@
       this.updateBadge();
     }
     /* ---------------------------------------------------------- clues */
+    /* The NÃO APERTE button back the way it was: unpressed, the cover locked
+       again, the room repaired. The master's way out of what the players did. */
+    /* Music: one loop or none, remembered with the session (it only starts on a click). */
+    setMusic(id) {
+      if (!this.sound) return;
+      if (!id || this.sound.musicId === id) this.sound.stopMusic(); else this.sound.playMusic(id);
+      this.session.sound.music = this.sound.musicId; this.save(); this.renderMusic();
+    }
+    renderMusic() {
+      this.renderChips();
+      const playing = this.sound?.musicId || '';
+      for (const b of this.panel.querySelectorAll('#gmMusic [data-music]')) b.setAttribute('aria-pressed', String((b.dataset.music || '') === playing));
+    }
+    rearmButton() {
+      if (!this.clues) return;
+      for (const clue of this.clues.clues().filter(c => c.type === 'mesa')) {
+        const mem = this.clues.memory(clue.id);
+        mem.apertado = false; mem.destravada = false; mem.tampa = 'fechada';
+        if (clue.data?.estrago) this.stage.setProp(clue.data.estrago, false);
+      }
+      this.clues.emit('change');
+    }
     applyCluePrefs() {
       const p = this.session.cluePrefs, c = this.clues;
       if (!c) return;
@@ -377,14 +562,16 @@
       if (!c || !scene || !this.$('#gmClues')) return;
       const visible = new Set(c.visibleClues().map(k => k.id)), d = c.sceneData(), marker = Object.fromEntries(root.MARKERS || []);
       const props = Object.fromEntries(scene.props.map(p => [p.id, p.label]));
-      const list = c.clues();
+      // Pistas primeiro; depois as interações criadas aqui (as peças das cenas montadas se editam em Montar e as portas em Exploração).
+      const categoria = k => root.ClueTypes.categoria(k);
+      const list = [...c.pistas(), ...c.clues().filter(k => categoria(k) === 'interacao' && !k.objeto)];
       this.$('#gmClueAreas').setAttribute('aria-pressed', String(c.showAreas));
       this.$('#gmClues').innerHTML = list.length ? list.map(k => {
         const type = root.ClueTypes.get(k.type), found = d.found[k.id], openNow = c.stack.some(e => e.clue.id === k.id);
         const state = openNow ? 'aberta agora' : found ? 'encontrada' : k.enabled === false ? 'desativada' : visible.has(k.id) ? 'na cena' : k.requires && !this.stage.state.props.has(k.requires) ? 'esperando objeto' : k.anchor ? 'na cena' : 'sem área';
         return `<article class="gm-clue" data-clue="${escapeHtml(k.id)}" data-found="${!!found}" data-enabled="${k.enabled !== false}" data-open="${openNow}">
           <div class="gm-clue-head"><canvas width="16" height="16" data-icon="${escapeHtml(type?.icon || 'lupa')}" aria-hidden="true"></canvas>
-            <div><strong>${escapeHtml(k.name)}</strong><small>${escapeHtml(type?.label || k.type)} · ${escapeHtml((marker[k.marker] || k.marker).split(' (')[0])}${k.requires ? ` · com “${escapeHtml(props[k.requires] || k.requires)}”` : ''}${k.builtIn ? '' : ' · criada por você'}</small></div>
+            <div><strong>${escapeHtml(k.name)}</strong><small>${categoria(k) === 'interacao' ? 'objeto · ' : ''}${escapeHtml(type?.label || k.type)} · ${escapeHtml((marker[k.marker] || k.marker).split(' (')[0])}${k.requires ? ` · com “${escapeHtml(props[k.requires] || k.requires)}”` : ''}${k.builtIn ? '' : ' · criada por você'}</small></div>
             <span class="gm-clue-state">${state}</span></div>
           <div class="gm-clue-actions">
             <button type="button" data-clue-action="open" title="Abre para todos: você e os jogadores">Abrir</button>
@@ -396,7 +583,8 @@
           </div>
           ${k.note ? `<p class="gm-clue-note">${escapeHtml(k.note)}</p>` : ''}
         </article>`;
-      }).join('') : '<p class="gm-muted">Nenhuma pista nesta cena. Crie uma com “+ Nova pista”.</p>';
+      }).join('') : `<p class="gm-muted">Nenhuma pista nesta cena. Crie uma com “+ Nova pista”.${c.clues().length ? ' Portas, móveis e máquinas ficam nas abas Exploração e Montar.' : ''}</p>`;
+      this.filterClues();
       for (const cv of this.$('#gmClues').querySelectorAll('canvas[data-icon]')) { const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(root.PixelUI.icon(cv.dataset.icon), 0, 0); }
       // Conclusions with their support.
       const concl = c.conclusions(), sceneIds = new Set((scene.conclusions || []).map(x => x.id));
@@ -411,6 +599,22 @@
       const log = Object.entries(d.found).map(([id, f]) => ({id, ...f, name: list.find(k => k.id === id)?.name || id})).sort((a, b) => a.at - b.at);
       this.$('#gmFound').innerHTML = log.length ? log.map(f => `<li><b>${escapeHtml(f.name)}</b> <small>${f.by === 'jogadores' ? 'pelos jogadores' : f.by === 'mestre' ? 'mostrada por você' : 'clicada na cena'} · ${new Date(f.at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</small></li>`).join('') : '<li class="gm-muted">Nada encontrado ainda.</li>';
       if (this.editing) this.renderEditorConclusions();
+      this.renderChips();
+    }
+    /* The list narrows as the master types: name, type, marker line and note. */
+    filterClues() {
+      const input = this.$('#gmClueFilter'), box = this.$('#gmClues');
+      if (!input || !box) return;
+      const plain = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const words = plain(input.value).split(/\s+/).filter(Boolean);
+      let shown = 0;
+      for (const card of box.querySelectorAll('.gm-clue')) {
+        const hit = words.every(w => plain(card.textContent).includes(w));
+        card.hidden = !hit; if (hit) shown++;
+      }
+      let empty = box.querySelector('.gm-filter-empty');
+      if (words.length && !shown) { if (!empty) { empty = this.doc.createElement('p'); empty.className = 'gm-muted gm-filter-empty'; box.append(empty); } empty.textContent = 'Nenhuma pista com esse texto.'; }
+      else empty?.remove();
     }
     /* Editor for a new clue or an existing one. */
     startEditing(id = null) {
@@ -453,7 +657,9 @@
       return def.fields.map(f => {
         const v = d.data?.[f.id] ?? def.defaults[f.id] ?? '', name = 'data.' + f.id;
         const options = f.kind === 'prop' ? [['', 'nenhum'], ...scene.props.map(p => [p.id, p.label])]
-          : f.kind === 'clue' ? [['', 'nenhuma'], ...this.clues.clues().filter(k => k.id !== this.editing?.id).map(k => [k.id, k.name])] : f.options;
+          : f.kind === 'clue' ? [['', 'nenhuma'], ...this.clues.clues().filter(k => k.id !== this.editing?.id).map(k => [k.id, k.name])]
+          : f.kind === 'cena' ? [['', 'nenhuma'], ...root.SceneLibrary.list().filter(s => s.id !== scene.id).map(s => [s.id, s.name])]
+          : f.kind === 'passagem' ? [['', 'automático'], ...(this.exploracao?.passagens(d.data?.destino) || []).map(p => [p.id, p.name])] : f.options;
         if (options) return `<label>${escapeHtml(f.label)}<select name="${name}">${options.map(([ov, ol]) => `<option value="${escapeHtml(ov)}" ${String(ov) === String(v) ? 'selected' : ''}>${escapeHtml(ol)}</option>`).join('')}</select></label>`;
         if (f.kind === 'textarea') return `<label class="gm-wide">${escapeHtml(f.label)}<textarea name="${name}" rows="${f.rows || 4}" placeholder="${escapeHtml(f.placeholder || '')}">${escapeHtml(v)}</textarea></label>`;
         return `<label>${escapeHtml(f.label)}<input name="${name}" value="${escapeHtml(v)}" placeholder="${escapeHtml(f.placeholder || '')}"></label>`;
@@ -550,7 +756,27 @@
       this.$('#gmDocTitle').value = d.title || ''; this.$('#gmDocStamp').value = d.stamp || ''; this.$('#gmDocBody').value = d.body || '';
       this.$('#gmDocAuto').value = String(d.auto || 0);
     }
+    /* One line of chips: what is going on right now, each a shortcut to its section. */
+    renderChips() {
+      const box = this.$('#gmLiveChips');
+      if (!box) return;
+      const chips = [], o = this.link.overlay || {};
+      const pedidos = this.exploracao?.pedidos || [];
+      if (pedidos.length) { const p = pedidos[pedidos.length - 1]; chips.push(['explorar', `Pedido: ${p.andar || p.nome}${pedidos.length > 1 ? ` +${pedidos.length - 1}` : ''}`, 'Alguém tentou uma passagem: escolha o que tem do outro lado', true]); }
+      if (this.clues && this.stage.scene) {
+        const list = this.clues.pistas(), found = Object.keys(this.clues.sceneData().found || {}).filter(id => list.some(k => k.id === id)).length;
+        chips.push(['mesa', `Pistas ${found}/${list.length}`, 'Ir para as pistas da cena']);
+      }
+      const music = this.sound?.musicId ? root.MapAmbience?.MUSIC?.[this.sound.musicId]?.label : null;
+      chips.push(['som', this.sound?.on ? (music ? `Música: ${music}` : 'Som ligado') : 'Som desligado', 'Ir para o som']);
+      chips.push(['tela', this.session.cluePrefs.players !== false ? 'Jogadores clicam' : 'Jogadores não clicam', 'Ir para a tela dos jogadores']);
+      if (o.curtain) chips.push(['cortina', 'Cortina fechada ×', 'Abrir a cortina']);
+      if (o.handout) chips.push(['documento', 'Documento na tela ×', 'Recolher o documento']);
+      const html = chips.map(([act, text, hint, alert]) => `<button type="button" class="gm-chip" data-chip="${act}" data-alert="${!!alert || act === 'cortina' || act === 'documento'}" title="${escapeHtml(hint)}">${escapeHtml(text)}</button>`).join('');
+      if (html !== this.chipsHtml) { this.chipsHtml = html; box.innerHTML = html; }
+    }
     updateBadge() {
+      this.renderChips();
       if (!this.badge) return;
       const o = this.link.overlay, parts = [];
       if (o.curtain) parts.push('CORTINA FECHADA · os jogadores não veem a cena');
@@ -579,13 +805,22 @@
       if (o.handout) root.MapOverlays.handout(m, t, o.handout, 1);
       if (o.curtain) root.MapOverlays.curtain(m, t, o.curtain, 1);
       if (this.session.tab === 'cenas' && now - this.previewTimer > 120) { this.previewTimer = now; this.renderPreview(); }
+      // The bag and the floor change under the tab too (the players pick things up): keep its counts true.
+      if (this.session.tab === 'itens' && this.items) {
+        const s = this.items.status();
+        if (`${s.used}|${s.floor}|${s.wielded}` !== this.itemStamp) this.renderItemStatus();
+      }
     }
 
     /* ---------------------------------------------------------- panel window */
     open(show) {
       this.panel.hidden = !show;
       if (this.toggle) { this.toggle.setAttribute('aria-expanded', String(show)); this.toggle.dataset.open = String(show); }
-      if (show) { const r = this.panel.getBoundingClientRect(); this.clamp(r.x, r.y); this.selectTab(this.session.tab || 'cenas'); this.syncPreviewControls(); }
+      if (show) {
+        const r = this.panel.getBoundingClientRect(); this.clamp(r.x, r.y);
+        const pedidos = this.exploracao?.pedidos.length || 0, novos = pedidos && pedidos !== this.pedidosVistos;
+        this.selectTab(novos ? 'explorar' : this.session.tab || 'cenas'); this.syncPreviewControls();
+      }
       (show ? this.$('#gmClose') : this.toggle)?.focus({preventScroll: true});
     }
     clamp(x, y) {
@@ -594,11 +829,61 @@
       this.panel.style.top = Math.max(0, Math.min(root.innerHeight - Math.min(r.height, 80), y)) + 'px';
     }
     selectTab(id) {
+      if (!SECTIONS.some(([key]) => key === id)) id = 'cenas';
+      const changed = this.session.tab !== id;
       this.session.tab = id;
-      for (const tab of this.panel.querySelectorAll('[data-gm-tab]')) tab.setAttribute('aria-selected', String(tab.dataset.gmTab === id));
+      for (const tab of this.panel.querySelectorAll('[data-gm-tab]')) { tab.setAttribute('aria-selected', String(tab.dataset.gmTab === id)); tab.tabIndex = tab.dataset.gmTab === id ? 0 : -1; }
       for (const pane of this.panel.querySelectorAll('.gm-pane')) pane.hidden = pane.id !== 'gmPane-' + id;
+      if (changed) {
+        const content = this.$('#gmContent'), body = this.$('.gm-body');
+        if (content) content.scrollTop = 0;
+        // On very short screens the whole window scrolls instead: bring the section's top back into view.
+        if (body && this.panel.scrollTop > body.offsetTop) this.panel.scrollTop = body.offsetTop;
+      }
       if (id === 'cenas') this.renderPreview();
+      if (id === 'itens') this.renderItems();
+      if (id === 'explorar') this.renderExplorar?.();
+      if (id === 'montar') this.renderMontar?.();
       this.save();
+    }
+
+    /* ---------------------------------------------------------- items */
+    renderItems() {
+      const box = this.$('#gmItems');
+      if (!box) return;
+      if (!this.items) { box.innerHTML = '<p class="gm-status">Os itens só podem ser entregues com o jogo aberto nesta janela.</p>'; return; }
+      box.innerHTML = this.items.catalog().map(it => `
+        <div class="gm-item" data-item="${escapeHtml(it.id)}">
+          <div class="gm-item-icon" aria-hidden="true">${it.icon}</div>
+          <div class="gm-item-text"><strong>${escapeHtml(it.label)}</strong><small>${escapeHtml(it.kindLabel)} · ${it.w * it.h} ${it.w * it.h === 1 ? 'espaço' : 'espaços'}${it.stack > 1 ? ` · pilha de ${it.stack}` : ''}</small></div>
+          ${it.stack > 1 ? `<label class="gm-item-qty">Qtd.<input type="number" min="1" max="${it.stack * 4}" value="1" aria-label="Quantidade: ${escapeHtml(it.label)}"></label>` : ''}
+          ${it.kind === 'key' ? '<label class="gm-item-qty" title="A chave abre a fechadura que tem este nome">Nome da chave<input type="text" data-key-name value="Porta" maxlength="24" spellcheck="false" aria-label="Nome da chave" style="width:96px;min-height:26px;padding:2px 5px"></label>' : ''}
+          <div class="gm-item-actions">
+            <button type="button" data-give="bag">Na bolsa</button>
+            <button type="button" data-give="floor">No chão</button>
+            ${it.kind === 'weapon' ? '<button type="button" data-give="hand" class="gm-accent">Na mão</button>' : ''}
+          </div>
+        </div>`).join('');
+      this.renderItemStatus();
+    }
+    renderItemStatus() {
+      if (!this.items) return;
+      const s = this.items.status();
+      this.itemStamp = `${s.used}|${s.floor}|${s.wielded}`;
+      this.flash('#gmItemsBag', `Bolsa: ${s.used} de ${s.capacity} espaços usados${s.wielded ? ` · na mão: ${s.wielded}` : ''}`);
+      this.flash('#gmFloorCount', s.floor ? `${s.floor} ${s.floor === 1 ? 'item solto' : 'itens soltos'} nesta cena` : 'Nada no chão.');
+      const collect = this.$('#gmFloorCollect');
+      if (collect) collect.disabled = !s.floor;
+    }
+    /* `dados` travels with the item: a key's name ({nome}). */
+    giveItem(id, where, qty = 1, dados = null) {
+      if (!this.items) return null;
+      const result = where === 'hand' ? this.items.wield(id) : where === 'floor' ? this.items.drop(id, qty, dados) : this.items.give(id, qty, dados);
+      this.flash('#gmItemsState', result.message);
+      const state = this.$('#gmItemsState');
+      if (state) state.dataset.ok = String(!!result.ok);
+      this.renderItemStatus();
+      return result;
     }
 
     /* ---------------------------------------------------------- events */
@@ -607,11 +892,40 @@
       this.toggle?.addEventListener('click', () => this.open(this.panel.hidden));
       on('#gmClose', 'click', () => this.open(false));
       for (const tab of this.panel.querySelectorAll('[data-gm-tab]')) tab.addEventListener('click', () => this.selectTab(tab.dataset.gmTab));
-      this.panel.querySelector('.gm-tabs').addEventListener('keydown', e => {
-        if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+      this.panel.querySelector('.gm-rail').addEventListener('keydown', e => {
+        const step = {ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1}[e.key];
+        if (!step) return;
+        e.preventDefault();
         const tabs = [...this.panel.querySelectorAll('[data-gm-tab]')], i = tabs.findIndex(t => t.dataset.gmTab === this.session.tab);
-        const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        const next = tabs[(i + step + tabs.length) % tabs.length];
         this.selectTab(next.dataset.gmTab); next.focus();
+      });
+      // Folded blocks stay folded, per block, across reloads.
+      for (const block of this.panel.querySelectorAll('details[data-block]')) {
+        if (typeof this.session.blocks[block.dataset.block] === 'boolean') block.open = this.session.blocks[block.dataset.block];
+        block.addEventListener('toggle', () => { this.session.blocks[block.dataset.block] = block.open; this.save(); });
+      }
+      // The status chips under the live header jump to where each thing is controlled.
+      on('#gmLiveChips', 'click', e => {
+        const chip = e.target.closest('[data-chip]');
+        if (!chip) return;
+        const act = chip.dataset.chip;
+        if (act === 'documento') this.hideDocument();
+        else if (act === 'cortina') this.setCurtain(false);
+        else this.selectTab(act);
+      });
+      // Items tab: hand the character anything from the catalogue; a key goes with the name typed on its card.
+      on('#gmItems', 'click', e => {
+        const button = e.target.closest('[data-give]'), card = button?.closest('[data-item]');
+        if (!card) return;
+        const qty = Math.max(1, Math.min(99, parseInt(card.querySelector('input[type=number]')?.value, 10) || 1));
+        const name = card.querySelector('[data-key-name]');
+        this.giveItem(card.dataset.item, button.dataset.give, qty, name ? {nome: name.value.trim() || 'Porta'} : null);
+      });
+      on('#gmFloorCollect', 'click', () => {
+        const result = this.items?.collect();
+        if (result) { this.flash('#gmItemsState', result.message); this.$('#gmItemsState').dataset.ok = String(!!result.ok); }
+        this.renderItemStatus();
       });
       // Window dragging, same feel as the other HUD windows.
       const handle = $('#gmHandle');
@@ -671,10 +985,23 @@
       on('#gmLightning', 'click', () => this.lightning());
       on('#gmSound', 'click', async () => {
         if (!this.sound) return;
-        if (this.sound.on) this.sound.stop(); else await this.sound.start();
+        if (this.sound.on) { this.sound.stop(); this.sound.stopMusic(); } else { await this.sound.start(); if (this.session.sound.music) this.sound.playMusic(this.session.sound.music); }
         $('#gmSound').setAttribute('aria-pressed', String(this.sound.on)); $('#gmSound').textContent = this.sound.on ? 'Som ligado' : 'Ligar som';
+        this.renderMusic(); this.renderChips();
       });
-      on('#gmVolume', 'input', e => this.sound?.setVolume(Number(e.target.value) / 100));
+      on('#gmVolume', 'input', e => { this.sound?.setVolume(Number(e.target.value) / 100); this.session.sound.volume = Number(e.target.value) / 100; this.save(); });
+      // Each ambient sound on its own switch; the music as chips, one playing at a time.
+      if (this.sound) {
+        const S = this.session.sound;
+        this.sound.setChannels(S.channels); this.sound.setVolume(S.volume ?? .6); $('#gmVolume').value = Math.round((S.volume ?? .6) * 100);
+        this.sound.setMusicVolume(S.musicVolume ?? .5); $('#gmMusicVolume').value = Math.round((S.musicVolume ?? .5) * 100); $('#gmMusicOut').textContent = $('#gmMusicVolume').value;
+        $('#gmChannels').innerHTML = root.MapAmbience.CHANNELS.map(([id, label, hint]) => `<label class="gm-check" title="${hint}"><input type="checkbox" data-channel="${id}" ${this.sound.channels[id] ? 'checked' : ''}> ${label}</label>`).join('');
+        on('#gmChannels', 'change', e => { const id = e.target.dataset.channel; if (!id) return; this.sound.setChannel(id, e.target.checked); S.channels[id] = e.target.checked; this.save(); });
+        $('#gmMusic').innerHTML = Object.entries(root.MapAmbience.MUSIC).map(([id, t]) => `<button type="button" data-music="${id}" aria-pressed="false">${t.label}</button>`).join('') + '<button type="button" data-music="" aria-pressed="false">Silêncio</button>';
+        on('#gmMusic', 'click', e => { const b = e.target.closest('[data-music]'); if (!b) return; this.setMusic(b.dataset.music || null); });
+        on('#gmMusicVolume', 'input', e => { $('#gmMusicOut').textContent = e.target.value; this.sound.setMusicVolume(Number(e.target.value) / 100); S.musicVolume = Number(e.target.value) / 100; this.save(); });
+        this.renderMusic();
+      }
       on('#gmFlicker', 'click', () => this.stage.setFlicker(!this.stage.effects.flicker));
       on('#gmDarkness', 'click', () => this.stage.setDarkness(!this.stage.effects.darkness, Number($('#gmDarkRadius').value)));
       on('#gmDarkRadius', 'input', e => { $('#gmDarkOut').textContent = e.target.value; if (this.stage.effects.darkness) this.stage.effects.darkness.radius = Number(e.target.value); });
@@ -687,7 +1014,10 @@
       on('#gmClueNew', 'click', () => this.startEditing(null));
       on('#gmClueAreas', 'click', () => { if (!this.clues) return; this.clues.showAreas = !this.clues.showAreas; this.renderClues(); });
       on('#gmClueRestore', 'click', () => { this.clues?.restoreBuiltIns(); });
+      on('#gmClueFilter', 'input', () => this.filterClues());
       on('#gmClues', 'click', e => {
+        const note = e.target.closest('.gm-clue-note');
+        if (note) { note.dataset.open = String(note.dataset.open !== 'true'); return; }
         const b = e.target.closest('[data-clue-action]'); if (!b) return;
         this.clueAction(b.dataset.clueAction, b.closest('[data-clue]').dataset.clue, b);
       });
@@ -713,10 +1043,12 @@
         if (!b.dataset.confirm) { b.dataset.confirm = '1'; b.textContent = 'Confirmar?'; setTimeout(() => { delete b.dataset.confirm; b.textContent = 'Zerar progresso'; }, 3000); return; }
         delete b.dataset.confirm; b.textContent = 'Zerar progresso';
         this.clues?.resetFound();
+        this.rearmButton();
       });
+      on('#gmButtonReset', 'click', () => { this.rearmButton(); });
       const prefs = this.session.cluePrefs;
       $('#gmCluePlayers').checked = prefs.players !== false; $('#gmClueAnnounce').checked = prefs.announce !== false; $('#gmClueSfx').checked = prefs.sfx !== false;
-      on('#gmCluePlayers', 'change', e => { prefs.players = e.target.checked; this.applyCluePrefs(); this.save(); });
+      on('#gmCluePlayers', 'change', e => { prefs.players = e.target.checked; this.applyCluePrefs(); this.renderChips(); this.save(); });
       on('#gmClueAnnounce', 'change', e => { prefs.announce = e.target.checked; this.applyCluePrefs(); this.save(); });
       on('#gmClueSfx', 'change', e => { prefs.sfx = e.target.checked; this.applyCluePrefs(); this.save(); });
       for (const sel of ['#gmDocTitle', '#gmDocStamp', '#gmDocBody', '#gmDocAuto']) on(sel, 'input', () => { this.session.handout = {...this.readDocument(), auto: Number($('#gmDocAuto').value)}; this.save(); });
@@ -736,13 +1068,18 @@
         try { root.localStorage?.removeItem(STORE); } catch {}
         this.session = this.defaults(); this.history = [];
         this.clues?.importData({}); this.applyCluePrefs(); this.editing = null; this.renderEditor();
-        this.hideDocument(); this.setCurtain(false, false);
         this.stage.goLive({scene: 'escritorio', transition: 'corte'});
+        root.Montador?.importar([]); this.exploracao?.importar({});
+        this.hideDocument(); this.setCurtain(false, false);
+        this.buildLibrary();
         this.fillDocument(this.session.handout); this.syncPreviewControls(true); this.renderedScene = null; this.renderLive(this.stage.describe());
+        this.aoRecomecar?.();
         $('#gmReset').textContent = 'Recomeçar'; delete $('#gmReset').dataset.confirm;
         this.save();
       });
 
+      this.bindMontar?.();
+      this.bindExplorar?.();
       // Keyboard.
       root.addEventListener('keydown', e => this.keydown(e), true);
     }
@@ -771,7 +1108,8 @@
     exportSession() {
       this.save();
       const st = this.stage.state;
-      const data = {...this.session, clues: this.clues ? this.clues.exportData() : this.session.clues, live: {scene: st.sceneId, preset: st.preset, weather: st.weather, props: [...st.props], clock: st.clock}, exportedAt: new Date().toISOString()};
+      const data = {...this.session, clues: this.clues ? this.clues.exportData() : this.session.clues, live: {scene: st.sceneId, preset: st.preset, weather: st.weather, props: [...st.props], clock: st.clock}, exportedAt: new Date().toISOString(),
+        exploracao: {...(this.exploracao?.exportar() || {}), cenas: root.Montador ? root.Montador.exportar() : []}};
       const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
       const a = this.doc.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -789,11 +1127,14 @@
         const live = this.session.live;
         this.session.cluePrefs = {...this.defaults().cluePrefs, ...this.session.cluePrefs};
         this.clues?.importData(this.session.clues); this.applyCluePrefs(); this.editing = null; this.renderEditor();
+        root.Montador?.importar(this.session.exploracao?.cenas || []); this.exploracao?.importar(this.session.exploracao || {});
+        this.buildLibrary();
         this.stage.goLive({scene: root.SceneLibrary.has(live.scene) ? live.scene : 'escritorio', state: {...live, props: new Set(live.props || [])}, transition: 'fade', duration: .8});
         this.fillDocument(this.session.handout); this.renderedScene = null;
         this.$('#gmCurtainMode').value = this.session.curtain.mode; this.$('#gmCurtainText').value = this.session.curtain.text; this.$('#gmMarkers').checked = this.session.markers;
         this.$('#gmCluePlayers').checked = this.session.cluePrefs.players !== false; this.$('#gmClueAnnounce').checked = this.session.cluePrefs.announce !== false; this.$('#gmClueSfx').checked = this.session.cluePrefs.sfx !== false;
         this.syncPreviewControls(true); this.setCurtain(!!this.session.curtain.on);
+        this.aoRecomecar?.();
         this.flash('#gmSaveState', `Sessão importada de ${file.name}.`);
       } catch (error) {
         this.flash('#gmSaveState', 'Arquivo inválido: escolha um .json exportado pelo mapa do mestre.');

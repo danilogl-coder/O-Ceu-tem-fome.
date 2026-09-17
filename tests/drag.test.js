@@ -68,7 +68,9 @@ assert(!state().ragdoll && state().mode==='play','automatic recovery returns con
 assert(Math.abs(state().playerX-landingX)<.01,'recovery preserves landing position');
 assert.equal(state().camera,landingCamera,'recovery must not recenter camera');
 // Left-facing projection, re-grabbing, and focus-loss cleanup.
-elements.get('#facing').emit('click');tick();assert.equal(state().facing,-1);
+// Turning round plays a short lean into the new direction; let it finish so the
+// sprite below is the plain standing pose the grab expects.
+elements.get('#facing').emit('click');tick(14);assert.equal(state().facing,-1);
 grab();canvas.emit('pointermove',event(340,65));tick(60);
 assert(Math.hypot(state().grab.point.x-state().grab.target.x,state().grab.point.y-state().grab.target.y)<1,'mirrored drag reaches target');
 window.emit('blur');assert(!state().dragging && !canvas.hasPointerCapture(7),'blur releases pointer');

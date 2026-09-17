@@ -135,8 +135,13 @@ function inspect(raster) {
 }
 function hairRun(mode,steps,drive) {
   const rig=new Skeleton2D(CHARACTER_ASSET), body=new CharacterPhysics(), motion=new CharacterMotion(rig);
-  motion.update(0,mode,0,body,1);
+  /* What was drawn: the hair at rest, before any clip turns it. The fall
+     preview now ends with her standing up, so its own first frame — head
+     already tilted, cheek lock merged into the mass — is not the reference. */
+  motion.update(0,'rest',0,body,1);
   const settled=inspect(rig.rasterize({hidden:bodyOnly}));
+  motion.initialized=false;
+  motion.update(0,mode,0,body,1);
   let sway=0, enclosed=0, pieces=0, thinnest=Infinity;
   const tip=[]; let bounds=[64,96,0,0];
   for(let i=0;i<steps;i++) {

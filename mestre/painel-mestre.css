@@ -131,3 +131,57 @@
 .gm-stage-badge{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:2;max-width:calc(100% - 140px);padding:5px 9px;background:#2a0d22ee;border:2px solid #d05a86;box-shadow:3px 3px #100414;color:#ffd9e6;font-size:10px;letter-spacing:.6px;text-align:center;pointer-events:none}
 @media(max-width:600px){.gm-window{left:10px;right:auto;top:10px;width:calc(100vw - 20px);padding:22px 13px 14px}.gm-live{grid-template-columns:1fr}.gm-monitor{max-width:260px}.gm-grid,.gm-checks{grid-template-columns:1fr}.gm-heading h2{font-size:19px}.gm-tabs button{font-size:9px}.gm-stage-badge{bottom:52px;max-width:calc(100% - 20px)}}
 .gm-inline{flex:1;flex-direction:row!important;align-items:center;gap:8px!important;margin:0!important}
+/* Items tab: the hand-out desk. */
+.gm-items{display:flex;flex-direction:column;gap:6px}
+.gm-item{display:grid;grid-template-columns:48px minmax(0,1fr) auto;grid-template-areas:'icon text qty' 'icon actions actions';gap:4px 9px;align-items:center;border:1px solid #5c244f;background:#1a071d;padding:6px 7px;box-shadow:2px 2px #09020d}
+.gm-item-icon{grid-area:icon;display:flex;align-items:center;justify-content:center;width:48px;height:48px;background:#2a0d30;border:1px solid #6d2d62}
+.gm-item-icon svg{max-width:40px;max-height:40px;width:auto;height:auto;image-rendering:pixelated}
+.gm-item-text{grid-area:text;display:flex;flex-direction:column;min-width:0}
+.gm-item-text strong{font-size:12px;color:#ffd9f2}
+.gm-item-text small{font-size:9px;color:#a77da4;line-height:1.35}
+.gm-item-qty{grid-area:qty;display:flex;align-items:center;gap:5px;font-size:10px;color:#e484cf}
+.gm-item-qty input{width:52px;min-height:26px;font:inherit;color:#f3b4e8;background:#230c28;border:1px solid #743064;border-radius:0;padding:2px 4px}
+.gm-item-actions{grid-area:actions;display:flex;flex-wrap:wrap;gap:4px}
+.gm-item-actions button{font-size:10px;min-height:26px!important;padding:2px 9px!important}
+.gm-items-state{min-height:1.5em;margin-top:6px;text-align:center}
+.gm-items-state[data-ok=true]{color:#bff0b4}.gm-items-state[data-ok=false]{color:#ffbf86}
+.gm-grow{flex:1;min-width:140px}
+
+/* ---- Rail layout: the live header and the sections stay put, only the section scrolls. ---- */
+.gm-window{width:600px;display:flex;flex-direction:column;overflow:hidden;height:min(calc(100dvh - 36px),880px);max-height:calc(100dvh - 36px)}
+.gm-window>.hud-crown,.gm-heading{flex-shrink:0}
+.gm-live{flex-shrink:0;grid-template-columns:168px minmax(0,1fr);gap:4px 12px;padding:10px 0}
+.gm-live-info strong{font-size:15px}
+.gm-live-actions{margin-top:2px}
+.gm-live-actions button{min-height:26px!important;padding:3px 8px!important;font-size:11px}
+.gm-live-chips{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.gm-live-chips:empty{display:none}
+.gm-window .gm-chip{min-height:22px;padding:2px 8px;font-size:10px;letter-spacing:.3px;color:#e8bfe0;background:#1c0820;border-color:#5c244f}
+.gm-window .gm-chip:hover:not(:disabled){color:#ffe6f7}
+.gm-window .gm-chip[data-alert=true]{color:#ffe0c0;border-color:#d0784a;background:#3a1a14}
+.gm-body{flex:1;min-height:0;display:grid;grid-template-columns:66px minmax(0,1fr);gap:0 12px;padding-top:10px}
+.gm-rail{display:flex;flex-direction:column;gap:5px;overflow-y:auto;padding:0 2px 4px 0;scrollbar-width:none}
+.gm-window .gm-rail button{display:flex;flex-direction:column;align-items:center;gap:3px;min-height:54px;padding:6px 2px 5px;font-size:9px;line-height:1.15;letter-spacing:.2px;text-align:center;color:#d9a6ce;background:#1c0820;border-color:#5c244f;clip-path:polygon(4px 0,calc(100% - 4px) 0,100% 4px,100% calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,0 calc(100% - 4px),0 4px)}
+.gm-rail svg{width:32px;height:32px;fill:currentColor;shape-rendering:crispEdges;flex-shrink:0}
+.gm-window .gm-rail button[aria-selected=true]{color:#ffe0f5;background:#5a1e50;border-color:#f187d7;box-shadow:inset 3px 0 #e574cc,0 2px #09020d}
+.gm-content{min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 4px 8px 0;scrollbar-width:thin;scrollbar-color:#803570 #140619}
+.gm-content .gm-pane>:first-child{margin-top:0}
+.gm-block{border-bottom:1px dashed #4a1c44;padding:0 0 8px;margin:0 0 6px}
+.gm-block:last-child{border-bottom:0}
+.gm-block>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 0 2px;user-select:none}
+.gm-block>summary::-webkit-details-marker{display:none}
+.gm-block>summary:before{content:'';flex-shrink:0;width:0;height:0;border-style:solid;border-width:4px 0 4px 6px;border-color:transparent transparent transparent #e574cc;transition:transform .12s}
+.gm-block[open]>summary:before{transform:rotate(90deg)}
+.gm-block>summary h3{margin:0!important}
+.gm-block>summary:hover h3{color:#ffd1f1}
+.gm-block>summary:focus-visible{outline:2px solid #ffd2a0;outline-offset:2px}
+.gm-block-body{padding-top:6px}
+.gm-block-body>.gm-row:first-child,.gm-block-body>.gm-chips:first-child,.gm-block-body>.gm-props:first-child,.gm-block-body>.gm-grid:first-child{margin-top:0}
+@media(max-width:600px){.gm-window{width:calc(100vw - 20px);height:calc(100dvh - 20px);max-height:calc(100dvh - 20px)}.gm-live{grid-template-columns:120px minmax(0,1fr)}.gm-body{grid-template-columns:52px minmax(0,1fr);gap:0 8px}.gm-window .gm-rail button{min-height:46px;font-size:8px}.gm-rail svg{width:24px;height:24px}}
+@media(max-height:720px){.gm-live{grid-template-columns:128px minmax(0,1fr);padding:6px 0}.gm-window .gm-rail button{min-height:42px;padding:4px 2px;font-size:8px}.gm-rail svg{width:22px;height:22px}.gm-rail{gap:4px}}
+@media(max-height:540px){.gm-window{display:block;height:auto;overflow:auto}.gm-rail{position:sticky;top:0;align-self:start;overflow:visible;z-index:1;background:#140619}.gm-content{overflow:visible}}
+.gm-window input.gm-filter{width:100%;margin-top:8px;min-height:28px;padding:4px 8px;font:inherit;font-size:11px;color:#f3b4e8;background:#1c0820;border:1px solid #5c244f;border-radius:0}
+.gm-window input.gm-filter:focus-visible{outline:2px solid #ffd2a0;outline-offset:1px}
+.gm-clue[hidden]{display:none!important}
+.gm-clue-note{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.gm-clue-note[data-open=true]{display:block;-webkit-line-clamp:unset}

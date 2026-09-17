@@ -1,6 +1,8 @@
-# Side Scroller — personagem modular
+# O Céu tem Fome — RPG de mesa
 
-Abra **index.html** diretamente no navegador. Não há instalação, dependências JavaScript, build ou conexão externa. A pasta estava vazia; esta é uma cena local de inspeção e movimento do personagem.
+Abra **index.html** diretamente no navegador. Não há instalação, dependências JavaScript, build ou conexão externa. É a mesa digital do RPG: o mestre monta os cenários com luz, clima e som, esconde pistas na própria cena e cuida da personagem (saúde, bolsa e roupas), e os jogadores acompanham numa tela só deles (`jogadores.html`).
+
+A página abre com o nome do RPG, a cena e um cartão **Na mesa** com os atalhos da personagem e do mestre. A personagem nasceu como protótipo de anatomia e movimento; as ferramentas daquela fase (inspeção do rig, ficha do sprite, links do cabelo) saíram da página, e o histórico continua abaixo.
 
 A base atual refina **a anatomia, a pose e o cabelo**, preservando os arquivos do rosto. O cabelo foi redesenhado a partir da referência e é simulado em tempo real. Roupa e botas foram removidas da pintura do corpo e exportadas como camadas opcionais. O PNG original tem 26×56 pixels; o arquivo entregue tem uma tela transparente de 64×96, com o desenho em `(19,20)`. Não houve ampliação, redução ou interpolação da fonte. Os previews usam apenas nearest neighbor. As primeiras interpretações estão guardadas somente como histórico.
 
@@ -11,9 +13,11 @@ A base atual refina **a anatomia, a pose e o cabelo**, preservando os arquivos d
 - **Respirar**, **Andar**, **Correr**, **Cair**, **Pular**: demonstrações de animação esquelética. Correr e cair têm **15 quadros cada**, um por desenho das folhas `png/Run (1..15)` e `png/Dead (1..15)`.
 - **Vida**, **Física do cabelo** e **Brisa**: ligam a camada de vida, a simulação do cabelo e o vento ambiente.
 - Passe o mouse pela cena: os olhos acompanham o ponteiro.
+- **Guarda-roupa** (**G** ou o botão ROUPAS na cena): cabelos, chapéus, blusas, casacos, calças, saias, calçados, acessórios, tons de pele e cor dos olhos, tudo desenhado por código sobre os mesmos ossos do corpo, com cor própria, conjuntos prontos e física nas peças soltas. Detalhes em [Guarda-roupa](#guarda-roupa).
 - **Ragdoll**: segure o botão esquerdo sobre o personagem e arraste. O ponto segurado acompanha o mouse; o corpo gira com gravidade e inércia e colide com o chão. Ao soltar, ele mantém o impulso. A recuperação parte da postura física atual: de bruços, busca apoio; de costas, senta e recolhe as pernas; invertido, primeiro se desvira; agachado, firma os pés e sobe. Se já estiver em pé, faz só um ajuste de equilíbrio. Os pés ficam plantados durante a subida, e a posição da queda é preservada. Enquanto estiver no ar ou segurado, continua em ragdoll. É possível pegá-lo novamente durante a recuperação. Funciona nas duas direções e com zoom da página.
 - **Mapa do mestre** (**M**): o cenário é uma cena que o mestre troca ao vivo para os jogadores, com prévia, transições, luz, clima, objetos, efeitos, documentos e uma janela limpa para TV, projetor ou Discord. O cenário inicial é o **Escritório**, em três camadas. Detalhes em [Mapa do mestre](#mapa-do-mestre).
-- **Jogar**: A/D ou setas movem, Espaço pula, **Shift** corre e **F** derruba a personagem. A corrida entra acima de 96 px/s. Após a queda, ela se levanta automaticamente onde caiu.
+- **Escritório do Jorge**: terceira cena do mapa do mestre (**Shift+3**), inspirada em *Five Nights at Freddy's* sem animatrônicos — mural da investigação, edições do livro, computador, câmeras que reagem à investigação e uma impressora que liga sozinha. Detalhes em [O Escritório do Jorge](#o-escritório-do-jorge).
+- **Jogar**: A/D ou setas movem, Espaço pula, **Shift** corre e **F** derruba a personagem. A corrida entra acima de 96 px/s. Após a queda, ela se levanta onde caiu com o clipe **levantar**: apoia as mãos, sobe o peito, põe um pé à frente, agacha e fica de pé. Virar de lado inclina o corpo na direção nova por alguns quadros.
 - **Esqueleto**: mostra articulações e hierarquia.
 - **Cores**: uma fileira de amostras — cabelo, cada olho, faixas, camiseta, short, botas e manto. Cada amostra já é a cor que ela define, então a fileira também é a leitura do que ela está vestindo; escolher a cor de uma roupa veste a roupa.
 - No inspetor, escolha um osso, ajuste o ângulo e oculte peças. **Restaurar aparência** desfaz ajustes visuais, sem mudar a posição ou interromper a física.
@@ -33,15 +37,42 @@ O inventário é uma bolsa de couro marrom aberta em pixel art, com grade **10 �
 - O uso leva **3 s para bandagem**, **5 s para tala** e **4 s para antibiótico**. Há progresso no item e no painel de saúde, acompanhado de uma animação de enfaixar, ajustar a tala ou tomar o remédio. O item só é consumido ao concluir, diretamente da pilha arrastada.
 - **Esc** ou **Cancelar uso** interrompe sem gastar. Movimento voluntário, novo dano, perda do membro alvo, incapacidade, falta do item ou saída da janela também interrompem. A pausa da animação congela o tempo de uso. Uma ação por vez; a pilha em uso fica reservada. É necessário ter pelo menos um braço e uma mão presentes.
 - A bandagem aceita cortes sem curativo; a tala aceita fraturas não imobilizadas; o antibiótico aceita regiões ainda não tratadas com infecção ou risco de infecção. O remédio preserva a regra existente de interromper a necrose sem regenerar tecido perdido. Os antigos botões de tratamento, legenda e instruções estáticas foram removidos.
-- **Repor suprimentos · demonstração** mantém os controles de reposição da cena. Não há peso, fabricação, descarte ou salvamento entre sessões.
+- **Repor suprimentos · demonstração** mantém os controles de reposição da cena. Não há peso, fabricação ou salvamento entre sessões.
+- **Botão direito** num item abre as opções dele: *Examinar* (pistas), *Vestir / Tirar a roupa* (a roupa), *Empunhar / Guardar* (o taco), *Separar 1*, *Largar no chão* e *Descartar*. A **lixeira** no canto da bolsa descarta o item selecionado com um segundo clique de confirmação, ou o que for solto sobre ela.
+- **Itens no cenário** (`itens-cena.js`): arrastar um item para fora da bolsa sobre a cena, ou *Largar no chão*, coloca-o no mundo com física própria — cai, quica, desliza, para nas paredes da sala e fica onde caiu quando você muda de cena e volta. Um clique sobre ele perto do personagem o guarda de novo (longe demais, ele avisa); segurar e mover carrega, e soltar com a mão rápida **arremessa**. Um item que voa e acerta o personagem machuca a região da altura em que bateu — hematoma, corte, fratura conforme a força e o peso (um taco pesa quatro vezes uma bandagem) — e um golpe forte o derruba. Os jogadores veem tudo isso na tela deles.
+- **A roupa é um item.** O que o personagem veste aparece na bolsa como um pacote de roupas de 2 × 2, contornado em dourado e marcado *VESTIDA*. Ele guarda o conjunto inteiro do guarda-roupa (peças e cores; cabelo, barba, corpo e pele não são roupa e ficam na pessoa). Mexer no guarda-roupa atualiza o pacote; *Tirar a roupa* deixa o personagem sem roupa e o pacote na bolsa; *Vestir* põe de volta; largar ou descartar o pacote também despe na hora, e o pacote no chão pode ser pego e vestido de novo.
+- **As pistas pequenas vão para a bolsa primeiro.** Documento, bilhete, carta, foto e objeto clicados na cena (pelo mestre ou pelos jogadores) não abrem: viram um item de uma casa na bolsa, com a arte do tipo, e somem do cenário. *Examinar* abre a interface da pista para todos; largar ou descartar deixa o item no chão ou fora do jogo, e *Zerar progresso* no painel do mestre devolve tudo ao cenário. Mesa, computador, cofre e mapa continuam abrindo onde estão.
+- **O taco de beisebol** é a primeira arma: um item de 1 × 3 na bolsa. *Empunhar* o coloca no ombro do personagem (a mão é desenhada por cima do cabo para ler como pegada); **E** golpeia — um arco de braço e tronco que manda voando qualquer item solto ao alcance; *Guardar* devolve à bolsa. Se um braço falta, o outro segura. Arremessado como qualquer item, é o que mais machuca. **Ele não começa na bolsa: quem entrega é o mestre**, na seção **Itens** do mapa do mestre (**M**) — *Na bolsa*, *No chão* (cai na frente do personagem) ou *Na mão* (já empunhado). Na demonstração, *Repor suprimentos* também tem **+ Taco**.
 
-Regras de estoque em `inventory.js`, interação em `inventory-ui.js`, tratamentos temporizados em `treatment.js` e animações em `treatment-motion.js`. `Inventory.merge(sourceId, targetId)` retorna a quantidade transferida; `Inventory.split(id, qty)` retorna a nova entrada ou `null`; `consumeEntry(id, qty)` consome uma pilha específica. Operações recusadas não alteram o estoque; `autoSort()` retorna `false` sem alterar a disposição se não conseguir acomodar tudo. `TreatmentAction` valida início, avanço, interrupção e conclusão sem depender do DOM. `TreatmentMotion` altera somente o esqueleto visual, mantendo as articulações e a física intactas.
+Regras de estoque em `inventory.js` (entradas com `data` — pista, roupa — nunca se juntam em pilha), interação em `inventory-ui.js`, itens no mundo em `itens-cena.js`, o taco em `armas.js`, tratamentos temporizados em `treatment.js` e animações em `treatment-motion.js`. `Inventory.merge(sourceId, targetId)` retorna a quantidade transferida; `Inventory.split(id, qty)` retorna a nova entrada ou `null`; `consumeEntry(id, qty)` consome uma pilha específica. Operações recusadas não alteram o estoque; `autoSort()` retorna `false` sem alterar a disposição se não conseguir acomodar tudo. `TreatmentAction` valida início, avanço, interrupção e conclusão sem depender do DOM. `TreatmentMotion` altera somente o esqueleto visual, mantendo as articulações e a física intactas.
 
-Validação: `node tests/inventory.test.js`, `node tests/treatment.test.js`, `node tests/browser-treatment.test.js`, `node tests/browser-inventory.test.js`, `node tests/browser-bag.test.js` e `node tests/browser-health.test.js`. Os testes de navegador usam Playwright e Chrome; `PLAYWRIGHT_MODULE` pode apontar para a instalação local de Playwright. Capturas em `pixel_art/generated/bag/` e `pixel_art/generated/treatment/`.
+Validação: `node tests/inventory.test.js`, `node tests/treatment.test.js`, `node tests/itens-cena.test.js` (física dos itens, clique/carregar/arremessar, o golpe que acerta a região certa uma vez só, o taco no ombro e o golpe dentro dos limites articulares, pistas na bolsa e de volta ao cenário), `node tests/browser-itens.test.js` (Chrome: pacote de roupa vestido, largado, pego e vestido de novo; taco empunhado, golpe que manda a bandagem voando, arremesso que machuca, arrastar para o cenário, lixeira), `node tests/browser-treatment.test.js`, `node tests/browser-inventory.test.js`, `node tests/browser-bag.test.js` e `node tests/browser-health.test.js`. Os testes de navegador usam Playwright e Chrome; `PLAYWRIGHT_MODULE` pode apontar para a instalação local de Playwright. Capturas em `pixel_art/generated/bag/` e `pixel_art/generated/treatment/`.
 
 ## Mapa do mestre
 
 O cenário deixou de ser um fundo fixo: é uma **cena**, e o mestre troca a cena dos jogadores durante a partida. Tudo continua sem instalação, sem servidor e sem arquivos de imagem ou som: abra `index.html` e aperte **M**.
+
+### O painel: seções em coluna
+
+O mapa do mestre crescia como uma aba comprida, e cada recurso novo empurrava o resto para baixo. Agora ele tem **uma coluna de seções à esquerda, com ícone em pixel art e nome em palavras simples**, como a [navigation rail do Material Design](https://m3.material.io/components/navigation-rail/guidelines), e só a seção aberta rola. A janela mantém o mesmo tamanho ao trocar de seção, então nada pula de lugar.
+
+- **Ao vivo, sempre à vista**: a miniatura do que os jogadores veem, a cena, a luz e a hora, e os três botões de urgência — **Abrir tela dos jogadores**, **Cortina** e **↶ Anterior**.
+- **Avisos clicáveis** logo abaixo: *Pedido: Porta 101* (quando alguém tenta uma passagem sem destino), *Pistas 3/11*, *Som desligado*, *Som ligado* ou a música que está tocando, *Jogadores clicam* ou *não clicam* e, quando for o caso, **Cortina fechada ×** e **Documento na tela ×**. Um clique no aviso leva à seção certa; os avisos com **×** abrem a cortina ou recolhem o documento na hora.
+- **Blocos que recolhem**: cada título (▾) fecha o seu bloco, vários podem ficar abertos, e o painel lembra quais estavam recolhidos e qual seção estava aberta, mesmo depois de recarregar. *Como a personagem usa* e *Atalhos* começam recolhidos.
+- **Filtro de pistas**: digitar em *Filtrar pistas* mostra só as que têm aquilo no nome, no tipo ou na nota (sem ligar para acentos). As notas do mestre aparecem em duas linhas; um clique mostra a nota inteira.
+- **Teclado**: com o foco na coluna, **↑ ↓** trocam de seção. Em tela muito baixa (celular deitado), a janela inteira rola e a coluna fica presa no topo.
+
+| Seção | O que tem |
+| --- | --- |
+| **Cenas** | Biblioteca, prévia só do mestre, luz, clima, entrada, transição, letreiro e **Enviar aos jogadores** |
+| **Montar** | Biblioteca de cenas genéricas e conjuntos prontos, cenas montadas da sessão e o editor: prancheta de arrastar, objetos, inspetor, peças e sala |
+| **Luz e clima** | Iluminação e relógio, clima, objetos da cena, efeitos (tremor, relâmpago, escuridão…) e a personagem (teleporte, parede) |
+| **Som** | Som ambiente com os canais e as músicas |
+| **Pistas** | Pistas da cena (criar, abrir, editar, filtro), conclusões, o que já foi encontrado e anotações da cena |
+| **Exploração** | Pedidos de improviso, passagens de qualquer cena (destino, chegada, tranca, elevador), mapa de conexões, eventos e preferências |
+| **Itens** | Entregar itens, o que está no chão desta cena e como a personagem usa cada um |
+| **Jogadores** | Tela dos jogadores, cliques deles nas pistas, cortina e documento |
+| **Sessão** | Exportar, importar, recomeçar e a lista de atalhos |
 
 ### A mesa em duas janelas
 
@@ -51,30 +82,42 @@ O cenário deixou de ser um fundo fixo: é uma **cena**, e o mestre troca a cena
 
 ### Preparar em silêncio, enviar quando quiser
 
-Como no modo estúdio do OBS e na diferença entre “ver” e “ativar” cena do Foundry, a aba **CENAS** tem uma **prévia que só o mestre vê**: escolha a cena na biblioteca (miniaturas; **1–9**), a luz, o clima, os objetos e o ponto de entrada, e mova a câmera da prévia. **Enviar aos jogadores** (**Ctrl+Enter**) aplica tudo com a transição escolhida: esmaecer, dissolver, íris em volta da personagem, persiana ou corte seco, com duração e **letreiro** opcional (nome e subtítulo em fonte de pixel). **Shift+número** envia uma cena na hora. **↶ Anterior** desfaz a última mudança ao vivo.
+Como no modo estúdio do OBS e na diferença entre “ver” e “ativar” cena do Foundry, a seção **Cenas** tem uma **prévia que só o mestre vê**: escolha a cena na biblioteca (miniaturas; **1–9**), a luz, o clima, os objetos e o ponto de entrada, e mova a câmera da prévia. **Enviar aos jogadores** (**Ctrl+Enter**) aplica tudo com a transição escolhida: esmaecer, dissolver, íris em volta da personagem, persiana ou corte seco, com duração e **letreiro** opcional (nome e subtítulo em fonte de pixel). **Shift+número** envia uma cena na hora. **↶ Anterior** desfaz a última mudança ao vivo.
 
 ### Ambiente ao vivo
 
-Na aba **AMBIENTE**, tudo muda para os jogadores sem recarregar nada, com uma dissolução pontilhada:
+Em **Luz e clima**, tudo muda para os jogadores sem recarregar nada, com uma dissolução pontilhada:
 
 - **Iluminação**: Manhã, Tarde, Pôr do sol, Noite e Luzes apagadas. Cada uma pinta de novo as camadas pela luz, não por filtro, e também escurece ou esfria a personagem.
 - **Relógio da cena**: o relógio de parede mostra a hora escolhida e continua andando.
 - **Clima**: céu limpo ou chuva (céu fechado, chuva na janela, sem sol no chão).
 - **Objetos**: aparecem e somem (luminária, monitor, café, envelope lacrado, molho de chaves, papéis no chão, bilhete na porta, arquivo entreaberto, retrato torto, pegadas e poça de sangue).
 - **Efeitos**: tremor (**T**), relâmpago com trovão (**L**), luzes piscando, escuridão com raio em volta da personagem e pulso de tensão com batimento.
-- **Som ambiente**: sintetizado no navegador. Ruído de sala, relógio, chuva, grilos à noite, vento em cena externa, trovão e batimento. Liga num botão, porque o navegador só permite som depois de um clique.
+- **Som ambiente**: sintetizado no navegador. Ruído de sala, relógio, chuva, grilos à noite, vento em cena externa, trovão e batimento. Liga num botão, porque o navegador só permite som depois de um clique. **Cada som tem a própria chave** — tom da sala, chuva, vento, relógio, grilos e pingos, batimento, trovão e os passos do personagem — e o que foi escolhido fica salvo na sessão.
+- **Passos**: a camada de movimento avisa quando um calcanhar pousa (dois por passada, alternando os pés, mais fortes correndo, um ao aterrissar de um salto) e o som toca conforme o piso — madeira no escritório (batida surda com um estalo em cima), grama na cena de campo (um esmagado de ruído).
+- **Música**: cinco trilhas curtas escritas em notas e tocadas pelo navegador, em loop, uma de cada vez, com volume próprio e lembradas na sessão (voltam a tocar quando o som é ligado): *Investigação* (baixo andante em ré menor, piano abafado, colchão de cordas), *Tensão* (bordão grave, quintas desafinadas, um sopro), *Chuva calma* (arpejos de triângulo sobre maj7), *Perseguição* (baixo quadrado, caixa de ruído, arpejo), *Lamento* (melodia triste em lá menor). Ficam em `MUSIC` no `som-ambiente.js`: cada voz é uma onda, um ganho, um envelope e as notas como `[tempo, altura MIDI, duração]`.
 - **Personagem**: leva a personagem para qualquer ponto de entrada da cena.
+
+### Itens para a personagem
+
+A seção **Itens** entrega qualquer item que não tenha história própria — bandagem, tala, antibiótico e o taco de beisebol (roupa sai do guarda-roupa, pista sai do cenário):
+
+- **Na bolsa**, com quantidade para o que empilha; se não couber tudo, diz quanto coube.
+- **No chão**: cai deitado na frente da personagem, na cena atual, e os jogadores veem. Ela guarda com um clique perto, ou arremessa.
+- **Na mão** (só armas): vai para a bolsa e já é empunhado; **E** golpeia.
+
+A seção mostra os espaços usados da bolsa, o que está na mão e quantos itens estão soltos na cena, e **Recolher tudo para a bolsa** guarda o que estiver no chão, perto ou longe dela. A lista vem de `ITEM_DEFS` (`inventory.js`), então um item novo aparece ali sozinho; a ponte com o jogo é o `itemDesk` de `app.js`.
 
 ### Pistas na cena
 
 As pistas ficam **dentro da cena** e se abrem **clicando nelas**, sem passar pelo mapa do mestre. Sobre uma pista o cursor vira uma lupa; o clique abre a interface dela, desenhada em pixel art na própria imagem do jogo, então os jogadores veem a mesma coisa na tela deles. **Esc** fecha. **P** mostra as áreas de todas as pistas (só para o mestre).
 
-- **Os jogadores também clicam**, pela janela deles: o cursor muda sobre as pistas, o clique e a digitação voltam para o jogo do mestre. O mestre desliga isso em **TELA → Jogadores podem clicar nas pistas**.
+- **Os jogadores também clicam**, pela janela deles: o cursor muda sobre as pistas, o clique e a digitação voltam para o jogo do mestre. O mestre desliga isso em **Jogadores → Jogadores podem clicar nas pistas** (ou no aviso *Jogadores clicam*, no topo do painel).
 - **Pista encontrada**: na primeira abertura aparece o aviso “PISTA ENCONTRADA” (desligável) e ela entra no registro com quem achou: a cena, os jogadores ou o mestre.
 - **Conclusões com a regra das três pistas**: cada conclusão mostra quantas pistas a sustentam e quantas já foram achadas, e avisa quando tem menos de três. O Escritório vem com quatro conclusões, cada uma com três a seis caminhos.
 - **Memória das interfaces**: gaveta aberta, computador logado, barbante no mapa, cadeado aberto e botão já apertado ficam gravados na sessão. **Zerar progresso** apaga o que a mesa fez, não o que o mestre escreveu.
 
-**Criar pistas próprias** (aba **MESA → + Nova pista**): nome, tipo, marca na cena (brilho, ícone flutuante, contorno, discreta ou oculta, que só o mestre abre), objeto da cena que a faz aparecer, conclusões que ela apoia, nota só para o mestre e os campos do tipo. **Marcar na cena** deixa o painel transparente: arraste sobre a cena para desenhar a área, em qualquer lugar da parede do fundo, do chão ou de um objeto da frente. A área acompanha a camada certa quando a câmera anda. **Testar só pra mim** abre a pista só na tela do mestre. Cada pista da lista tem **Abrir** (para todos), **Só eu**, **Olhar** (a câmera vai até ela), **Ativa/Desativada**, **Editar** e **Excluir**. As pistas que já vêm com a cena podem ser editadas ou excluídas e voltam com **Restaurar originais**.
+**Criar pistas próprias** (seção **Pistas → + Nova pista**): nome, tipo, marca na cena (brilho, ícone flutuante, contorno, discreta ou oculta, que só o mestre abre), objeto da cena que a faz aparecer, conclusões que ela apoia, nota só para o mestre e os campos do tipo. **Marcar na cena** deixa o painel transparente: arraste sobre a cena para desenhar a área, em qualquer lugar da parede do fundo, do chão ou de um objeto da frente. A área acompanha a camada certa quando a câmera anda. **Testar só pra mim** abre a pista só na tela do mestre. Cada pista da lista tem **Abrir** (para todos), **Só eu**, **Olhar** (a câmera vai até ela), **Ativa/Desativada**, **Editar** e **Excluir**. As pistas que já vêm com a cena podem ser editadas ou excluídas e voltam com **Restaurar originais**.
 
 Tipos de pista, cada um com a própria interface:
 
@@ -92,7 +135,7 @@ Tipos de pista, cada um com a própria interface:
 
 ### As pistas do Escritório
 
-- **Mesa da secretaria**: telefone de disco (atenda para ouvir a linha), luminária (acende e apaga a luminária da cena de verdade), computador, teclado que levanta e revela o post-it **CEU1987**, ofício sobre o mata-borrão, café ainda quente, três gavetas (a da direita só abre com o molho de chaves) e o **grande botão de emergência NÃO APERTE**: clique na tampa de acrílico para levantá-la; apertar o botão dispara o alarme com giroflex e contagem, e a cena é cortada para a cinemática. Depois da primeira vez, alguém cola um bilhete na tampa.
+- **Mesa da secretaria**: telefone de disco (atenda para ouvir a linha), luminária (acende e apaga a luminária da cena de verdade), computador, teclado que levanta e revela o post-it **CEU1987**, ofício sobre o mata-borrão, café ainda quente, três gavetas (a da direita só abre com o molho de chaves) e o **grande botão de emergência NÃO APERTE**. A tampa de acrílico agora tem um **teclado com senha**: clicar nela abre o teclado com a dica (*Meu verdadeiro nome*) e a palavra é **Raimundo** — sem distinguir maiúsculas ou acentos; a senha, a dica e o objeto de cena do estrago são campos da pista, editáveis pelo mestre. Apertar o botão dispara o alarme com giroflex e contagem, corta para a cinemática, e depois **o botão fica apertado para sempre**: a placa passa a dizer APERTARAM., ninguém mais aperta, e o escritório mostra o que fizeram — rachaduras descendo do teto, fuligem, reboco caído com o ripado à mostra, o retrato torto, entulho e papéis no chão (o objeto **Estrago do botão**, que o mestre também pode ligar e desligar sozinho). **Rearmar o botão**, na seção Pistas, desaperta, tranca a tampa de novo e conserta a sala; **Zerar progresso** também faz isso.
 - **Cinemática do foguete**: estática de TV; ao entardecer o silo abre e o foguete sobe sobre fumaça iluminada pelo fogo; do alto, ele cruza a curvatura da Terra, desliga o motor e aponta para baixo; sobre uma cidade com a mesma igreja, caixa d’água e cúpula do mapa, um risco cai atrás da cúpula. Clarão, silhuetas, bola de fogo, onda de choque correndo pelo chão, anel de condensação, e a nuvem de cogumelo sobe puxando o caule enquanto o chapéu rola sobre si mesmo e esfria de branco a amarelo, vermelho, marrom e cinza, sob um céu que fica vermelho. VOCÊ FOI AVISADO. Tudo em pixels 2×2 com pontilhado, com som sintetizado; os jogadores veem na tela deles e **Esc** pula (só o mestre).
 - **Computador**: liga com boot e bipes; o que se digita durante o boot espera o prompt. Usuário SECRETARIA, senha CEU1987. Pastas INTERDICOES, OBRAS, PESSOAL e LIXEIRA; **NAO_ABRIR.TXT** rasga a tela e termina em “ERRO DE LEITURA NO SETOR 0317”. O botão de energia apaga o tubo na linha que encolhe dos CRTs.
 - **Mapa com três X**: clique em cada X para ler a ficha (igreja, caixa d’água, estação). Lidos os três, o **barbante** liga os pontos e o centro do triângulo cai na **Prefeitura**. A lupa acha 03:17 ao lado da estação e “PORÃO” a lápis sob a Prefeitura.
@@ -109,7 +152,7 @@ O computador da mesa foi redesenhado **virado para a cadeira**: da câmera se v�
 ### Cortina e sessão
 
 - **B** fecha a cortina só para os jogadores: tela preta, “A sessão já vai começar”, “Intervalo”, “Fim da sessão” ou mensagem própria. O mestre continua vendo a cena, com um aviso no palco.
-- A sessão (cena ao vivo, luz, objetos, prévia, pistas criadas e editadas, pistas encontradas, memória das interfaces, anotações, documento e cortina) fica salva neste navegador e sobrevive a recarregar a página. **Exportar sessão** gera um `.json` para outro computador; **Importar** o traz de volta; **Recomeçar** limpa.
+- A sessão (cena ao vivo, luz, objetos, prévia, pistas criadas e editadas, pistas encontradas, memória das interfaces, anotações, documento, cortina, a seção aberta e os blocos recolhidos do painel) fica salva neste navegador e sobrevive a recarregar a página. **Exportar sessão** gera um `.json` para outro computador; **Importar** o traz de volta; **Recomeçar** limpa.
 
 | Tecla | Ação |
 | --- | --- |
@@ -121,6 +164,7 @@ O computador da mesa foi redesenhado **virado para a cadeira**: da câmera se v�
 | **N** | recolhe o documento |
 | **T** · **L** | tremor · relâmpago |
 | **P** | mostra as áreas das pistas |
+| **I** · **E** | bolsa da personagem · golpe com o taco na mão |
 | **Esc** | fecha a pista aberta · pula a cinemática |
 | **F** · **E** | na tela dos jogadores: tela cheia · escala |
 
@@ -152,13 +196,13 @@ Copie `mestre/cena-modelo.js`, uma sala simples e funcional com comentários, tr
 | `mestre/cena-campo.js` · `mestre/cena-modelo.js` | Fundo original como cena · modelo para novas cenas |
 | `mestre/sobreposicoes.js` | Letreiro, cortina, documento e tela de espera |
 | `mestre/link.js` | Ligação mestre ↔ jogadores (`postMessage`, `BroadcastChannel`, batimento) |
-| `mestre/painel-mestre.js` · `mestre/painel-mestre.css` | Janela do mestre no HUD roxo |
-| `mestre/som-ambiente.js` | Som ambiente e efeitos das pistas e da cinemática, sintetizados (Web Audio) |
+| `mestre/painel-mestre.js` · `mestre/painel-mestre.css` | Janela do mestre no HUD roxo: topo ao vivo com avisos, coluna de seções com ícones, blocos que recolhem e filtro de pistas |
+| `mestre/som-ambiente.js` | Som ambiente por canal, passos por piso, cinco músicas em loop e efeitos das pistas e da cinemática, sintetizados (Web Audio) |
 | `mestre/pistas.js` | Sistema de pistas: modelo por cena, âncoras, clique na cena e pela tela dos jogadores, descobertas, conclusões, memória |
 | `mestre/pistas-ui.js` | Kit de interface em pixel art: paleta, arte em cache, escrita à mão, lupa, carimbo, assinatura, barra de título |
 | `mestre/pistas-tipos.js` | Documento, bilhete, carta, objeto e cadeado |
 | `mestre/pista-foto.js` · `mestre/pista-mapa.js` | Foto com verso e lupa (Prefeitura, retrato, casa) · mapa com X, barbante e lupa |
-| `mestre/pista-mesa.js` · `mestre/pista-computador.js` | Mesa com botão NÃO APERTE · terminal com senha e arquivos |
+| `mestre/pista-mesa.js` · `mestre/pista-computador.js` | Mesa com botão NÃO APERTE (tampa com senha, botão que fica apertado, estrago na sala) · terminal com senha e arquivos |
 | `mestre/cinematica-foguete.js` | Cinemáticas; o foguete e a nuvem de cogumelo |
 | `mestre/ferramentas/previa-pistas.html` | Ferramenta de arte: a cena com as pistas clicáveis, sem personagem |
 | `jogadores.html` · `mestre/jogadores.js` | Tela dos jogadores |
@@ -171,9 +215,11 @@ Integração com o jogo em `app.js`: o fundo vem da cena, a frente é desenhada 
 
 `node tests/pistas.test.js`: os nove tipos e seus campos, âncoras na parede, na mesa e no chão (e de volta a partir de um retângulo desenhado), a menor pista sob o cursor, personagem na frente de pista de parede, pistas que esperam objeto, cliques dos jogadores (nunca em pista oculta, só quando permitido), quem encontrou, contadores das conclusões, edição, exclusão e restauração, sessão exportada e importada, arquivos e senha do computador e o cadeado.
 
-`node tests/browser-pistas.test.js`: no Chrome, abre pistas clicando na cena sem o painel, lê os três X e usa o barbante e a lupa, os jogadores abrem e viram a foto pela janela deles, digita a senha durante o boot sem acionar atalhos, abre o arquivo corrompido, levanta o teclado, abre gaveta e tampa, aperta NÃO APERTE, confere a cinemática na tela dos jogadores e pula, os jogadores digitam 0317 e a porta do arquivo abre na cena, cria uma pista pelo editor marcando a área na cena e confere tudo depois de recarregar. Capturas em `pixel_art/generated/pistas/`.
+`node tests/browser-pistas.test.js`: no Chrome, abre pistas clicando na cena sem o painel, lê os três X e usa o barbante e a lupa, os jogadores clicam na foto pela janela deles e ela vai para a bolsa, de onde o mestre a examina para todos e eles a viram, digita a senha durante o boot sem acionar atalhos, abre o arquivo corrompido, levanta o teclado, abre gaveta, erra e acerta a senha da tampa, aperta NÃO APERTE, confere a cinemática na tela dos jogadores e pula, confere o botão apertado e o estrago na sala e o rearma pelo painel, os jogadores digitam 0317 e a porta do arquivo abre na cena, cria uma pista pelo editor marcando a área na cena (que vai para a bolsa) e confere tudo depois de recarregar. `node tests/som.test.js` cobre as chaves de cada som, os passos vindos da marcha e as cinco trilhas com um AudioContext de mentira. Capturas em `pixel_art/generated/pistas/`.
 
-`node tests/browser-mestre.test.js`: no Chrome, abre a tela dos jogadores e confere que ela recebe a mesma imagem do mestre. Testa cortina só para os jogadores, documento, olhar para uma pista, as cinco luzes, chuva, objetos, efeitos, teleporte, parede direita e limite da câmera, transições íris e dissolver com letreiro, e sessão restaurada depois de recarregar. Capturas em `pixel_art/generated/mestre/`. Com os testes das pistas são 26 arquivos de teste, todos passando.
+`node tests/browser-painel.test.js`: no Chrome, a página com o nome do RPG e o botão que abre o mapa; as nove seções com ícone e nome, trocadas com as setas; cada controle na sua seção; a janela do mesmo tamanho em todas as seções, com o topo e a coluna parados enquanto só a seção rola (e a janela inteira rolando num celular deitado); o filtro de pistas; blocos recolhidos e a última seção de volta depois de recarregar; e os avisos do topo (pistas, som, cliques dos jogadores, cortina e documento) levando à seção certa. Captura em `pixel_art/generated/painel/`.
+
+`node tests/browser-mestre.test.js`: no Chrome, abre a tela dos jogadores e confere que ela recebe a mesma imagem do mestre. Testa cortina só para os jogadores, documento, olhar para uma pista, as cinco luzes, chuva, objetos, efeitos, teleporte, parede direita e limite da câmera, transições íris e dissolver com letreiro, e sessão restaurada depois de recarregar. Capturas em `pixel_art/generated/mestre/`. Com os testes das pistas, da anatomia das animações, do guarda-roupa, dos gestos de tratamento, dos itens no cenário, do som, da roupa que acompanha o corpo, do Escritório do Jorge, do próprio painel e da exploração são 40 arquivos de teste, todos passando.
 
 ### Pesquisa que orientou as decisões
 
@@ -188,6 +234,137 @@ Integração com o jogo em `app.js`: o fundo vem da cena, a frente é desenhada 
 - Chão por rolagem de linhas: [Street Fighter II, row scrolling](https://sf2platinum.wordpress.com/2020/10/15/row-scrolling-for-parallax-effects/). Limites de câmera e dica de câmera: [Scroll Back, de Itay Keren](https://www.gamedeveloper.com/design/scroll-back-the-theory-and-practice-of-cameras-in-side-scrollers).
 - Segundo monitor: [Window Management API](https://developer.chrome.com/docs/capabilities/web-apis/window-management). `file://` é contexto seguro segundo o [MDN](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts), e [`BroadcastChannel`](https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel) exige mesma origem, por isso a ligação principal usa `postMessage`.
 - Sombras com mudança de matiz e pontilhado contido: [Pixnote, sombreamento em pixel art](https://pixnote.net/en/learn/shading/).
+- Painel em seções: poucas seções fixas numa coluna com ícone e nome na [navigation rail do Material Design](https://m3.material.io/components/navigation-rail/guidelines); só mostrar o detalhe quando é pedido, em no máximo dois níveis, na [revelação progressiva da NN/g](https://www.nngroup.com/videos/progressive-disclosure/); blocos que recolhem, com vários abertos ao mesmo tempo e um sinal claro de aberto e fechado, em [Accordions on Desktop](https://www.nngroup.com/articles/accordions-on-desktop/) e [Accordion Icons](https://www.nngroup.com/articles/accordion-icons/), da NN/g; poucas seções longas pedem abas, muitas curtas pedem blocos que recolhem, em [Tabs vs. Accordions](https://www.nngroup.com/videos/tabs-vs-accordions/).
+
+### O Escritório do Jorge
+
+Uma cena nova na biblioteca do mapa do mestre (a terceira: **3** mostra na prévia, **Shift+3** envia na hora). É o escritório de um escritor comum, só que tomado pela investigação, no clima de *Five Nights at Freddy's* — madrugada, monitor de câmeras, ventilador de mesa, corredor escuro atrás da porta aberta —, sem nenhum animatrônico. O Escritório da Prefeitura e o Campo continuam iguais: a cena do Jorge vive em arquivos próprios, e o `index.html` só ganhou as linhas que carregam esses arquivos.
+
+**Três camadas, como o Escritório.** Na parede: a porta aberta para o corredor de ladrilhos xadrez (com o gravador das câmeras em cima e a lâmpada do fundo que nunca funciona direito), o cartaz do livro, o quadro branco, a estante com as cinco edições, o **mural** no centro com fichas, fotos, mapa e barbante vermelho (legível na própria cena), a janela com persiana, o gaveteiro com a pasta do Kakau em cima, a impressora e o triturador. No chão: tábuas escuras, tapete velho sob a mesa, o cabo das câmeras e as tiras de papel perto do triturador. Na frente: a mesa com o monitor de segurança virado para a sala (mostra a câmera escolhida, ao vivo), o computador de costas com a luz batendo na cadeira, a Bíblia marcada, os envelopes de dinheiro, a secretária eletrônica com relógio, a luminária articulada e o ventilador girando; caixas do livro e uma lixeira nos cantos.
+
+**Luzes:** Fim de tarde (sol pela persiana em listras), Noite (luz do teto, poste da rua pela persiana), **Meia-noite** (a padrão: luminária, monitores e a lâmpada do mural), Só os monitores e Luzes apagadas (05:59; só o monitor das câmeras no nobreak). **Objetos:** luminária, computador, monitor das câmeras, ventilador, luz do mural, recado na secretária, folha na impressora, as três mudanças da CAM 04, porta do corredor, luz do corredor e papel triturado.
+
+#### As pistas
+
+| Pista | O que acontece |
+| --- | --- |
+| **Edições do livro** (estante) | Cinco edições de *Autobiografia do Jorge — Como eu salvei o mundo*. Abra uma: folha de rosto à esquerda, páginas marcadas com post-its à direita. **COMPARAR** põe duas lado a lado. Na p. 113 a nova impressão diz “Ele ergueu os olhos. O céu estava faminto.”; na p. 214 tem um parágrafo inteiro a mais, com O CÉU TEM FOME, no estilo de Jorge. A caneta dele sublinha a diferença e cola um post-it. |
+| **Computador do Jorge** | Desktop com a capa do livro de papel de parede. **PUBLISHER**: os e-mails (e o primeiro, que Jorge mandou). **GRÁFICAS**: a anotação digitalizada com “Está chegando antes.” circulado várias vezes e a lista das três gráficas. **LIVRO**: `MANUSCRITO_FINAL_REAL.docx` e `BACKUP_ANTIGO_2019.docx`, os dois já com a frase; **HISTÓRICO** encontra a frase em todas as versões — nenhuma alteração, nenhum usuário desconhecido. |
+| **Mural da investigação** | LIVRO, DINHEIRO, NOVA BÍBLIA e KAKAU ligados a CONHECIMENTO; passar o mouse acende o barbante, clicar lê as anotações. O centro reescreve “NÃO É A FRASE.”, risca, e escreve “É O QUE A FRASE ENSINA.” |
+| **Quadro branco** | A linha do tempo (2017, 2019, 2020, 2023, março de 2026 circulado: nova tiragem e Nova Bíblia?) e as listas “o que eu sei” e “o que eu não sei”. |
+| **Envelope de notas** | Três notas. A **lupa** mostra símbolos quase invisíveis na segunda; a **câmera do celular** (6×) lê o microtexto da terceira — DENTE RAIZ CÉU CARNE CONHECIMENTO — e acha **EDEN**. |
+| **Nova Bíblia** | Os versículos marcados, o do firmamento e dos dentes em destaque. **COMPARAR** traz uma Bíblia comum, onde eles não existem; na margem, “NÃO EXISTE EM NENHUMA TRADUÇÃO.” A aba C é a página de créditos: primeira impressão em março de 2026, “6 meses atrás”, “MESMO MÊS DA NOVA TIRAGEM.” |
+| **Pasta: caso Kakau** | Notícia (“Detento apresenta surto após programa de leitura”), ficha da biblioteca da prisão (obra de Jorge) e o livro riscado: na p. 57, circulada e sublinhada, “VOCÊ VAI ENTENDER QUANDO ELE OLHAR PARA BAIXO.” — que Jorge nunca escreveu. Na pasta: “Quem é ‘ele’?” |
+| **Gaveteiro** | Quatro gavetas de arquivo; na G–L está a pasta KAKAU (abre a pista), e as outras pastas têm um detalhe cada (a de REVISÕES guarda a prova de 2019 com a frase original). |
+| **Monitor das câmeras** | CAM 01 corredor, 02 porta da frente, 03 depósito, 04 sala das caixas de livros, 05 exterior, 06 copiadora. Imagem verde com chiado, varredura lenta, REC, relógio e o mapa do prédio; clique no mapa ou use 1–6 e as setas. |
+| **Secretária eletrônica** | Dois recados, com legenda e fita girando. |
+| **Triturador de papel** | Seis tiras para remontar trocando de lugar: uma cópia da anotação das gráficas. |
+| **Folha na impressora** | Só aparece quando a impressora imprime. Uma página que Jorge conhece — e, olhando um pouco, uma linha nova: “Jorge fechou o arquivo. Olhou para a câmera. Finalmente percebeu que não estava investigando a editora. A editora estava investigando ele.” |
+
+As conclusões (regra das três pistas): *Jorge não escreveu a frase, mas ela é dele* · *A alteração chega antes da gráfica* · *Nova Bíblia e nova tiragem: o mesmo mês* · *O perigo é o que a frase ensina* · *Alguma coisa reage à investigação*.
+
+#### O caso reage
+
+- **Descobertas.** Cada interface registra o que foi realmente visto, com o aviso DESCOBERTA: a frase trocada, o parágrafo novo, um e-mail da Publisher, a anotação das gráficas (ou as tiras remontadas), o manuscrito, o centro do mural, EDEN, o versículo comparado e a frase do Kakau.
+- **As câmeras mudam enquanto ninguém olha.** Ler um e-mail da Publisher, consultar a pasta do Kakau e examinar a Nova Bíblia mexem na CAM 04, sempre na mesma ordem, qualquer que seja a pista: primeiro uma caixa aberta, depois um livro no chão, depois o livro aberto. Na primeira vez que a mudança aparece, o sinal rasga.
+- **A impressora liga sozinha.** Com **6 descobertas** (campo *Descobertas para a impressora* na pista “Folha na impressora”; 0 faz imprimir logo) e ninguém com uma pista aberta, a câmera vai até a impressora, ela imprime por alguns segundos e a folha fica na bandeja. O mestre pode ligar o objeto *Folha na impressora* à mão.
+- **O que Jorge fechou.** A linha nova usa `{objeto}`: é a última coisa fechada antes da impressão (o arquivo, o livro, a Bíblia, a pasta, o envelope…). Apague `{objeto}` no editor para deixar o texto fixo.
+- **CAM 07.** Depois de ler a linha nova aparece uma câmera que Jorge nunca instalou: o próprio escritório, ao vivo, com a personagem dentro. O campo *CAM 07* da pista das câmeras escolhe *depois da folha*, *sempre* ou *nunca*.
+- **Zerar progresso** desfaz tudo isso: descobertas, CAM 04 e a folha na impressora.
+
+#### Tudo editável
+
+No painel (seção **Pistas → Editar**), cada pista do escritório traz todos os textos que os jogadores leem. Os campos de várias linhas têm um formato simples, explicado no próprio rótulo (por exemplo `NOME | ANO | TIRAGEM`). Um campo vazio tira aquele texto da interface; os avisos DESCOBERTA e os essenciais do livro (título, frases, páginas) voltam ao original. **Restaurar originais** traz tudo de volta.
+
+| Pista | O que se edita |
+| --- | --- |
+| **Edições do livro** | Título, subtítulo e autor; as edições (nome, ano, tiragem, selo na lombada, marca-d’água e quais têm a frase nova, com `*`); os números e o texto das quatro páginas marcadas, com `{FRASE}` e `{PARAGRAFO}`; as duas frases e o parágrafo; o rodapé da folha de rosto; os post-its do Jorge; a legenda da estante; os avisos DESCOBERTA |
+| **Folha na impressora** | Quantas descobertas ligam a impressora, qual página marcada sai e a linha nova, com `{objeto}` |
+| **Computador do Jorge** | Nome do computador e usuário; nomes das pastas; e-mails; nomes, datas e tamanhos dos arquivos; anotação digitalizada, arquivo de texto e rascunho da lixeira; datas, versões e linhas do HISTÓRICO, trecho procurado e conclusão; barra de status; texto ao lado do documento; tela sem energia; avisos |
+| **Monitor das câmeras** | Nome de cada câmera (CAM 01 a 07), palavras do mapa, tapete da CAM 02, avisos da CAM 07, monitor desligado, nome do sistema, quando a CAM 07 aparece e o adesivo da mesa |
+| **Mural da investigação** | Títulos das cinco fichas, frase riscada, resposta, frase do pé, anotações de cada ficha e o aviso |
+| **Quadro branco** | Os três títulos, a linha do tempo (um ano repetido fica circulado), a anotação do ano repetido e as duas listas |
+| **Envelope de notas** | Valor e série das notas, etiqueta do envelope, microtexto e palavra escondida, o que se diz de cada nota, legenda e avisos |
+| **Nova Bíblia** | Nome, cabeçalhos, as duas passagens e as páginas ao lado (versículos inventados com `*`), anotação de Jorge, anotação na Bíblia comum, data e página de créditos, anotações dos créditos e avisos |
+| **Pasta: caso Kakau** | Rótulo, jornal, manchete, notícia, cabeçalho e linhas da ficha, carimbos, páginas e textos do livro riscado (a página com `{FRASE}`, a palavra e os rabiscos), post-it, pergunta do Jorge e aviso |
+| **Gaveteiro** | As gavetas e as pastas com o que tem dentro; a pasta sem texto abre a pista escolhida |
+| **Secretária eletrônica** | Recados e nome no aparelho |
+| **Triturador de papel** | O texto das tiras, a legenda e o aviso |
+
+**A sala acompanha.** O cartaz (autor e subtítulo), as fichas do mural, a linha do tempo do quadro branco, o adesivo da mesa e a capa da Bíblia são pintados com os textos das pistas: quando um deles muda, o escritório é repintado na hora. Os botões e as dicas de uso das interfaces (VOLTAR, COMPARAR, “setas viram”…) continuam fixos.
+
+#### Arquivos do Escritório do Jorge
+
+| Arquivo | Função |
+| --- | --- |
+| `mestre/cena-jorge.js` | A cena: paleta, parede, chão, laterais, janela, mesa, luzes, objetos, entradas, pistas e conclusões |
+| `mestre/caso-jorge.js` | O livro (páginas e edições), descobertas, câmeras que reagem, impressora, `{objeto}`, sons novos e o kit de arte das interfaces |
+| `mestre/pista-livros.js` | Estante com as edições e a folha impressa |
+| `mestre/pista-pc.js` | Computador do Jorge |
+| `mestre/pista-cameras.js` | Monitor das câmeras, as seis salas e a CAM 07 |
+| `mestre/pista-mural.js` | Mural e quadro branco |
+| `mestre/pista-provas.js` | Notas de dinheiro, Nova Bíblia, pasta do Kakau, gaveteiro, secretária eletrônica e triturador |
+| `mestre/ferramentas/previa-jorge.html` | Ferramenta de arte: a cena do Jorge com as pistas clicáveis, sem personagem |
+
+`node tests/jorge.test.js`: câmera e sala fechada, cinco luzes × dois climas com camadas sólidas e coloridas, furos só na persiana, arte determinística, pistas em superfícies reais, três pistas por conclusão, os doze tipos novos com campos e textos desenháveis, todos os textos reescritos no editor (interfaces, avisos e as palavras pintadas na sala) e Restaurar originais, páginas diferentes entre as edições, descobertas, CAM 04 na ordem certa, impressora só com a sala livre, Zerar progresso e todas as interfaces desenhadas nos seus estados. `node tests/browser-jorge.test.js`: no Chrome, a cena enviada com Shift+3 sem mexer na primeira cena, colorida em todas as luzes, paredes, mural, edições comparadas, e-mail que muda a CAM 04, jogadores vendo a câmera, impressora sozinha, CAM 07, sessão recarregada, textos mudados no editor do painel chegando às interfaces e à sala (e voltando depois de recarregar) e Zerar progresso. Capturas em `pixel_art/generated/jorge/`.
+
+### Exploração: portas, cenas genéricas e improviso
+
+Entrar numa sala, mexer nas coisas e sair por uma porta, um corredor, uma escada, um elevador ou pela lateral da tela direto para outra cena — e, quando os jogadores forem para onde nada foi preparado, abrir uma cena genérica que combine, ligar e continuar sem quebrar o ritmo.
+
+**Atravessar.** Perto de uma passagem aparece a dica **↑** com o que ela faz (*Entrar*, *Subir*, *Descer*, *Chamar o elevador*, *Seguir*); **↑** ou **W** atravessa. Clicar na porta — também pela janela dos jogadores, se o mestre deixar — leva a personagem até ela. Encostar e empurrar a borda da sala sai pela lateral. A chegada é na passagem de lá, virada para dentro da sala; a cena de destino volta com a luz, o clima e os objetos de quando foi deixada, e a hora e a chuva seguem da cena de onde ela vem. O mesmo **↑** usa objetos: abrir gaveta, examinar, acender a luz, ligar a TV.
+
+**Trancas.** Aberta; trancada (com a mensagem que o mestre escrever); **chave** (o item *Chave* com o mesmo nome, na bolsa, ignorando maiúsculas e acentos); **código** (teclado na tela, que os jogadores digitam pela janela deles, com um bilhete opcional ao lado); ou **só com a liberação do mestre**, que vira um pedido *Quer passar*.
+
+**Elevador.** Uma lista de andares (`RÓTULO | cena | chegada`); o painel mostra os botões e o andar atual; a porta abre com a transição de portas de elevador. O mesmo painel pode valer para todos os andares do prédio. Andar sem cena também vira pedido.
+
+**Pedidos de improviso.** Uma passagem sem destino não abre para os jogadores (*NÃO ABRE*) e aparece para o mestre no topo do mapa e na seção **Exploração**, com miniaturas de sugestões: primeiro pelo nome da passagem (*Banheiro* sugere banheiro, *Estoque* sugere depósito, *Diretoria* sugere escritório), depois pelo lugar onde ela está (numa rua: loja, lanchonete, portaria…). Um clique **cria a cena, liga ida e volta e leva a personagem** — a cena criada é a mesma da miniatura. Também dá para escolher outro modelo, ligar a uma cena que já existe (escolhendo por onde chega) ou deixar como está.
+
+**Biblioteca de improviso.** Dezoito modelos genéricos, sem nada da história, cada um um gerador: a mesma semente dá a mesma sala; outra semente, outras cores, móveis, bagunça e detalhes. **Conectores**: corredor de prédio (residencial, comercial, hospital ou hotel), escadaria e portaria. **Casa**: apartamento, quarto e banheiro (de casa ou público). **Trabalho**: escritório, sala administrativa, depósito e oficina mecânica. **Comércio**: loja de conveniência, lanchonete e bar com fliperama. **Rua**: rua, beco e estacionamento subterrâneo. **Saúde**: enfermaria. **Abandonado**: prédio abandonado. Cada modelo tem pelo menos três coisas para mexer e eventos próprios. **Conjuntos prontos** criam várias cenas já ligadas: *Prédio residencial* (9 cenas, com escada e elevador), *Hospital* (8), *Quarteirão comercial* (7), *Prédio de escritórios* (8, com uma sala sem destino para improvisar) e *Prédio abandonado* (5).
+
+**Peças.** 180 peças em pixel art feitas em código, todas no mesmo kit de medidas (parede de 62 linhas, porta de 30 × 48, luz vinda de cima à direita): portas de oito modelos, vão, escada, elevador e saídas laterais; janelas; luminárias, luz de emergência e placa de saída; e móveis e objetos de sala, quarto, cozinha, escritório, depósito, oficina, loja, restaurante, diversão, hospital, banheiro, rua e estacionamento, em camadas de parede, de chão e da frente. As peças acendem as próprias luzes (lâmpada, tela, vitrine, poste), mudam com o desgaste e trazem estados que viram objetos da cena (porta aberta, TV ligada, energia). Paredes, barras, pisos, vistas e o conjunto de luz (interior, rua, subsolo, hospital, abandonado) completam a sala.
+
+**Coisas para fazer.** Examinar de perto (a peça ampliada, um detalhe escondido e às vezes um item), recipientes (gavetas, armários, geladeira, caixas, caçamba — com itens e tranca de chave ou código), interruptor, **TV** com canais (notícias, chuvisco, desenho, novela, propaganda, mensagem, futebol), **telefone** e orelhão (números com recado, cobrança em moedas, chamada recebida), **computador** com senha, pastas e arquivos corrompidos, **máquina de venda** (produtos e preços editáveis, pagos com as **Moedas** da bolsa, produto que às vezes engancha), **fliperama** com dois jogos jogáveis e recordes, e **quadro de energia**, um puzzle de disjuntores em três dificuldades que devolve a luz da sala.
+
+**Eventos.** Cada cena tem eventos que o mestre liga, edita e dispara: ao entrar, de tempos em tempos (com chance e intervalo) ou só no botão — legenda na tela, som, luzes piscando, queda e volta de energia, tremor, relâmpago, chuva, telefone tocando, TV ligando sozinha, um objeto que muda de estado e escuridão em volta.
+
+### Montar e Exploração no mapa do mestre
+
+**Montar.** A biblioteca mostra as miniaturas dos 18 modelos: **Criar** faz a sala da miniatura, **Outra** sorteia outra variação e **Opções…** escolhe nome, semente, desgaste, luz, largura e as opções do modelo, com prévia grande. Os conjuntos são criados num clique. Cada cena montada tem nome editável, **Prévia**, **Enviar**, **Passagens**, **Duplicar** (as portas da cópia começam sem destino) e **Excluir**. O editor tem:
+
+- **Prancheta**: a cena como os jogadores veem, com o contorno de cada peça (parede, chão e frente em cores diferentes). Clique escolhe; arrastar move (na horizontal e, nas peças de parede soltas, na altura); arrastar o vazio anda pela sala; **← →** movem o escolhido; **Ctrl+Z** e **↶ Desfazer** voltam. A luz da prancheta pode ser outra, só para conferir.
+- **Objetos**: a lista filtrável de tudo o que está na cena.
+- **Inspetor**: nome, posição, ordem na camada, aparência (cores, modelos, estados ao abrir a cena e, com a cena ao vivo, o estado *agora*) e a interação — o que a peça faz (nada, qualquer interação ou qualquer tipo de pista), marca, nota e todos os campos do tipo (os produtos da máquina, os canais da TV, os arquivos do computador…), com **Testar só pra mim**. Numa porta, **Editar a passagem**.
+- **Peças**: o catálogo com miniaturas, por grupo ou pelo nome; um clique põe a peça no meio da prancheta.
+- **Sala**: parede, barra, piso e cores, vista das janelas, desgaste, tipo e luz de abertura, largura, energia e luzes, **Variar detalhes** (mesmos objetos, outros detalhes) e **Novo arranjo** (o modelo monta a sala de novo e as portas continuam ligadas pelo papel de cada uma).
+
+**Exploração.** **Pedidos** com sugestões, *Criar*, *Ligar* e *Não abre*; ou *Deixar passar*, *Destrancar de vez* e *Continua trancada*. **Passagens** de qualquer cena — não só a ao vivo: destino e chegada, ida e volta, tranca, chave, código e bilhete, mensagem, transição, letreiro, marca, *aparece com* um objeto e os andares do elevador; *Atravessar*, *Olhar*, *Outro lado*, ativar e excluir. Nas cenas pintadas à mão a passagem nova é marcada arrastando sobre a cena, como uma pista; nas montadas entra uma peça de porta, escada, elevador ou saída. O **mapa de conexões** desenha cada grupo de cenas ligadas como uma árvore (setas nos dois sentidos, elevador tracejado, cadeado nas trancadas, **?** onde há pedido): um clique mostra as passagens da cena, dois cliques a enviam. **Eventos** da cena escolhida com *Disparar* e o registro dos últimos; **Como funciona** liga e desliga os pedidos, a travessia pelos jogadores, a dica ↑, o ↑ nos objetos, a continuidade da hora e os eventos.
+
+Tudo — cenas montadas, ligações, trancas, eventos, preferências e o estado de cada cena visitada — fica na sessão salva no navegador e vai junto no **Exportar sessão**.
+
+### Arquivos da exploração
+
+| Arquivo | Função |
+| --- | --- |
+| `mestre/montador.js` | Receita (JSON) → cena: casca, luzes por conjunto, geometria das peças, interações e passagens, edição ao vivo, miniaturas, sessão |
+| `mestre/montador-paleta.js` | Rampas, variantes de luz, materiais de parede e piso e pincéis comuns das peças |
+| `mestre/modulos-estrutura.js` · `modulos-casa.js` · `modulos-trabalho.js` · `modulos-comercio.js` · `modulos-saude.js` · `modulos-rua.js` | As 180 peças |
+| `mestre/interacoes-basicas.js` · `mestre/interacoes-jogos.js` | Examinar, recipiente e interruptor · TV, telefone, computador, máquina de venda, fliperama e quadro de energia |
+| `mestre/cenas-genericas.js` | Os 18 modelos, os nomes para o improviso e os 5 conjuntos |
+| `mestre/exploracao.js` | Passagens, trancas, elevador, chegada, pedidos, sugestões, eventos, estado lembrado das cenas |
+| `mestre/painel-exploracao.js` · `mestre/painel-exploracao.css` | Seções **Montar** e **Exploração** do mapa do mestre |
+| `mestre/ferramentas/previa-exploracao.html` | Ferramenta de arte: cada modelo em qualquer luz, semente e desgaste, e a vitrine de peças |
+
+`node tests/montador.test.js`: as 180 peças; os 18 modelos iguais com a mesma semente e diferentes com outra, cada um em seis variações com passagens com papel, interações e eventos que existem e portas que não se cobrem; camadas de cinco tipos de luz; os cinco conjuntos com todo destino existindo e voltando, e elevadores válidos; sugestões pelo nome da passagem; a área que anda com a peça, a passagem que vem da receita, sessão e cópia. `node tests/itens-exploracao.test.js`: a ponte com a bolsa (contar, gastar e dar moedas e chaves). `node tests/browser-exploracao.test.js`: no Chrome, a biblioteca e os conjuntos; criar pelo cartão; arrastar uma porta na prancheta, recolorir no inspetor, pôr uma máquina de venda que vende, trocar o piso e desfazer; um prédio de nove cenas no mapa; um pedido vindo dos jogadores com o nome da porta em primeiro, resolvido num clique com ida e volta e travessia; código errado e certo no teclado; o painel do elevador levando a outro andar; um evento disparado com legenda; pedidos desligados deixando a porta fechada; e tudo de volta depois de recarregar.
+
+### Pesquisa da exploração
+
+- Portas ao fundo e a tecla para cima dos side-scrollers 2.5D; apontar e clicar para andar até a porta, das aventuras gráficas.
+- Regiões de teleporte com destino, vários destinos à escolha (o elevador) e o laço infinito de duas regiões ligadas (por isso atravessar exige uma ação): [Scene Regions do Foundry VTT](https://foundryvtt.com/article/scene-regions/), [vários destinos](https://github.com/foundryvtt/foundryvtt/issues/12842) e [o laço](https://github.com/foundryvtt/foundryvtt/issues/10887).
+- Lugares como nós e passagens como ligações, e prédios como nós que contêm outros: [Node-Based Scenario Design](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach) e [Moving Between Nodes](https://thealexandrian.net/wordpress/8171/roleplaying-games/advanced-node-based-design-part-1-moving-between-nodes), do The Alexandrian.
+- Kits modulares com medidas comuns para montar muitos cenários com as mesmas peças: [Skyrim’s Modular Approach to Level Design](https://www.gamedeveloper.com/design/skyrim-s-modular-approach-to-level-design) e a [transcrição da palestra de Joel Burgess](http://blog.joelburgess.com/2013/04/skyrims-modular-level-design-gdc-2013.html).
+- Improviso com lugares evocativos e “três aspectos fantásticos” em cada um: *Develop Fantastic Locations* no [Lazy GM’s Resource Document, Sly Flourish](https://slyflourish.com/lazy_gm_resource_document.html).
+- Consertar a luz como puzzle curto e claro: a tarefa [Fix Lights de Among Us](https://among-us.fandom.com/wiki/Fix_Lights).
 
 ## Arquivos principais
 
@@ -210,6 +387,15 @@ Integração com o jogo em `app.js`: o fundo vem da cena, a frente é desenhada 
 | `mestre/cena-escritorio.js` | O Escritório, pintado inteiramente em código |
 | `mestre/painel-mestre.js` | Janela do mestre: biblioteca, prévia, ao vivo, mesa, tela e sessão |
 | `assets.js` | Pixels dos PNGs embutidos para funcionar até por `file://` |
+| `wardrobe.js` | Guarda-roupa: 85 peças (cabelos, barbas, corpo, chapéus, roupas, acessórios), tons de pele, rampas de cor, fios das peças soltas e 25 conjuntos, 14 deles os personagens das imagens |
+| `itens-cena.js` | Itens soltos no cenário: física, paredes, clique/carregar/arremessar, golpe no corpo |
+| `armas.js` | O taco: empunhado no ombro, golpe com E, alcance do golpe |
+| `treatment-motion.js` | O gesto de usar um item: inclinar, agachar, sentar; IK dos dedos com limites; o braço que sobra |
+| `pixel_art/tools/audit_treatment.js` / `audit_treatment_sheet.py` | Auditoria dos 207 gestos de tratamento com os ângulos contra os limites |
+| `wardrobe-ui.js` / `wardrobe.css` | A janela do guarda-roupa em pixel art, com a personagem viva na prévia |
+| `pixel_art/tools/audit_animations.js` / `audit_sheet.py` | Auditoria: renderiza cada clipe e imprime os ângulos das juntas por quadro, com o esqueleto por cima |
+| `pixel_art/tools/probe_ragdoll_limits.js` | Arremessa o ragdoll centenas de vezes e mede o ângulo máximo de cada junta |
+| `pixel_art/tools/render_showcase.js` / `preview_showcase.py` | GIFs do guarda-roupa, dos clipes corrigidos e dos tons de pele |
 | `pixel_art/generated/reference_comparison.png` | Referência e montagem, ambas ampliadas 8× |
 | `pixel_art/generated/validation_report.json` | Verificação de formato e igualdade exata |
 
@@ -431,7 +617,7 @@ Nada aqui anima junto. O detalhe que faz um personagem parado parecer gente em v
 | Piscar | 2,5–7 s, ~1 em 4 é duplo | Pálpebra em dois estágios |
 | Olhar | mouse, ou 1,6–3,3 s sozinho | O pixel azul da íris muda de lado |
 | Gestos | 9,4–16,3 s de quietude | Coçar, jogar o cabelo, rolar os ombros, olhar em volta |
-| Inércia | molas de 34, 22, 15 e 11 | Peito, braços, roupa e barra chegam em tempos diferentes |
+| Inércia | molas de 34 e 22 | Peito e braços chegam em tempos diferentes; a roupa vai junto com a parte do corpo em que está |
 | Cabelo | física verlet própria | Ver a seção do cabelo |
 
 ### Respiração
@@ -450,7 +636,7 @@ Um pixel de íris, então há duas respostas: o ponteiro decide enquanto estiver
 
 ### Inércia e antecipação
 
-No quadro em que o corpo começa a empurrar, tudo acima do quadril leva um chute para o lado contrário — é a antecipação. Depois cada canal volta no seu tempo: peito, braços, roupa e barra, nessa ordem. Medido ao arrancar: peito −1, braços −1, barra −2, e eles voltam a zero nos quadros 80, 100 e 160.
+No quadro em que o corpo começa a empurrar, tudo acima do quadril leva um chute para o lado contrário — é a antecipação. Depois cada canal volta no seu tempo: peito e braços, nessa ordem. Medido ao arrancar: peito −1 e braços −1, que voltam a zero nos quadros 80 e 100. A roupa não tem canal próprio (veja abaixo).
 
 As molas são **levemente superamortecidas de propósito**. Um canal que anda em pixel inteiro não tem onde colocar um overshoot: oscilar em cima do limiar de arredondamento não lê como elasticidade, lê como pixel piscando. A elasticidade mora no cabelo, que tem resolução de sobra para ela.
 
@@ -458,7 +644,9 @@ O pulo a partir do chão também se prepara: `pressJump` dá 0,055 s de agachame
 
 ### Roupa
 
-As camadas de roupa carregam o próprio canal e ficam para trás do corpo, a camiseta menos que a barra do short. O limite é um pixel: essas peças são máscaras exatas do corpo, então escorregar dois pixels mostraria pele na costura. Uma saia ou casaco desenhados como forma própria, passando do corpo, poderiam ir bem mais longe.
+A roupa **acompanha o corpo o tempo todo**. Cada peça é desenhada com a mesma transformação e o mesmo canal da parte do corpo em que está: quando o peito respira ou fica um pixel para trás ao arrancar, a camisa em cima dele faz o mesmo, no mesmo quadro. Antes as camadas de roupa tinham canais próprios que ficavam um pixel atrasados e se ajustavam ao corpo depois; isso foi retirado. O rasterizador ignora um `drift` que a peça declare para si (`rasterize` em `skeleton.js`), e só o corpo tem canais.
+
+Só balança o que pende solto do corpo — saia, vestido, saia longa, batina, abas do sobretudo, capa e manto, poncho, cachecol, gravata, barba longa, a cauda da mortalha e o cabelo —, sempre a partir de um ponto que segue o corpo. `tests/roupa-acompanha-corpo.test.js` trava isso: peças copiadas de cada parte do corpo continuam em cima dela pixel a pixel ao andar, correr, parar, virar, pular e cair; conjuntos com todo tipo de peça desenham igual a um segundo rig que só conhece o estado do corpo; e nenhuma peça pintada sobre o corpo tem fio de física.
 
 ### O que os testes travam
 
@@ -564,4 +752,46 @@ A cegueira unilateral usa uma camada visual que ocupa exatamente metade da cena 
 Validação adicional: `node tests/pain-mobility.test.js` verifica os oito ciclos no rasterizador, integridade das articulações e ausência de mudanças na física. `node tests/browser-pain-vision.test.js` verifica as metades cinzas nos pixels renderizados, caminhada/salto/recuperação sem braços e animações de agonia na aplicação. Capturas em `pixel_art/generated/pain-vision/`.
 
 `node tests/browser-hud-reactions.test.js` aplica ferimentos pelos botões do HUD e compara a renderização real com o mesmo quadro sem a camada de dor, mantendo respiração, ferimentos e física idênticos. Verifica os cinco botões de lesão, cinco perfis de dor em órgãos ainda funcionais, duração visível, movimento e pausas. Comparações de pixels e capturas ficam em `pixel_art/generated/hud-reactions/`.
+## Revisão anatômica das animações
+
+Cada clipe foi renderizado quadro a quadro com o esqueleto por cima e os ângulos de cada junta impressos como um fisioterapeuta os leria (`pixel_art/tools/audit_animations.js` e `audit_sheet.py`, saída em `generated/audit/`). O que estava errado, e o que foi feito:
+
+- **Passadas alternando curta e longa.** A referência fica de pé com o pé distante cinco pixels à frente do próximo; mantido dentro da caminhada e da corrida, isso dava um passo de 5 px e o seguinte de 15 px — uma manqueira. Os dois pés agora andam na mesma linha; a profundidade da perna distante continua no ângulo que ela faz a partir do próprio quadril.
+- **Braços um quarto de ciclo fora de fase.** Os braços chegavam ao extremo na posição de passagem, com as pernas cruzadas, e pendiam no contato. O braço próximo agora está mais para trás no instante em que o calcanhar próximo pousa à frente, e os dois pendem na passagem.
+- **Quadril invertido.** O corpo descia sobre a perna de apoio no meio da passada e subia no contato — o contrário do que uma caminhada faz —, o que dobrava o joelho de apoio em 48° a cada meio ciclo e deixava a marcha agachada. Agora o quadril é mais baixo no contato, com as duas pernas abertas, e mais alto passando sobre a perna esticada; na corrida, mais baixo no meio do apoio e mais alto no voo.
+- **Pés planos no ar.** As solas ficavam paralelas ao chão o tempo todo, o que dorsiflexionava o tornozelo em 43° na caminhada e 57° na corrida (um tornozelo chega a uns 20–25°). O pé agora tem ciclo próprio: calcanhar toca primeiro, sola plana no apoio, o calcanhar levanta e o pé gira sobre a ponta na saída, e no ar o pé pende do tornozelo seguindo a canela. Na corrida o pouso é na ponta do pé. Um pé que apontasse para baixo ao pousar levanta o tornozelo o quanto for preciso para não furar o chão.
+- **Corrida inclinada para trás.** O sinal do tronco estava trocado: `-.13` inclinava a corredora 15° para trás, como quem cruza a linha de chegada. O torso desenhado já pende 8° para trás; caminhar e correr agora inclinam para a frente, e o queixo recolhe para o rosto continuar olhando adiante sem girar a unidade da cabeça (que fica abaixo de `UNIT_SNAP`, senão a franja pisca).
+- **Salto sem corpo.** Os joelhos dobravam 36° e nada mais. Agora o salto tem três formas misturadas pela fase (`amount`): subindo as pernas recolhem e os braços sobem com o impulso; no ápice o corpo relaxa; descendo as pernas esticam para o chão, ponta do pé primeiro, e os braços abrem para equilibrar. Antes de pular o corpo junta (quadril baixa, peito à frente, braços atrás) e o pouso absorve para a frente com os braços vindo à frente — não para trás, como estava.
+- **Deitada com as pernas no ar.** Os últimos desenhos da queda seguravam as duas pernas horizontais na altura do quadril, a oito pixels do chão, para sempre. Nos quatro últimos desenhos as pernas baixam e deitam no chão, a distante um pouco mais atrás.
+- **Levantar era a queda de trás para a frente.** Ela flutuava a 60° com as pernas atrás e nada embaixo. O clipe `levantar` (1,5 s) é um movimento com apoio: as mãos deslizam até embaixo dos ombros e empurram, o peito sobe, o corpo vem de quatro, um pé desce atrás e vem para a frente, os dois pés ficam embaixo dela num agachamento com as mãos ainda no chão, e ela se ergue. Os quadros de contato são resolvidos por IK no próprio rig na primeira vez em que o clipe toca, e um teste garante que nenhum pixel rígido passa do chão em nenhum instante.
+- **Limites articulares.** `JOINT_LIMITS` em `skeleton.js` prende cada junta ao que um corpo permite — ombro 172° à frente e 57° atrás, cotovelo e joelho só para um lado (6° e 5° além do reto), quadril 120° à frente e 29° atrás, tornozelo 26° para cima e 52° para baixo, pescoço e coluna assimétricos — e `clampPose()` é a última coisa que a camada de movimento faz, depois de respiração, peso, gestos, dor e pouso. Quando um agachamento fundo exigiria mais dorsiflexão do que o tornozelo tem, o calcanhar levanta (`plantFoot`).
+- **Ragdoll dobrando ao contrário.** Os limites do ragdoll eram simétricos: um arremesso levava o ombro a 165° atrás das costas, o quadril a 107° atrás e o joelho e o cotovelo 10–14° ao contrário (medido por `pixel_art/tools/probe_ragdoll_limits.js`, 160 arremessos). Os limites agora são os mesmos do esqueleto; medido de novo, o pior caso fica em 67° no ombro e 33° no quadril, que é o transbordo de um solver iterativo num arremesso forte.
+- **Virar.** O sprite espelha num quadro, como pixel art vira, mas por 0,16 s o corpo se inclina na direção nova, o braço próximo cruza e a cabeça vira primeiro. O cabelo faz a parte dele sozinho: o vento que o puxa troca de sinal.
+
+Comparação: `pixel_art/generated/antes_depois_animacoes.png`. Prévia contínua, vestida: `generated/clipes.gif` (andar, virar, correr, saltar, cair, levantar). `tests/anatomia-animacao.test.js` mantém tudo isso: percorre 14 s de cada modo e reprova qualquer junta fora do limite, mede as passadas dos dois pés, a fase dos braços, a altura do quadril, a articulação dos pés, a inclinação, o salto, as pernas no chão, o apoio das mãos e dos pés no levantar e os ângulos do ragdoll em 60 arremessos.
+
+## O gesto de usar um item, região por região
+
+`treatment-motion.js` foi refeito. Antes, o braço era resolvido por IK com o cotovelo dobrando para o lado errado no braço próximo (o sinal do joelho), o alvo era só o meio da região e nada segurava as juntas: para a cabeça, o pescoço, o tórax, o abdômen e os braços o cotovelo ficava virado ao contrário; para a canela e o pé a mão parava a vinte pixels do ferimento; e com um braço faltando o braço distante trabalhava escondido atrás do tronco, então o item parecia flutuar. Uma ferramenta (`pixel_art/tools/audit_treatment.js` + `audit_treatment_sheet.py`) renderiza os 207 gestos — 19 regiões × 3 itens × os dois braços, sem o braço direito, sem o esquerdo, sem a mão direita — e imprime os ângulos das juntas contra os limites do rig; `generated/tratamento_poses.png` é a folha de contato.
+
+Agora o corpo vai até o ferimento como uma pessoa vai: inclina para o peito e a barriga, **agacha** para a coxa (quadril desce oito pixels, os dois pés plantados por `plantFoot`, joelhos à frente) e **senta no chão** para a canela e o pé (quadril no piso, o joelho ferido levantado, a outra perna esticada), com a cabeça olhando o que faz. O braço que trabalha é resolvido por IK **com as pontas dos dedos** no alvo — o antebraço e a mão como uma peça só, o cotovelo sempre dobrando para trás — e depois cada junta é presa ao limite; um alvo perto demais para dedos esticados (o próprio ombro) é alcançado pelo punho, com a mão virando a partir dele. Um braço ferido é segurado à frente do peito (levantado quando o ferimento é no próprio braço, para ficar na frente do corpo) enquanto o outro trata; um remédio vai à boca. Quando falta um braço, o outro faz tudo, e o braço distante é **erguido na ordem de desenho** (`rig.raise`) para passar na frente do tronco em vez de sumir atrás dele. Nada rígido atravessa o chão: a pose é elevada pelo pixel mais baixo, e no meio da transição para o agachamento os pés são replantados. Com o corpo em física (ragdoll, rastejando) só os braços são posados, nas transformações resolvidas, com os mesmos limites.
+
+Validação: `node tests/tratamento-anatomia.test.js` — os 207 gestos em sete instantes cada: nenhuma junta fora do limite, cotovelo nunca para trás, o item sempre numa mão presente, dedos no ferimento (ou na boca), nada abaixo do chão, agachamento para coxa, sentar para canela e pé, braço distante na frente quando é o único, corpo físico intocado.
+
+## Guarda-roupa
+
+Nada aqui é PNG. `wardrobe.js` gera cada peça a partir de regras — quase sempre da silhueta da parte do corpo em que ela pendura, então a peça segue o membro em todos os clipes e em qualquer arremesso do ragdoll de graça — e a pinta como uma rampa de cinco tons que o sistema de tingimento já existente recolore. `Wardrobe.extend(asset)` devolve uma cópia do asset com as peças anexadas como camadas de roupa comuns (`bone`, `slot`, `z`, e quando é o caso `sway`, `drift` e `covers`), as cores novas na paleta e uma rampa por peça; o rig e o rasterizador não sabem a diferença entre uma peça desenhada e uma gerada. As referências: as bases de *paper doll* do Mana Seed e do gerador LPC (uma paleta universal por peça, toda peça deitada sobre os próprios quadros do corpo para qualquer combinação animar) e a ordem de camadas deles — chapéu sobre cabelo, cabelo sobre gola, manga distante atrás do tronco.
+
+**As peças** (85, em dez categorias). As 49 originais: cinco penteados além do original — chanel, rabo de cavalo, coque, curtinho, trança — que copiam pixel a pixel a franja, a têmpora e a mecha da bochecha desenhadas (esse é o rosto dela) e trocam só a massa de trás, na paleta do próprio cabelo, então a cor do cabelo tinge todos; chapéu de aba, boné, gorro, bandana, óculos, coroa de flores, tapa-olho; camiseta, regata, camisa com botões, blusa listrada, suéter de gola alta, moletom com capuz, vestido, top esportivo, armadura de couro, túnica; manto com capuz, jaqueta de couro, colete, sobretudo, capa, poncho; short, calça jeans, calça cargo, calça de moletom, legging, bermuda, saia, saia longa; botas, tênis, sandálias, botas altas, sapatilhas; faixas, cachecol, mochila, cinto, luvas, colar, ombreiras, bolsa a tiracolo. Oito tons de pele (a rampa de cinco tons da própria pele, tingida do meio-tom) e a cor dos olhos.
+
+**As peças novas, para os personagens das imagens enviadas**: cortes masculinos pintados do zero sobre o crânio (raspado com degradê, curto social, mullet com a massa de trás no fio do rabo, cacheado curto, careca), uma categoria de **barba** (rala, cheia, cavanhaque, bigode, longa trançada — com fio de física — todas na paleta do cabelo, então a cor do cabelo tinge a barba), uma categoria de **corpo** (*forte*: ombros, peito e braços mais largos, pintados na rampa da pele, então o tom de pele tinge junto), máscara de borboleta (asas maiores que a cabeça, nervuras, o corpo sobre os olhos), elmo com chifres, óculos escuros (óculos e tapa-olho passaram para os extras, para empilhar com chapéus), scrubs de gola V, macacão de presídio com o remendo, batina com colarinho e faixa, armadura de placas com ombreiras de espigões e a gema, mortalha de fantasma (capuz, corpo, barra que pinga e some, pernas escondidas), paletó aberto no V da camisa, jaqueta militar de botões dourados, jaqueta aberta com gola contrastante, calça social, grevas de placas, gravata (com fio), corrente com cruz, coldre, luvas sem dedos, arnês de tiras, braçadeira, tatuagens, crachá, estetoscópio, cinto de ferramentas, faixa no braço. Catorze conjuntos novos no grupo **Personagens** reproduzem as imagens: Veterano, Taco rosa, Cavaleiro negro, Fantasma, Anão, Borboleta, Chapéu vermelho, Jaqueta verde, Presidiário, Regata azul, Forte, Couro vermelho, Médico e Padre.
+
+**Roupa colada ao corpo, pano solto balançando.** Tudo o que é pintado sobre o corpo — camisas e mangas, calças, a barra das blusas, jaquetas, paletó, macacão, armaduras, luvas e correias — acompanha o osso em que está em todo quadro, pixel a pixel, sem atraso e sem fio de física. Só balança o que pende solto: saia e vestido, saia longa e batina, abas do sobretudo, capa e manto, poncho, cachecol, gravata, barba longa e a cauda da mortalha, cada um num fio preso a um ponto que segue o corpo (`CLOTH` em `wardrobe.js` guarda os fios compartilhados da barba, da gravata e da mortalha; os outros vêm com a peça). Os punhos, as barras, as dobras do cotovelo e do joelho e o vinco das costuras continuam refinados nas peças.
+
+**Física nas peças soltas.** Saia, vestido, saia longa, sobretudo, capa, poncho, cachecol, rabo de cavalo e trança carregam um fio verlet próprio (`strands` na definição da peça), com rigidez, arrasto, dobra e vento próprios, entregue ao rasterizador como deslocamento por linha — o mesmo mecanismo do cabelo e do manto. `HairSway` aceita perfis embutidos e vento por fio, então uma peça nova não precisa mexer em `motion.js`. Um vestido esvazia a categoria das pernas (`excludes`); um penteado esconde as camadas do cabelo desenhado (`covers`); o poncho esconde os braços dentro dele.
+
+**A janela** (`wardrobe-ui.js`) é um painel de 320×248 desenhado a 1× e mostrado ampliado, na tinta roxa do HUD, com as categorias em duas fileiras, três fileiras de ladrilhos com paginação (‹ ›) e os conjuntos em dois grupos (CONJUNTOS e PERSONAGENS): à esquerda a personagem viva — respirando, piscando, com o cabelo e o pano se mexendo — que pode andar no lugar para julgar a física; à direita as categorias, as peças como ladrilhos recortados das próprias peças sobre uma silhueta apagada, uma fileira de cores por peça (mais um seletor livre e "original"), e os conjuntos prontos: Original, Exploradora, Cidade, Inverno, Verão, Noite, Festa, Andarilha, Sobrevivente, Campo e Heroína, mais os catorze personagens. SORTE sorteia. O que foi vestido fica salvo neste navegador; na primeira visita ela começa vestida com o conjunto Original, e a roupa vestida aparece na bolsa como um item (veja *Bolsa de suprimentos*). **G** abre, **Esc** fecha, **Restaurar aparência** despe.
+
+Prévias: `generated/roupas.gif` (os 25 conjuntos parados, andando e correndo), `generated/roupas_contact_sheet.png`, `generated/peles.gif` (tons de pele e penteados). Validação: `node tests/guarda-roupa.test.js` (cada peça renderiza e deixa o corpo em paz, os penteados mantêm a franja pixel a pixel, tingir e destingir é exato, tom de pele não toca as roupas, vestido exclui pernas, conjuntos válidos, peças em todos os clipes e num arremesso, saia, cachecol e rabo balançam e assentam; camisa e jeans sem fio, gravata e barba longa com fio), `node tests/roupa-acompanha-corpo.test.js` (a roupa segue o corpo pixel a pixel em todo quadro) e `node tests/browser-wardrobe.test.js` (Chrome: abre em G, conjunto veste, vestido tira a calça, tinge e destinge, cabelo, pele, olhos, extras um a um, prévia andando com física, Esc, vestida na corrida, lembrada ao recarregar, sorteio e limpar; capturas em `pixel_art/generated/wardrobe/`).
+
 "# O-Ceu-tem-fome." 

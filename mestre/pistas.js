@@ -27,13 +27,20 @@
 
   const types = new Map();
   const ClueTypes = {
-    register(id, def) { def.id = id; def.fields = def.fields || []; def.defaults = def.defaults || {}; types.set(id, def); return def; },
+    /* categoria: 'pista' (conta nas conclusões e no “pista encontrada”),
+       'interacao' (móveis e máquinas das cenas) ou 'passagem' (portas, escadas). */
+    register(id, def) { def.id = id; def.fields = def.fields || []; def.defaults = def.defaults || {}; def.categoria = def.categoria || 'pista'; types.set(id, def); return def; },
+    categoria: clue => types.get(clue?.type)?.categoria || 'pista',
     get: id => types.get(id),
     list: () => [...types.values()].filter(t => !t.hidden)
   };
   /* How a clue shows itself in the scene. 'discreta' has no mark but anyone
      can find it with the cursor; 'oculta' can only be opened by the master. */
   const MARKERS = [['brilho', 'Brilho'], ['icone', 'Ícone flutuante'], ['contorno', 'Contorno'], ['discreta', 'Discreta (sem marca)'], ['oculta', 'Oculta (só o mestre abre)']];
+  /* Clues small enough to carry: found in the scene they go into the bag
+     first, and are examined from there. A desk, a computer, a safe or a map
+     on the wall stay where they are. */
+  const PORTABLE = new Set(['documento', 'bilhete', 'carta', 'foto', 'objeto']);
 
   function normalize(clue) {
     const type = types.get(clue.type);
@@ -57,6 +64,7 @@
       stage.overlayHooks.add(ctx => this.drawPublic(ctx));
       if (link) { link.inputListeners?.add(msg => this.playerInput(msg)); link.frameExtras = () => this.frameExtras(); }
       root.addEventListener?.('keydown', e => this.keydown(e), true);
+      root.addEventListener?.('keyup', e => this.keyup(e), true);
       stage.listeners.add(desc => {
         if (desc && this.stackScene && desc.scene !== this.stackScene) { this.stack = []; this.stackScene = null; }
         if (this.placement && desc?.scene !== this.placement.scene) this.placement = null;
@@ -67,7 +75,7 @@
     scene() { return this.stage.scene; }
     sceneData(sceneId = this.scene()?.id) {
       const d = this.data[sceneId] ??= {};
-      d.custom ??= []; d.overrides ??= {}; d.found ??= {}; d.removed ??= []; d.conclusions ??= []; d.memory ??= {};
+      d.custom ??= []; d.overrides ??= {}; d.found ??= {}; d.removed ??= []; d.conclusions ??= []; d.memory ??= {}; d.taken ??= {};
       return d;
     }
     /* What an interface remembers between openings: drawers left open, the
@@ -84,11 +92,34 @@
       return [...builtIn, ...d.custom.map(c => normalize({...c, builtIn: false}))];
     }
     clue(id, sceneId) { return this.clues(sceneId).find(c => c.id === id) || null; }
+    /* Só as pistas de verdade (sem móveis, máquinas e portas). */
+    pistas(sceneId) { return this.clues(sceneId).filter(c => ClueTypes.categoria(c) === 'pista'); }
     visibleClues() {
       const st = this.stage.state;
       if (!st) return [];
-      return this.clues().filter(c => c.enabled !== false && c.anchor && (!c.requires || st.props.has(c.requires)));
+      const d = this.sceneData();
+      return this.clues().filter(c => c.enabled !== false && c.anchor && !d.taken[c.id] && (!c.requires || st.props.has(c.requires)));
     }
+    /* ---- carrying clues. A portable clue clicked in the scene is taken:
+       it leaves the scene (until the master resets or puts it back) and the
+       game puts it in the bag through `onPickup`. */
+    static get PORTABLE() { return PORTABLE; }
+    portable(clue) { return !!clue && PORTABLE.has(clue.type) && !clue.inline; }
+    taken(id, sceneId) { return !!this.sceneData(sceneId).taken[id]; }
+    take(clue, source = 'cena') {
+      if (!this.portable(clue)) return false;
+      const d = this.sceneData();
+      if (d.taken[clue.id]) return false;
+      d.taken[clue.id] = {at: Date.now(), by: source};
+      this.discover(clue, source, {quiet: true});
+      if (this.announce) this.toast('PISTA GUARDADA', clue.name, types.get(clue.type)?.icon || 'lupa');
+      this.sfx('pista');
+      this.emit('taken');
+      return true;
+    }
+    // The clue goes back to where it was in the scene.
+    putBack(id, sceneId = this.scene()?.id) { const d = this.sceneData(sceneId); if (!d.taken[id]) return false; delete d.taken[id]; this.emit('change'); return true; }
+    resetTaken(sceneId = this.scene()?.id) { const d = this.sceneData(sceneId); d.taken = {}; this.emit('change'); }
     conclusions(sceneId = this.scene()?.id) {
       const scene = root.SceneLibrary.get(sceneId), d = this.sceneData(sceneId);
       const list = [...(scene?.conclusions || []), ...d.conclusions];
@@ -130,7 +161,7 @@
       this.emit('change');
       return c;
     }
-    resetFound(sceneId = this.scene()?.id) { const d = this.sceneData(sceneId); d.found = {}; d.memory = {}; this.stack = []; this.emit('change'); }
+    resetFound(sceneId = this.scene()?.id) { const d = this.sceneData(sceneId); d.found = {}; d.memory = {}; d.taken = {}; this.stack = []; this.emit('change'); this.emit('reset'); }
     removeConclusion(id, sceneId = this.scene()?.id) {
       const d = this.sceneData(sceneId);
       d.conclusions = d.conclusions.filter(c => c.id !== id);
@@ -192,6 +223,16 @@
       const found = this.hitClue(x, y, {forPlayers: source !== 'mestre'});
       if (!found) return false;
       if (characterHit && found.rect.depth <= 1 && source === 'mestre') return false;
+      // Portas, interruptores: agem direto, sem abrir interface (ou abrem a própria, quando precisam).
+      const kind = types.get(found.clue.type);
+      if (kind?.activate) {
+        const handled = kind.activate(normalize(found.clue), this, {source: source === 'mestre' ? 'mestre' : 'jogadores', x, y});
+        if (handled !== false) { this.emit('action'); return true; }
+      }
+      // A small thing is picked up, not opened: it goes into the bag first.
+      if (this.onPickup && this.portable(found.clue)) {
+        if (this.onPickup(found.clue, source === 'mestre' ? 'cena' : 'jogadores')) return true;
+      }
       this.open(found.clue, {source: source === 'mestre' ? 'cena' : 'jogadores'});
       return true;
     }
@@ -210,7 +251,8 @@
       }
       const found = this.hitClue(x, y);
       this.hover = found && !(characterHit && found.rect.depth <= 1) ? found.clue.id : null;
-      return this.hover ? U.cursorCss() : '';
+      if (!this.hover) return '';
+      return ClueTypes.categoria(found.clue) === 'pista' ? U.cursorCss() : 'pointer';
     }
     pointerUp(x, y) {
       this.mouse = {...this.mouse, x, y, down: false};
@@ -257,6 +299,11 @@
       }
       if (e.code === 'KeyP' && !e.repeat && !e.ctrlKey && !e.altKey && !e.metaKey) { stop(); this.showAreas = !this.showAreas; this.emit('areas'); }
     }
+    keyup(e) {
+      const top = this.top;
+      if (!top?.type.keyup || this.cinematic) return;
+      if (top.type.keyup(e, top.state, top.clue, this)) { e.preventDefault?.(); e.stopImmediatePropagation?.(); }
+    }
     /* Input forwarded by the players' window. */
     playerInput(msg) {
       if (!this.allowPlayers || !msg) return;
@@ -264,6 +311,12 @@
       if (msg.kind === 'down') { this.handleDown(msg.x, msg.y, 'jogadores'); return; }
       if (msg.kind === 'up') { this.mouse = {...this.mouse, down: false}; return; }
       if (msg.kind === 'wheel') { const top = this.top; if (top?.audience === 'todos') this.wheel(msg.delta); return; }
+      if (msg.kind === 'keyup') {
+        const top = this.top;
+        if (this.cinematic || !top || top.audience !== 'todos' || !top.type.keyup) return;
+        top.type.keyup({key: msg.key, code: msg.code, preventDefault() {}, stopImmediatePropagation() {}}, top.state, top.clue, this);
+        return;
+      }
       if (msg.kind === 'key') {
         const top = this.top;
         if (this.cinematic || !top || top.audience !== 'todos') return;
@@ -299,13 +352,13 @@
     }
     close() { const top = this.top; if (top && !top.closing) { top.closing = true; top.type.onClose?.(top.state, top.clue, this); this.sfx('fechar'); this.emit('closing'); } }
     closeAll() { this.stack = []; this.emit('close'); }
-    discover(clue, source) {
-      if (!clue?.id || clue.inline) return;
+    discover(clue, source, {quiet = false} = {}) {
+      if (!clue?.id || clue.inline || ClueTypes.categoria(clue) !== 'pista') return;
       const d = this.sceneData();
       if (d.found[clue.id]) return;
       d.found[clue.id] = {at: Date.now(), by: source === 'jogadores' ? 'jogadores' : source === 'mestre' || source === 'painel' ? 'mestre' : 'cena'};
-      if (this.announce) this.toast('PISTA ENCONTRADA', clue.name, types.get(clue.type)?.icon || 'lupa');
-      this.sfx('pista');
+      if (this.announce && !quiet) this.toast('PISTA ENCONTRADA', clue.name, types.get(clue.type)?.icon || 'lupa');
+      if (!quiet) this.sfx('pista');
       this.emit('found');
     }
     toast(title, sub = '', icon = 'lupa') {
@@ -383,8 +436,9 @@
           const r = this.rectOf(clue, camera);
           if (!r) continue;
           const off = clue.requires && !this.stage.state?.props.has(clue.requires);
-          U.ants(ctx, r.x, r.y, r.w, r.h, t, off ? ['#7c6f86', '#140619'] : clue.marker === 'oculta' ? ['#e574cc', '#140619'] : ['#9fe0b0', '#0b2014']);
-          const label = clue.name + (off ? ' (objeto desligado)' : '');
+          const cat = ClueTypes.categoria(clue);
+          U.ants(ctx, r.x, r.y, r.w, r.h, t, off ? ['#7c6f86', '#140619'] : clue.marker === 'oculta' ? ['#e574cc', '#140619'] : cat === 'passagem' ? ['#8fd3ff', '#0a1a2a'] : cat === 'interacao' ? ['#ffd18c', '#2a1606'] : ['#9fe0b0', '#0b2014']);
+          const label = clue.name + (off ? ' (objeto desligado)' : '') + (cat === 'passagem' ? ` → ${this.exploracao?.rotuloDestino?.(clue) || 'sem destino'}` : '');
           const w = K.measure(label) + 6;
           U.rect(ctx, r.x, r.y - 12, w, 11, '#140619e6');
           K.drawText(ctx, label, r.x + 3, r.y - 10, {color: '#ffe6f7'});
@@ -464,13 +518,13 @@
       if (top) return top.audience === 'todos' ? this.ui.regions.map(r => [Math.round(r.x), Math.round(r.y), Math.round(r.w), Math.round(r.h), r.cursor === 'text' ? 3 : r.cursor === 'lupa' ? 2 : r.cursor === 'none' ? 4 : r.cursor === 'default' ? 0 : 1]) : [];
       return this.visibleClues().filter(c => c.marker !== 'oculta').map(c => {
         const r = this.rectOf(c);
-        return r && [Math.round(r.x), Math.round(r.y), Math.round(r.w), Math.round(r.h), 2];
+        return r && [Math.round(r.x), Math.round(r.y), Math.round(r.w), Math.round(r.h), ClueTypes.categoria(c) === 'pista' ? 2 : 1];
       }).filter(Boolean);
     }
     snapshot() {
       return {open: this.stack.map(e => ({id: e.clue.id, type: e.clue.type, audience: e.audience, state: e.type.describe ? e.type.describe(e.state) : null})),
         cinematic: this.cinematic ? this.cinematic.describe?.() || {name: this.cinematic.name} : null,
-        found: Object.keys(this.sceneData().found), placement: !!this.placement, hover: this.hover, areas: this.showAreas};
+        found: Object.keys(this.sceneData().found), taken: Object.keys(this.sceneData().taken), placement: !!this.placement, hover: this.hover, areas: this.showAreas};
     }
   }
 
