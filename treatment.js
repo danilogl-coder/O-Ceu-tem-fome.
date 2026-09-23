@@ -8,7 +8,7 @@
     antibiotic:{duration:4,label:'Tomando antibiótico',method:'treatInfection'}
   });
   class TreatmentAction {
-    constructor(health,inventory){this.health=health;this.inv=inventory;this.active=null;this.revision=0;this.message='';this.lastResult=null;}
+    constructor(health,inventory,user=health){this.health=health;this.user=user;this.inv=inventory;this.active=null;this.revision=0;this.message='';this.lastResult=null;}
     reason(entryId,region){
       if(this.active)return 'Já existe um tratamento em andamento.';
       return this.eligibility(entryId,region);
@@ -16,8 +16,8 @@
     eligibility(entryId,region){
       const h=this.health,e=this.inv.get(entryId),p=h.parts.get(region);
       if(!e||!Object.hasOwn(TREATMENTS,e.def)||e.qty<1)return 'Suprimento indisponível.';
-      if(h.incapacitated)return 'O personagem não consegue usar itens agora.';
-      if(!['near','far'].some(side=>['arm_','forearm_','hand_'].every(prefix=>!h.parts.get(prefix+side)?.missing)))return 'É preciso ter um braço e uma mão para usar o item.';
+      if(this.user.incapacitated)return 'O personagem não consegue usar itens agora.';
+      if(!['near','far'].some(side=>['arm_','forearm_','hand_'].every(prefix=>!this.user.parts.get(prefix+side)?.missing)))return 'É preciso ter um braço e uma mão para usar o item.';
       if(!p||p.missing)return 'Escolha uma região presente no corpo.';
       if(e.def==='bandage'&&(!p.cut||p.bandaged))return 'A bandagem precisa de um corte sem curativo.';
       if(e.def==='splint'&&(!p.fracture||p.splinted))return 'A tala precisa de uma fratura não imobilizada.';

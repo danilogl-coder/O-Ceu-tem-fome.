@@ -26,17 +26,23 @@
     ['som', 'Som', 'Som ambiente, música e efeitos das pistas'],
     ['mesa', 'Pistas', 'Pistas da cena, conclusões, o que foi encontrado e anotações'],
     ['explorar', 'Exploração', 'Pedidos de improviso, passagens entre cenas, mapa de conexões e eventos'],
-    ['itens', 'Itens', 'Entregar itens para a personagem'],
+    ['elenco', 'Elenco', 'As pessoas da mesa: fichas, quem está em cena e quem você controla'],
+    ['ferramentas', 'Ferramentas', 'Sistemas de cada pessoa, a mão do mouse e as ações em massa sobre a seleção'],
+    ['itens', 'Itens', 'Entregar itens para o personagem'],
+    ['necessidades', 'Fome e sede', 'Estágios de fome e sede, automático com prazo, condições e pular tempo'],
     ['tela', 'Jogadores', 'Tela dos jogadores, cortina e documentos'],
     ['sessao', 'Sessão', 'Salvar, importar, recomeçar e atalhos']
   ];
   const RAIL_ICONS = {
+    ferramentas: ['................', '...##...........', '...###..........', '...####.........', '...#####........', '...######.......', '...#######......', '...########.....', '...#########....', '...######.......', '...##.####......', '...#...####.....', '........####....', '.........###....', '................', '................'],
+    elenco: ['................', '.........####...', '.........#..#...', '.........#..#...', '..####....##....', '..#..#..######..', '..#..#.##.##.##.', '...##..#..##..#.', '.######....##...', '##.##.##...##...', '#..##..#...##...', '...##......##...', '...##.....#..#..', '..#..#....#..#..', '.##..##..##..##.', '................'],
     montar: ['................', '......####......', '......#..#......', '......####......', '...####..####...', '...#..#..#..#...', '...####..####...', '................', '.##############.', '.#..#..##..#..#.', '.##############.', '.#....#..#....#.', '.##############.', '................', '................', '................'],
     explorar: ['................', '.#########......', '.#.......#......', '.#.#####.#......', '.#.#...#.#...#..', '.#.#...#.#...##.', '.#.#...#.#######', '.#.#..##.#######', '.#.#...#.#...##.', '.#.#...#.#...#..', '.#.#...#.#......', '.#.#####.#......', '.#.......#......', '.#########......', '................', '................'],
     cenas: ['................', '.##############.', '.#............#.', '.#.........##.#.', '.#.........##.#.', '.#............#.', '.#.....#......#.', '.#....###.....#.', '.#...#####..#.#.', '.#..#######.###.', '.#.############.', '.##############.', '................', '................', '................', '................'],
     ambiente: ['.......#........', '...#...#...#....', '....#.....#.....', '......###.......', '.....#####......', '.##..#####..##..', '.....#####......', '......###.......', '....#.....#.....', '...#..######....', '.....########...', '....##########..', '...############.', '...############.', '....##########..', '................'],
     som: ['................', '......#.........', '.....##....#....', '....###.....#...', '..#####..#...#..', '.######...#..#..', '.######...#...#.', '.######...#...#.', '.######...#...#.', '.######...#..#..', '..#####..#...#..', '....###.....#...', '.....##....#....', '......#.........', '................', '................'],
     mesa: ['................', '....######......', '...#......#.....', '..#..##....#....', '..#.#......#....', '..#........#....', '..#........#....', '..#........#....', '...#......#.....', '....#######.....', '..........###...', '...........###..', '............###.', '.............##.', '................', '................'],
+    necessidades: ['................', '.....#....##....', '....#.#..#..#...', '....#.#..#..#...', '....#.#..#..#...', '.....#....#.#...', '.....#....#.#...', '.....#.....##...', '.....#.....#....', '................', '.......##.......', '......####......', '.....######.....', '.....######.....', '......####......', '................'],
     itens: ['................', '......####......', '.....#....#.....', '.....#....#.....', '..############..', '.#............#.', '.#..########..#.', '.#..#......#..#.', '.#..########..#.', '.#............#.', '.#............#.', '.#............#.', '.##############.', '................', '................', '................'],
     tela: ['................', '.##############.', '.#............#.', '.#.##########.#.', '.#.#........#.#.', '.#.#.#......#.#.', '.#.#........#.#.', '.#.#........#.#.', '.#.##########.#.', '.#............#.', '.##############.', '.......##.......', '.....######.....', '................', '................', '................'],
     sessao: ['................', '.############...', '.#..######..#...', '.#..######..##..', '.#..#...##..#.#.', '.#..######..#.#.', '.#............#.', '.#............#.', '.#..########..#.', '.#..#......#..#.', '.#..#......#..#.', '.#..#......#..#.', '.##############.', '................', '................', '................']
@@ -45,10 +51,17 @@
   const pixelPath = rows => rows.map((row, y) => [...row.matchAll(/#+/g)].map(m => `M${m.index} ${y}h${m[0].length}v1h-${m[0].length}z`).join('')).join('');
 
   class MasterPanel {
-    constructor({stage, link, clues = null, items = null, exploracao = null, doc = document}) {
+    constructor({stage, link, clues = null, items = null, exploracao = null, necessidades = null, ficha = null, elenco = null, doc = document}) {
       this.stage = stage; this.link = link; this.clues = clues; this.doc = doc;
+      /* Fome e sede do personagem (necessidades.js), com os controles do mestre. */
+      this.necessidades = necessidades;
       /* Passagens, cenas montadas, pedidos de improviso e eventos (exploracao.js). */
       this.exploracao = exploracao;
+      /* O elenco da mesa (mestre/elenco.js): uma pessoa por ficha, com corpo,
+         roupa e feridas próprias. Fica de pé aqui, e não junto da ficha mais
+         abaixo, porque `template()` roda ainda neste construtor — sem ele a
+         seção ELENCO nasceria dizendo que o elenco não foi carregado. */
+      this.elenco = elenco;
       /* The game's hand-out desk: catalogue(), status(), give(), drop(),
          wield(), collect(). Without it the ITENS tab says so. */
       this.items = items;
@@ -72,6 +85,12 @@
         clues.importData(this.session.clues);
         this.applyCluePrefs();
       }
+      if (this.necessidades && this.session.necessidades) this.necessidades.importar(this.session.necessidades);
+      /* A ficha da mesa viaja com a sessão, como a fome e a sede. */
+      this.ficha = ficha;
+      if (this.ficha && this.session.ficha) this.ficha.importar(this.session.ficha);
+      if (this.elenco && this.session.elenco) this.elenco.importar(this.session.elenco);
+      this.ficha?.on?.(() => this.save());
 
       // As cenas montadas pelo mestre voltam antes de a cena ao vivo ser carregada.
       root.Montador?.importar(this.session.exploracao?.cenas || []);
@@ -118,7 +137,7 @@
       return {v: 1, live: {scene: 'escritorio'}, preview: {scene: 'escritorio', spawn: 'manter', camera: .35},
         transition: {type: 'fade', duration: 1.2}, title: {text: '', subtitle: '', edited: false},
         clues: {}, cluePrefs: {players: true, announce: true, sfx: true}, notes: {}, handout: {title: '', body: '', stamp: '', auto: 0},
-        sound: {channels: {}, music: null, musicVolume: .5, volume: .6},
+        sound: {channels: {}, music: null, musicVolume: .5, volume: .6, estrada: {}},
         curtain: {on: false, mode: 'espera', text: ''}, markers: true, tab: 'cenas', blocks: {},
         exploracao: {cenas: [], prefs: {}, estados: {}, eventos: {}, pedidos: []}};
     }
@@ -142,6 +161,9 @@
         if (st) this.session.live = {scene: st.sceneId, preset: st.preset, weather: st.weather, props: [...st.props], clock: st.clock};
         if (this.clues) this.session.clues = this.clues.exportData();
         if (this.exploracao || root.Montador) this.session.exploracao = {...(this.exploracao?.exportar() || {}), cenas: root.Montador ? root.Montador.exportar() : []};
+        if (this.necessidades) this.session.necessidades = this.necessidades.exportar();
+        if (this.ficha) this.session.ficha = this.ficha.exportar();
+        if (this.elenco) this.session.elenco = this.elenco.exportar();
         try { root.localStorage?.setItem(STORE, JSON.stringify(this.session)); this.flash('#gmSaveState', 'Sessão salva neste navegador · ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})); }
         catch { this.flash('#gmSaveState', 'Não foi possível salvar neste navegador. Use “Exportar sessão”.'); }
       }, 350);
@@ -252,6 +274,19 @@
         <label class="gm-slider">Volume da música <output id="gmMusicOut">50</output><input id="gmMusicVolume" type="range" min="0" max="100" value="50"></label>
           </div>
         </details>
+        <details class="gm-block" data-block="som-estrada" open>
+          <summary><h3>SOM DA ESTRADA <small>o minigame de viagem: motor, pneus, vento e trilha</small></h3></summary>
+          <div class="gm-block-body">
+        <label class="gm-check"><input type="checkbox" id="gmEstradaLigado" checked> Som da estrada ligado</label>
+        <div class="gm-row"><label class="gm-inline gm-grow">Trilha da viagem<select id="gmEstradaTrilha" aria-label="Trilha do minigame de estrada"></select></label></div>
+        <label class="gm-slider">Motor <output id="gmEstradaMotorOut">80</output><input id="gmEstradaMotor" type="range" min="0" max="100" value="80"></label>
+        <label class="gm-slider">Pneus e vento <output id="gmEstradaPneusOut">60</output><input id="gmEstradaPneus" type="range" min="0" max="100" value="60"></label>
+        <label class="gm-slider">Efeitos: batida, cascalho, buzina <output id="gmEstradaEfeitosOut">90</output><input id="gmEstradaEfeitos" type="range" min="0" max="100" value="90"></label>
+        <label class="gm-slider">Música da viagem <output id="gmEstradaMusicaOut">55</output><input id="gmEstradaMusica" type="range" min="0" max="100" value="55"></label>
+        <div class="gm-row"><select id="gmEstradaCarro" aria-label="Carro do teste"></select><button type="button" id="gmEstradaTestar">Ouvir o motor</button></div>
+        <p class="gm-hint gm-left" id="gmEstradaDica"></p>
+          </div>
+        </details>
         </section>
         <section class="gm-pane" id="gmPane-mesa" role="tabpanel" aria-labelledby="gmTab-mesa" hidden>
         <details class="gm-block" data-block="pistas" open>
@@ -290,9 +325,11 @@
         </details>
         </section>
         <section class="gm-pane" id="gmPane-explorar" role="tabpanel" aria-labelledby="gmTab-explorar" hidden>${this.paneExplorar ? this.paneExplorar() : '<p class="gm-muted">A exploração não foi carregada.</p>'}</section>
+        <section class="gm-pane" id="gmPane-elenco" role="tabpanel" aria-labelledby="gmTab-elenco" hidden>${this.paneElenco && this.elenco ? this.paneElenco() : '<p class="gm-muted">O elenco da mesa só aparece com o jogo aberto nesta janela.</p>'}</section>
+        <section class="gm-pane" id="gmPane-ferramentas" role="tabpanel" aria-labelledby="gmTab-ferramentas" hidden>${this.paneFerramentas && this.elenco ? this.paneFerramentas() : '<p class="gm-muted">As ferramentas do mestre só aparecem com o jogo aberto nesta janela.</p>'}</section>
         <section class="gm-pane" id="gmPane-itens" role="tabpanel" aria-labelledby="gmTab-itens" hidden>
         <details class="gm-block" data-block="adicionar" open>
-          <summary><h3>ADICIONAR ITENS <small>para a personagem · na bolsa, no chão ou direto na mão</small></h3></summary>
+          <summary><h3>ADICIONAR ITENS <small>para o personagem · na bolsa, no chão ou direto na mão</small></h3></summary>
           <div class="gm-block-body">
         <p class="gm-status" id="gmItemsBag">—</p>
         <div id="gmItems" class="gm-items"></div>
@@ -302,7 +339,7 @@
         <details class="gm-block" data-block="chao" open>
           <summary><h3>NO CHÃO DESTA CENA <small>os jogadores veem tudo o que está no chão</small></h3></summary>
           <div class="gm-block-body">
-        <div class="gm-row"><span id="gmFloorCount" class="gm-muted gm-grow">Nada no chão.</span><button id="gmFloorCollect" type="button" title="Guarda na bolsa tudo o que está solto nesta cena, esteja perto ou longe da personagem">Recolher tudo para a bolsa</button></div>
+        <div class="gm-row"><span id="gmFloorCount" class="gm-muted gm-grow">Nada no chão.</span><button id="gmFloorCollect" type="button" title="Guarda na bolsa tudo o que está solto nesta cena, esteja perto ou longe do personagem">Recolher tudo para a bolsa</button></div>
           </div>
         </details>
         <details class="gm-block" data-block="uso">
@@ -311,11 +348,12 @@
         <ul class="gm-tips">
           <li><b>Bolsa:</b> <kbd>I</kbd> abre. Botão direito num item mostra as opções — no taco, <b>Empunhar</b> o põe no ombro e <b>Guardar</b> devolve.</li>
           <li><b>Taco na mão:</b> <kbd>E</kbd> golpeia; o que estiver solto ao alcance sai voando.</li>
-          <li><b>No chão:</b> clique perto da personagem para guardar; segure e solte rápido para arremessar — acerta quem estiver no caminho.</li>
+          <li><b>No chão:</b> clique perto do personagem para guardar; segure e solte rápido para arremessar — acerta quem estiver no caminho.</li>
         </ul>
           </div>
         </details>
         </section>
+        <section class="gm-pane" id="gmPane-necessidades" role="tabpanel" aria-labelledby="gmTab-necessidades" hidden>${this.paneNecessidades && this.necessidades ? this.paneNecessidades() : '<p class="gm-muted">A fome e a sede só aparecem com o jogo aberto nesta janela.</p>'}</section>
         <section class="gm-pane" id="gmPane-tela" role="tabpanel" aria-labelledby="gmTab-tela" hidden>
         <details class="gm-block" data-block="tela" open>
           <summary><h3>TELA DOS JOGADORES</h3></summary>
@@ -378,7 +416,7 @@
           <dt><kbd>N</kbd></dt><dd>recolhe o documento</dd>
           <dt><kbd>T</kbd> · <kbd>L</kbd></dt><dd>tremor · relâmpago</dd>
           <dt><kbd>P</kbd></dt><dd>mostra as áreas das pistas</dd>
-          <dt><kbd>I</kbd> · <kbd>E</kbd></dt><dd>bolsa da personagem · golpe com o taco na mão (itens na seção Itens)</dd>
+          <dt><kbd>I</kbd> · <kbd>E</kbd></dt><dd>bolsa do personagem · golpe com o taco na mão (itens na seção Itens)</dd>
           <dt><kbd>Esc</kbd></dt><dd>fecha a pista aberta · pula a cinemática</dd>
         </dl>
           </div>
@@ -528,6 +566,25 @@
       if (!this.sound) return;
       if (!id || this.sound.musicId === id) this.sound.stopMusic(); else this.sound.playMusic(id);
       this.session.sound.music = this.sound.musicId; this.save(); this.renderMusic();
+    }
+    /* Os controles do som da estrada, com o texto que explica o que cada motor é. */
+    renderSomEstrada() {
+      const SE = root.SomEstrada, $ = sel => this.panel.querySelector(sel);
+      if (!SE || !$('#gmEstradaLigado')) return;
+      const m = SE.mixer;
+      $('#gmEstradaLigado').checked = m.ligado !== false;
+      $('#gmEstradaTrilha').value = m.trilha || '';
+      for (const [sel, chave] of [['#gmEstradaMotor', 'motor'], ['#gmEstradaPneus', 'pneus'], ['#gmEstradaEfeitos', 'efeitos'], ['#gmEstradaMusica', 'musica']]) {
+        const el = $(sel), out = $(sel + 'Out');
+        if (el) el.value = Math.round((m[chave] ?? 0) * 100);
+        if (out) out.textContent = Math.round((m[chave] ?? 0) * 100);
+      }
+      for (const sel of ['#gmEstradaTrilha', '#gmEstradaMotor', '#gmEstradaPneus', '#gmEstradaEfeitos', '#gmEstradaMusica', '#gmEstradaTestar', '#gmEstradaCarro'])
+        if ($(sel)) $(sel).disabled = m.ligado === false;
+      const dica = $('#gmEstradaDica');
+      if (dica) dica.textContent = m.trilha === 'silencio' ? 'A viagem corre sem música: só motor, pneus e vento.'
+        : m.trilha ? 'Essa trilha toca em toda viagem, seja qual for o trecho.'
+        : 'Cada trecho tem a trilha dele — rodovia, serra, terra, noite, chuva, neblina e cidade. O motor é o do carro com que o jogador interagiu: o sedã de seis cilindros é grave e liso, o hatch é pequeno e zumbido, a picape é diesel e engasgada.';
     }
     renderMusic() {
       this.renderChips();
@@ -844,6 +901,9 @@
       if (id === 'itens') this.renderItems();
       if (id === 'explorar') this.renderExplorar?.();
       if (id === 'montar') this.renderMontar?.();
+      if (id === 'elenco') this.renderElenco?.();
+      if (id === 'ferramentas') this.renderFerramentas?.();
+      if (id === 'necessidades') this.renderNecessidades?.();
       this.save();
     }
 
@@ -1001,6 +1061,27 @@
         on('#gmMusic', 'click', e => { const b = e.target.closest('[data-music]'); if (!b) return; this.setMusic(b.dataset.music || null); });
         on('#gmMusicVolume', 'input', e => { $('#gmMusicOut').textContent = e.target.value; this.sound.setMusicVolume(Number(e.target.value) / 100); S.musicVolume = Number(e.target.value) / 100; this.save(); });
         this.renderMusic();
+        /* Som da estrada: o mixer do minigame de viagem (motor, pneus, efeitos,
+           trilha). Fica na sessão, como o resto do som. */
+        const SE = root.SomEstrada;
+        if (SE) {
+          SE.ligar(this.sound);
+          SE.aplicarMixer(S.estrada || {});
+          const trilha = $('#gmEstradaTrilha');
+          trilha.innerHTML = SE.opcoesTrilha().map(([id, label]) => `<option value="${escapeHtml(id)}">${escapeHtml(label)}</option>`).join('');
+          const carros = $('#gmEstradaCarro');
+          // Quem não tem motor não entra em "ouvir o motor": a bicicleta só faria
+          // o mestre clicar num botão que não toca nada.
+          carros.innerHTML = Object.entries(SE.MOTORES).filter(([, m]) => !m.mudo)
+            .map(([id, m]) => `<option value="${escapeHtml(id)}">${escapeHtml((root.Veiculos?.MODELOS?.[id]?.nome) || id)} · ${escapeHtml(m.nome)}</option>`).join('');
+          const guardar = () => { S.estrada = SE.mixer; this.save(); this.renderSomEstrada(); };
+          on('#gmEstradaLigado', 'change', e => { SE.definirMixer('ligado', e.target.checked); guardar(); });
+          on('#gmEstradaTrilha', 'change', e => { SE.definirMixer('trilha', e.target.value); guardar(); });
+          for (const [sel, chave] of [['#gmEstradaMotor', 'motor'], ['#gmEstradaPneus', 'pneus'], ['#gmEstradaEfeitos', 'efeitos'], ['#gmEstradaMusica', 'musica']])
+            on(sel, 'input', e => { SE.definirMixer(chave, Number(e.target.value) / 100); guardar(); });
+          on('#gmEstradaTestar', 'click', () => { SE.testar($('#gmEstradaCarro')?.value || 'sedan_oficial'); });
+          this.renderSomEstrada();
+        }
       }
       on('#gmFlicker', 'click', () => this.stage.setFlicker(!this.stage.effects.flicker));
       on('#gmDarkness', 'click', () => this.stage.setDarkness(!this.stage.effects.darkness, Number($('#gmDarkRadius').value)));
@@ -1067,9 +1148,11 @@
         if (!$('#gmReset').dataset.confirm) { $('#gmReset').dataset.confirm = '1'; $('#gmReset').textContent = 'Confirmar?'; setTimeout(() => { delete $('#gmReset').dataset.confirm; $('#gmReset').textContent = 'Recomeçar'; }, 3000); return; }
         try { root.localStorage?.removeItem(STORE); } catch {}
         this.session = this.defaults(); this.history = [];
+        this.stage.tacticalTable?.prepareRestore(null);
         this.clues?.importData({}); this.applyCluePrefs(); this.editing = null; this.renderEditor();
         this.stage.goLive({scene: 'escritorio', transition: 'corte'});
         root.Montador?.importar([]); this.exploracao?.importar({});
+        this.necessidades?.importar({fome: 0, sede: 0, minutos: 0, efeitos: []}); this.renderNecessidades?.();
         this.hideDocument(); this.setCurtain(false, false);
         this.buildLibrary();
         this.fillDocument(this.session.handout); this.syncPreviewControls(true); this.renderedScene = null; this.renderLive(this.stage.describe());
@@ -1080,6 +1163,9 @@
 
       this.bindMontar?.();
       this.bindExplorar?.();
+      if (this.elenco) this.bindElenco?.();
+      if (this.elenco) this.bindFerramentas?.();
+      if (this.necessidades) this.bindNecessidades?.();
       // Keyboard.
       root.addEventListener('keydown', e => this.keydown(e), true);
     }
@@ -1106,10 +1192,11 @@
     }
 
     exportSession() {
+      this.stage.tacticalTable?.save();
       this.save();
       const st = this.stage.state;
       const data = {...this.session, clues: this.clues ? this.clues.exportData() : this.session.clues, live: {scene: st.sceneId, preset: st.preset, weather: st.weather, props: [...st.props], clock: st.clock}, exportedAt: new Date().toISOString(),
-        exploracao: {...(this.exploracao?.exportar() || {}), cenas: root.Montador ? root.Montador.exportar() : []}};
+        elenco:this.elenco?.exportar(),ficha:this.ficha?.exportar(),exploracao: {...(this.exploracao?.exportar() || {}), cenas: root.Montador ? root.Montador.exportar() : []}};
       const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
       const a = this.doc.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -1124,6 +1211,9 @@
         const data = JSON.parse(await file.text());
         if (data.v !== 1) throw new Error('versão');
         this.session = {...this.defaults(), ...data};
+        this.stage.tacticalTable?.prepareRestore(data.tactical);
+        if(data.ficha)this.ficha?.importar(data.ficha);
+        if(data.elenco)this.elenco?.importar(data.elenco);
         const live = this.session.live;
         this.session.cluePrefs = {...this.defaults().cluePrefs, ...this.session.cluePrefs};
         this.clues?.importData(this.session.clues); this.applyCluePrefs(); this.editing = null; this.renderEditor();

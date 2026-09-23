@@ -57,7 +57,8 @@ fs.mkdirSync(output,{recursive:true});
     await dragTreatment(page,'bandage');
     const blood=(await state()).health.blood;
     await page.waitForFunction(()=>window.demo.state.bloodParticles===0);
-    assert.equal((await state()).health.blood,blood);
+    // A bandagem estanca a perda; com o metabolismo em dia o corpo ainda repõe devagar.
+    assert((await state()).health.blood>=blood,'a bandagem para a perda de sangue');
     assert.equal(await page.locator('#healthMap [data-part="forearm_near"]').getAttribute('data-state'),'bandaged');
     await page.locator('#healthPart').selectOption('shin_near');
     await page.locator('[data-injury="fracture"]').click();
@@ -137,7 +138,7 @@ fs.mkdirSync(output,{recursive:true});
     await page.waitForFunction(()=>window.demo.state.health.dead);
     assert.equal((await state()).health.vitality,0);
     assert((await state()).ragdoll && !(await state()).recovering);
-    assert.equal(await page.locator('#healthStatus').textContent(),'Morto · sem sinais vitais');
+    assert.equal(await page.locator('#healthStatus').textContent(),'Sem sinais vitais');
     assert.deepEqual(errors,[]);
     console.log('PASS: draggable pixel HUD, 19 regional life bars, fracture and splint, pixel bones, independent eye damage and grayscale blindness, blood and bandages, living amputee movement, detached limb drag, fatal injury and mobile resize');
   } finally {

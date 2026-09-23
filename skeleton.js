@@ -859,7 +859,13 @@
               const sx=Math.floor((w.c*dx+w.s*dy)*localMirror+px),sy=Math.floor(-w.s*dx+w.c*dy+py);
               for(let eye=0;eye<2;eye++) {
                 const injury=wounds.get(eye?'eye_right':'eye_left');
-                if(injury?.hp<100 && sy===this.eyes.row && this.eyes.sockets[eye].includes(sx))color=injury.hp===0?0xff39343d:0xff46409f;
+                /* Olho ferido é olho ABAIXO DO PRÓPRIO MÁXIMO, e não abaixo de 100.
+                   O vigor de SUBSTÂNCIA encolhe o que cada região aguenta — um
+                   personagem comum anda com o olho em 80/80, inteiro —, e comparar
+                   com 100 pintava o olho de cego em todo mundo: de longe, o
+                   personagem parecia estar de olhos fechados o tempo todo. */
+                const cheio=injury&&injury.maxHp>0?injury.maxHp:100;
+                if(injury && injury.hp<cheio && sy===this.eyes.row && this.eyes.sockets[eye].includes(sx))color=injury.hp<=0?0xff39343d:0xff46409f;
               }
             }
             if(injury && (injury.bruise>0 || injury.cut>0)) {

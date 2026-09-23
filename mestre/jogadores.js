@@ -14,6 +14,19 @@
   const start = performance.now();
   let hasFrame = false, lastFrameAt = -1e9, overlay = {}, lastCurtain = null, dirty = true;
   let hot = [], interfaceOpen = false, wantsKeys = false, lastMove = 0, pointer = null;
+  let tacticalView=null,tacticalSerial=0;
+  const tacticalHud=rootlessHUD();
+  function rootlessHUD(){return new TacticalHUD(canvas,tacticalIntent);}
+  function tacticalIntent(intent){
+    if(!tacticalView)return;
+    if(intent.type==='camera'){cameraInput(intent);return;}
+    if(intent.type==='select'){link.input({kind:'tacticalSelect',intent,epoch:tacticalView.state.epoch,id:`select-${Date.now()}-${++tacticalSerial}`});return;}
+    const s=tacticalView.state,sel=tacticalView.selection,actor=intent.type==='reaction'?s.pending?.reaction:s.current;
+    let cmd=intent;if(intent.type==='confirm')cmd={type:'attack',action:sel.action,target:sel.target,region:sel.region};if(intent.type==='self')cmd={type:'attack',action:intent.action};
+    link.input({kind:'tacticalCommand',command:{...cmd,id:`player-${Date.now()}-${++tacticalSerial}`,epoch:s.epoch,actor}});
+  }
+  function cameraInput(intent){if(tacticalView)link.input({kind:'tacticalCamera',intent,epoch:tacticalView.state.epoch,id:`camera-${Date.now()}-${++tacticalSerial}`});}
+  let cameraDrag=null;
   const fade = {curtain: {value: 0, target: 0, speed: 1 / .45}, handout: {value: 0, target: 0, speed: 1 / .3, doc: null}};
   const store = {
     get(key, fallback) { try { const v = localStorage.getItem(key); return v === null ? fallback : v; } catch { return fallback; } },
@@ -23,6 +36,8 @@
 
   const link = new PlayerLink({
     onFrame(msg) {
+      const changed=!!tacticalView!==!!msg.tactical;tacticalView=msg.tactical||null;
+      if(changed)fit();
       frameCtx.putImageData(new ImageData(new Uint8ClampedArray(msg.pixels), msg.width, msg.height), 0, 0);
       hasFrame = true; lastFrameAt = performance.now();
       hot = Array.isArray(msg.hot) ? msg.hot : []; interfaceOpen = !!msg.open; wantsKeys = !!msg.kb;
@@ -61,6 +76,7 @@
     const live = hasFrame && link.connected && now - lastFrameAt < 3000;
     if (live) ctx.drawImage(frame, 0, 0);
     else MapOverlays.standby(ctx, t, hasFrame ? 'Sem imagem do mestre. Mantenha o jogo aberto e visível.' : '');
+    if(live&&tacticalView)tacticalHud.draw(tacticalView,ctx);
     if (fade.handout.value > 0) MapOverlays.handout(ctx, t, fade.handout.doc, fade.handout.value);
     if (fade.curtain.value > 0) MapOverlays.curtain(ctx, t, overlay.curtain || lastCurtain || {}, fade.curtain.value);
     const label = live ? 'ao vivo' : link.connected ? 'conectada · sem imagem' : 'aguardando o mestre';
@@ -96,22 +112,34 @@
   }
   canvas.addEventListener('pointermove', e => {
     pointer = program(e);
+    if(tacticalView&&cameraDrag?.id===e.pointerId){cameraInput({mode:'pan',delta:cameraDrag.x-pointer[0]});cameraDrag.x=pointer[0];canvas.style.cursor='grabbing';return;}
+    if(tacticalView){canvas.style.cursor=tacticalHud.pointer(...pointer)?'pointer':'';return;}
     canvas.style.cursor = cursorAt(pointer[0], pointer[1]);
     const now = performance.now();
     if (now - lastMove > 30 && (hot.length || interfaceOpen)) { lastMove = now; link.input({kind: 'move', x: pointer[0], y: pointer[1], down: (e.buttons & 1) === 1}); }
   });
-  canvas.addEventListener('pointerleave', () => { pointer = null; if (hot.length || interfaceOpen) link.input({kind: 'move', x: -1, y: -1}); });
+  canvas.addEventListener('pointerleave', () => { pointer = null;tacticalHud.hover=null; if (hot.length || interfaceOpen) link.input({kind: 'move', x: -1, y: -1}); });
   canvas.addEventListener('pointerdown', e => {
-    if (e.button !== 0) return;
     const [x, y] = program(e);
+    if(tacticalView&&(overlay.curtain||overlay.handout||!link.connected))return;
+    if(tacticalView&&e.button===0&&!e.shiftKey&&tacticalHud.click(x,y)){e.preventDefault();return;}
+    if(tacticalView&&tacticalHud.hitAt(x,y))return;
+    if(tacticalView&&(e.button===1||e.button===2||e.button===0&&e.shiftKey)){e.preventDefault();cameraDrag={id:e.pointerId,x};canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';return;}
+    if (e.button !== 0) return;
+    if(tacticalView){e.preventDefault();link.input({kind:'tacticalScene',x,y,epoch:tacticalView.state.epoch,id:`scene-${Date.now()}-${++tacticalSerial}`});return;}
     if (!hotAt(x, y) && !interfaceOpen) return;
     e.preventDefault();
     link.input({kind: 'move', x, y}); link.input({kind: 'down', x, y});
   });
   canvas.addEventListener('pointerup', e => { if (e.button === 0 && (hot.length || interfaceOpen)) { const [x, y] = program(e); link.input({kind: 'up', x, y}); } });
-  canvas.addEventListener('wheel', e => { if (!interfaceOpen) return; e.preventDefault(); link.input({kind: 'wheel', delta: Math.sign(e.deltaY)}); }, {passive: false});
-  canvas.addEventListener('dblclick', e => { const [x, y] = program(e); if (!interfaceOpen && !hotAt(x, y)) toggleFullscreen(); });
+  for(const type of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(type,e=>{if(cameraDrag?.id!==e.pointerId)return;cameraDrag=null;canvas.style.cursor='';if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);});
+  canvas.addEventListener('contextmenu',e=>{if(tacticalView)e.preventDefault();});
+  canvas.addEventListener('wheel', e => {if(tacticalView&&!e.ctrlKey){e.preventDefault();const unit=e.deltaMode===1?16:e.deltaMode===2?270:1;cameraInput({mode:'pan',delta:(e.deltaX||e.deltaY)*unit*.5});return;} if (!interfaceOpen) return; e.preventDefault(); link.input({kind: 'wheel', delta: Math.sign(e.deltaY)}); }, {passive: false});
+  canvas.addEventListener('dblclick', e => { const [x, y] = program(e); if (!tacticalView&&!interfaceOpen && !hotAt(x, y)) toggleFullscreen(); });
   addEventListener('keydown', e => {
+    if(tacticalView&&(overlay.curtain||overlay.handout||!link.connected))return;
+    if(tacticalView&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&['Enter','Escape'].includes(e.code)){e.preventDefault();tacticalIntent(e.code==='Enter'?{type:'confirm'}:{type:'select',anatomy:false});return;}
+    if(tacticalView&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&['KeyA','KeyD','ArrowLeft','ArrowRight','KeyC'].includes(e.code)){e.preventDefault();cameraInput(e.code==='KeyC'?{mode:'follow'}:{mode:'pan',delta:['KeyA','ArrowLeft'].includes(e.code)?-48:48});return;}
     if ((wantsKeys || (interfaceOpen && e.key === 'Escape')) && !e.ctrlKey && !e.metaKey && !e.altKey) {
       e.preventDefault();
       link.input({kind: 'key', key: e.key, code: e.code, shift: e.shiftKey});
@@ -127,5 +155,5 @@
     link.input({kind: 'keyup', key: e.key, code: e.code});
   });
   document.addEventListener('fullscreenchange', () => { fit(); link.say('ping'); });
-  window.playersView = {get state() { return {hasFrame, connected: link.connected, curtain: fade.curtain.value, handout: fade.handout.value, overlay, hot: hot.length, interfaceOpen, wantsKeys}; }};
+  window.playersView = {get tactical(){return tacticalView;},get hud(){return tacticalHud;},get state() { return {hasFrame, connected: link.connected, curtain: fade.curtain.value, handout: fade.handout.value, overlay, hot: hot.length, interfaceOpen, wantsKeys}; }};
 })();

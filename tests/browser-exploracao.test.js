@@ -27,7 +27,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
     await P(()=>localStorage.clear());await page.reload();await page.waitForFunction(()=>window.demo?.state.time>.3);
     await page.keyboard.press('m');await wait(200);
     await page.locator('#gmTab-montar').click();await wait(300);
-    assert.equal(await page.locator('#gmModelos .gm-modelo').count(),18,'eighteen generic scenes in the library');
+    assert.equal(await page.locator('#gmModelos .gm-modelo').count(),25,'twenty-five generic scenes in the library: eighteen from around town plus the seven roadside stretches');
     assert.equal(await page.locator('#gmConjuntos .gm-conjunto').count(),5,'five ready-made sets');
     await page.waitForFunction(()=>[...document.querySelectorAll('#gmModelos canvas')].slice(0,3).every(c=>!c.dataset.carregando),null,{timeout:20000});
 
@@ -142,7 +142,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
     assert.equal(await P(()=>demo.exploracao.prefs.pedidos),false,'and so do the preferences');
     assert(await P(()=>demo.exploracao.eventos().some(e=>e.texto==='Alguém bate três vezes numa porta.')),'and the event');
     assert.deepEqual(errors,[],'no page errors');
-    console.log('PASS: library of 18 generic scenes and 5 sets; create from a card into preview and editor; drag a door on the board, recolour it, add a vending machine that sells, change the floor and undo; a building of nine linked scenes on the connection map; a door with no destination tried by the players becomes a request with the door\'s name first, one click creates the room, links both ways and crosses; a code lock refuses a wrong code and crosses with the right one; the elevator panel goes to another floor; a master event shows its caption; requests turned off keep the door shut; scenes, locks, preferences and events survive a reload');
+    console.log('PASS: library of 25 generic scenes and 5 sets; create from a card into preview and editor; drag a door on the board, recolour it, add a vending machine that sells, change the floor and undo; a building of nine linked scenes on the connection map; a door with no destination tried by the players becomes a request with the door\'s name first, one click creates the room, links both ways and crosses; a code lock refuses a wrong code and crosses with the right one; the elevator panel goes to another floor; a master event shows its caption; requests turned off keep the door shut; scenes, locks, preferences and events survive a reload');
   }catch(error){console.error(error);if(errors.length)console.error('page errors:',errors.slice(0,5));process.exitCode=1;}
   finally{await browser.close();}
 })();

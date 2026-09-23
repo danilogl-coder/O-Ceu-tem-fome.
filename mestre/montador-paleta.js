@@ -255,7 +255,7 @@
 
   /* ------------------------------------------------------------ pisos
      Em coordenadas do mundo: X ao longo da sala, d = profundidade. */
-  const PISOS = [['tabuas', 'Tábuas'], ['taco', 'Taco em espinha'], ['ceramica', 'Cerâmica'], ['xadrez', 'Xadrez'], ['carpete', 'Carpete'], ['concreto', 'Concreto'], ['linoleo', 'Vinílico'], ['asfalto', 'Asfalto'], ['calcada', 'Calçada'], ['portuguesa', 'Calçada portuguesa'], ['epoxi', 'Epóxi'], ['podre', 'Tábuas podres']];
+  const PISOS = [['tabuas', 'Tábuas'], ['taco', 'Taco em espinha'], ['ceramica', 'Cerâmica'], ['xadrez', 'Xadrez'], ['carpete', 'Carpete'], ['concreto', 'Concreto'], ['linoleo', 'Vinílico'], ['asfalto', 'Asfalto'], ['calcada', 'Calçada'], ['portuguesa', 'Calçada portuguesa'], ['epoxi', 'Epóxi'], ['podre', 'Tábuas podres'], ['cascalho', 'Cascalho / terra batida']];
   /* Rejunte que cai exatamente num texel: `a` é a coordenada, `t` o tamanho do
      texel nessa direção; verdadeiro no primeiro texel de cada peça. Assim as
      linhas não viram tracejado na perspectiva. */
@@ -320,6 +320,19 @@
         out.r = 'asfalto'; out.l = 3 + (n > .64 ? 1 : 0) - (n < .28 ? 1 : 0);
         const h = hash2(Math.floor(X / 3), Math.floor(d / 2), seed);
         if (h > .975) out.l += 1; else if (h < .02) out.l -= 1;
+        return;
+      }
+      case 'cascalho': {
+        /* Acostamento: terra batida com pedrisco por cima. Sem junta nenhuma —
+           o que dá a textura é a mancha larga (fbm) somada ao grão do pedrisco,
+           e uma pedra maior de vez em quando com a luz de cima à direita. */
+        const n = fbm(X / 46, d / 30, seed + 2);
+        out.r = cor; out.l = 2 + (n > .6 ? 1 : 0) - (n < .3 ? 1 : 0);
+        const g = hash2(Math.floor(X / 3), Math.floor(d / 2), seed + 5);
+        if (g > .86) out.l += 1; else if (g < .14) out.l -= 1;
+        const pedra = hash2(Math.floor(X / 7), Math.floor(d / 5), seed + 11);
+        if (pedra > .955) { out.r = 'calcada'; out.l = 4; }
+        else if (pedra < .03) { out.r = 'calcada'; out.l = 1; }
         return;
       }
       case 'calcada': {

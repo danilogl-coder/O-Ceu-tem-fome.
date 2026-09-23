@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ficha · O Céu tem Fome</title>
+  <link rel="stylesheet" href="mestre/ficha-arvore-dom.css?v=pericias1">
+  <style>
+    :root{color-scheme:dark}
+    html,body{margin:0;height:100%;background:#07040c;overflow:hidden;
+      font:12px Consolas,'Courier New',monospace;color:#f3b4e8}
+    body{display:grid;place-items:center}
+    #ficha{display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}
+    /* A barra some sozinha: o que se quer ver é a ficha, não os botões. */
+    .barra{position:fixed;top:8px;right:8px;display:flex;gap:6px;align-items:center;
+      padding:5px 8px;background:#140619ee;border:2px solid #9c3e88;box-shadow:4px 4px #09020d;
+      transition:opacity .4s;z-index:2;white-space:nowrap}
+    .barra[data-ocioso=true]{opacity:0;pointer-events:none}
+    .barra button{font:inherit;color:#f3b4e8;background:#230c28;border:2px solid #743064;
+      border-radius:0;padding:4px 8px;cursor:pointer}
+    .barra button:hover,.barra button:focus-visible{border-color:#ffd18c;outline:none}
+    #estado{color:#b581b3}
+    #estado[data-on=true]{color:#a7d98e}
+    #erro{position:fixed;inset:auto 12px 12px 12px;padding:10px;background:#4f0a11;
+      border:2px solid #e8553d;color:#ffd6c8}
+    #erro[hidden]{display:none}
+  </style>
+</head>
+<body>
+  <canvas id="ficha" width="960" height="540" aria-label="Ficha de personagem. Clique nos campos para escrever e nas cartas para rolar o dado."></canvas>
+  <div class="barra" id="barra">
+    <span id="estado">ficha do jogador</span>
+    <button id="cheia" type="button">Tela cheia</button>
+  </div>
+  <p id="erro" role="alert" hidden></p>
+
+  <script src="mestre/pixel-kit.js?v=ficha3"></script>
+  <script src="mestre/pistas-ui.js?v=ficha3"></script>
+  <script src="ficha-arvore-dados.js?v=pericias1"></script>
+  <script src="ficha-grafo.js?v=pericias1"></script>
+  <script src="ficha-planta.js?v=pericias1"></script>
+  <script src="ficha.js?v=pericias1"></script>
+  <script src="mestre/ficha-arte.js?v=ficha3"></script>
+  <script src="mestre/ficha-dado.js?v=ficha3"></script>
+  <script src="mestre/ficha-arvore.js?v=ficha3"></script>
+  <script src="mestre/ficha-pericias-kit.js?v=pericias1"></script>
+  <script src="mestre/ficha-pericias-arte.js?v=pericias1"></script>
+  <script src="mestre/ficha-icones.js?v=pericias1"></script>
+  <script src="mestre/ficha-arvore-dom.js?v=pericias1"></script>
+  <script src="mestre/ficha-ui.js?v=pericias1"></script>
+  <script src="mestre/ficha-pagina.js?v=ficha3"></script>
+</body>
+</html>

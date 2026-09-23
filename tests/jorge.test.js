@@ -23,7 +23,8 @@ const chroma=(r,g,b)=>Math.max(r,g,b)-Math.min(r,g,b);
 
 // The other scenes are still there, untouched, and the new one comes after them.
 assert.deepEqual(SceneLibrary.list().map(s=>s.id),['escritorio','campo','jorge'],'Jorge is added after the existing scenes');
-assert.equal(SceneLibrary.get('escritorio').clues.length,11,'the office keeps its own clues');
+assert.equal(SceneLibrary.get('escritorio').clues.filter(c=>c.type!=='passagem').length,11,'the office keeps its own clues');
+assert.deepEqual(SceneLibrary.get('escritorio').clues.filter(c=>c.type==='passagem').map(c=>c.data.destino),['pref_corredor','pref_arquivo'],'and gained the two ways out');
 const jorge=SceneLibrary.get('jorge'),room=jorge.room;
 
 // Camera: a closed room the game can start in.
@@ -70,7 +71,7 @@ for(const p of jorge.presets)assert(/^\d\d:\d\d$/.test(p.time),`preset ${p.id} h
 assert.equal(jorge.defaultPreset,'madrugada');
 for(const clue of jorge.clues){
   const a=clue.anchor;
-  assert(ClueTypes.get(clue.type),`clue ${clue.id} has a registered type`);
+  assert(clue.type==='passagem'||ClueTypes.get(clue.type),`clue ${clue.id} has a registered type`);   // 'passagem' vem de exploracao.js
   if(a.layer==='wall')assert(a.u>=0&&a.u+a.w<=room.wallCols&&a.v>=0&&a.v+a.h<=room.wallRows,`clue ${clue.id} on the wall`);
   if(a.layer==='front'){const piece=jorge.front.find(p=>p.id===a.piece);assert(piece&&a.x>=0&&a.y>=0&&a.x+a.w<=piece.w&&a.y+a.h<=piece.h,`clue ${clue.id} on its front piece`);}
   if(clue.requires)assert(jorge.props.some(p=>p.id===clue.requires),`clue ${clue.id} waits for a real prop`);
@@ -165,6 +166,7 @@ const flush=async()=>{for(let i=0;i<60&&stage.pending;i++)await new Promise(r=>s
   const act=(entry,id,data=null)=>entry.type.action?.(id,entry.state,entry.clue,sys,{x:240,y:140,data,source:'mestre'});
   sys.resetFound();
   for(const clue of sys.clues()){
+    if(clue.type==='passagem')continue;            // a saída para o corredor é da exploração, não uma interface
     sys.stack=[];
     assert(sys.open(clue),`opens ${clue.id}`);
     const e=sys.top;frames(e);
@@ -235,6 +237,7 @@ const flush=async()=>{for(let i=0;i<60&&stage.pending;i++)await new Promise(r=>s
   sys.resetFound();sys.toasts=[];
   for(const clue of sys.clues()){
     sys.stack=[];
+    if(clue.type==='passagem')continue;
     assert(sys.open(clue),`opens edited ${clue.id}`);
     const e=sys.top;frames(e);
     if(clue.type==='edicoes'){act(e,'livro','nova');frames(e);act(e,'aba',88);act(e,'comparar');frames(e,30);assert(Caso.has(sys,'frase'),'the renumbered sentence page still finds the change');assert.equal(e.state.caption,null,'a blank post-it is not drawn');act(e,'aba',150);frames(e,30);assert(Caso.has(sys,'paragrafo'));}

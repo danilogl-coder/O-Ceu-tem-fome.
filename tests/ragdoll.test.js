@@ -76,3 +76,39 @@ assert(!recovery.recovery && !recovery.readyToStand,'re-grab cancels recovery');
 for(let i=0;i<180;i++)recovery.step(STEP);
 assert(!recovery.recovery,'never get up while held');
 console.log('PASS: automatic grounded recovery, fixed landing position, floor support and re-grab interruption');
+
+/* ============================================ O PEDAÇO QUE SAIU NÃO MUDA DE DONO
+   Um membro decepado era desenhado com o RIG DO JOGO — o corpo de quem o
+   mestre está controlando. Bastava assumir outra pessoa para que o braço
+   decepado de alguém trocasse de pele, de roupa e de feridas, porque era
+   redesenhado com a tinta de quem entrou no corpo. Um pedaço que já saiu do
+   corpo não tem mais dono, e não pode mudar de cara. */
+{
+  const {DetachedLimbs}=require('../ragdoll.js');
+  const corpo=new Skeleton2D(CHARACTER_ASSET);
+  corpo.restyle({hair:'#8b2f2f',skin:'#e9b48c'});
+  const fisica=new CharacterRagdoll(corpo,{autoRecover:false});
+  fisica.start({ground:corpo.baseline+1});
+  const pedacos=new DetachedLimbs(corpo);
+  const corte=fisica.sever('arm_near');
+  assert(corte,'o braço se separa');
+  const feridas=new Map([['arm_near',{hp:0,missing:true,cut:100,bleed:0}]]);
+  pedacos.add(fisica,corte.names,{x:100,y:20},1,
+    {dye:{...corpo.dye},outfit:new Set(['torso.camisa']),wounds:feridas});
+  const grupo=pedacos.groups[0];
+  assert(grupo.rig && grupo.rig!==corpo,'o pedaço ganha o esqueleto dele');
+  assert.equal(grupo.rig.dye.hair,'#8b2f2f','tingido com a tinta de quem o perdeu');
+  assert.deepEqual([...grupo.outfit],['torso.camisa'],'com a roupa daquele instante');
+  assert.equal(grupo.feridas.get('arm_near').cut,100,'e com as feridas daquele instante');
+  assert(grupo.feridas!==feridas,'em cópia: mexer no corpo depois não mexe no pedaço');
+
+  /* O MESTRE ASSUME OUTRA PESSOA: o corpo do jogo é retingido e trocado de
+     roupa. O pedaço que já estava no chão não pode sentir nada disso. */
+  const antes=grupo.rig.colors.slice();
+  corpo.restyle({hair:'#1133ff',skin:'#442200'});
+  feridas.get('arm_near').cut=0;
+  assert.deepEqual([...grupo.rig.colors],[...antes],'o pedaço continua com as cores de quem o perdeu');
+  assert.equal(grupo.feridas.get('arm_near').cut,100,'e com a ferida com que saiu');
+  assert.notDeepEqual([...corpo.colors],[...grupo.rig.colors],'enquanto o corpo do jogo mudou de fato');
+  console.log('PASS: o membro decepado guarda a aparência de quem o perdeu');
+}

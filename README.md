@@ -1,10 +1,83 @@
 # O Céu tem Fome — RPG de mesa
 
-Abra **index.html** diretamente no navegador. Não há instalação, dependências JavaScript, build ou conexão externa. É a mesa digital do RPG: o mestre monta os cenários com luz, clima e som, esconde pistas na própria cena e cuida da personagem (saúde, bolsa e roupas), e os jogadores acompanham numa tela só deles (`jogadores.html`).
+Abra **index.html** diretamente no navegador. Não há instalação, dependências JavaScript, build ou conexão externa. É a mesa digital do RPG: o mestre monta os cenários com luz, clima e som, esconde pistas na própria cena e cuida do personagem (saúde, bolsa e roupas), e os jogadores acompanham numa tela só deles (`jogadores.html`).
 
-A página abre com o nome do RPG, a cena e um cartão **Na mesa** com os atalhos da personagem e do mestre. A personagem nasceu como protótipo de anatomia e movimento; as ferramentas daquela fase (inspeção do rig, ficha do sprite, links do cabelo) saíram da página, e o histórico continua abaixo.
+### Combate tático na própria cena
+
+O botão **MODO TÁTICO**, acima da cena, abre a preparação. A interface da luta é desenhada diretamente no render de 480×270: retratos e iniciativa no alto, recursos individuais e dez ícones de golpes na base. **MIRA** abre a silhueta anatômica sobre a cena, com seleção ampliada dos olhos; **Esc** fecha a mira. Escolha **Iniciar batalha** no próprio HUD. **MESTRE** abre os controles de pausa, turno, desfazer e encerramento; **AJUSTAR MESA** abre o editor avançado de participantes, lados, iniciativas e terreno. A grade usa o piso em perspectiva; o tamanho inicial é 48 unidades. O pincel permite bloquear, liberar, marcar terreno difícil ou terra e reposicionar o alvo selecionado. Durante os turnos, pause para editar o terreno. NPCs têm controle do mestre e IA desligada; o temporizador também começa desligado.
+
+- **Movimento:** 6 + MÁQUINA por turno, ajustado pelos ferimentos. Clique no destino para revisar o caminho, custo e oportunidades; clique novamente para confirmar. Passos diagonais custam 2, ortogonais 1 e terreno difícil dobra o custo. Ocupantes e quinas bloqueadas impedem passagem.
+- **Câmera:** acompanha o personagem do turno, inclusive durante o deslocamento. Para olhar o cenário livremente, use **A/D**, **←/→**, a roda do mouse ou arraste com o botão direito, central ou **Shift + botão esquerdo**. **C** ou **FOCAR [C]** retoma o acompanhamento. Um novo turno volta a enquadrar seu participante. Os mesmos controles estão disponíveis na janela dos jogadores; as duas janelas compartilham o enquadramento da mesa. Olhar o cenário não consome PA nem movimento.
+- **Ações:** cada personagem recebe seus próprios 4 + SENSO PA por turno, conforme a ficha dele. PA, movimento e reação são individuais; o HUD distingue os recursos de quem está no **TURNO** e os do **ALVO**. Selecione o alvo na cena ou na fila, escolha um dos dez golpes e a região na silhueta, confira a chance e confirme. Selecionar alguém escolhe o alvo; quem ataca continua sendo o participante do turno. Repetir o mesmo golpe aumenta a dificuldade em 2. Levantar, limpar olhos, desengajar e defender custam 2 PA.
+- **Reações:** sair de uma célula adjacente a um hostil interrompe o caminho antes do passo. O controlador escolhe atacar ou deixar passar. Atacar consome a reação da rodada; recusar a conserva. Desengajar evita oportunidades até encerrar o turno.
+- **Dado:** ataques, oportunidades e testes de Fortitude mostram o mesmo d20 animado da ficha acima do personagem que rolou. O dado apresenta o resultado já resolvido, sem refazer rolagens nem aplicar dano novamente. Pausa e câmera também afetam a apresentação. Movimento e ações auxiliares não exigem d20.
+- **Mestre:** pode pular turnos, incluir ou retirar participantes, editar iniciativa, habilitar IA individualmente, corrigir recursos, condições, posições e resultados. Quem entra durante a luta recebe turno somente na próxima rodada. **Desfazer ação** restaura os recursos, ferimentos, posições e decisões envolvidos e pausa o encontro.
+- **Janela dos jogadores:** recebe a cena e um HUD próprio. Pode agir pelo participante com controle Jogador no turno ou reação correspondente. A janela do mestre valida cada comando; NPCs ocultos são filtrados do estado enviado.
+- **Tempo e sessão:** cada rodada completa entrega 6 segundos aos sistemas habilitados. O botão de pausa do relógio de saúde continua valendo. Pensar, animar ou escolher reações não avança a saúde. O temporizador opcional começa em 60 segundos e pausa durante ações, reações e desconexão. Reabrir uma sessão restaura a batalha pausada, sem repetir rolagens ou dano.
+
+Na exploração, **WASD/setas** caminham também em profundidade, **Espaço** pula, **E** interage e **J** aciona a arma livre. Caminhar em profundidade reaproveita a animação lateral. Encerrar a batalha conserva posições e ferimentos; quem terminou caído permanece caído e pode usar **V** para levantar se tiver condições físicas.
+
+As regras estão em `mestre/tatico-regras.js` (`TACTICAL_RULES`, `TACTICAL_ACTIONS`); terreno, animações, HUD, integração e IA ficam em arquivos `tatico-*` separados. A batalha usa a saúde regional existente. Os valores de dano e duração são iniciais de teste: as simulações de IA ajudam a detectar travamentos, mas ainda é necessário testar o equilíbrio em mesa, especialmente atributos altos e condições. Cenas sem metadados de obstáculos exigem revisão do mestre na preparação; o sistema não deduz colisões pela pintura.
+
+Verificações: `node tests/tatico.test.js`, `node tests/tatico-motion.test.js` e `node tests/tatico-balance.test.js`. Os testes `browser-tatico*.test.js` usam Playwright com Chrome instalado; `PLAYWRIGHT_MODULE` pode indicar o módulo instalado fora do projeto. `browser-tatico-hud.test.js` verifica os cliques reais no render das duas janelas, mira, reação, pausa e movimento projetado; `browser-tatico-dado.test.js` verifica resultados únicos e integração com saúde. Capturas ficam em `pixel_art/generated/tatico/`. A direção de arte e suas referências estão em [mestre/tatico-arte.md](mestre/tatico-arte.md).
+
+A página abre com o nome do RPG, a cena e um cartão **Na mesa** com os atalhos do personagem e do mestre. O personagem nasceu como protótipo de anatomia e movimento; as ferramentas daquela fase (inspeção do rig, ficha do sprite, links do cabelo) saíram da página, e o histórico continua abaixo.
 
 A base atual refina **a anatomia, a pose e o cabelo**, preservando os arquivos do rosto. O cabelo foi redesenhado a partir da referência e é simulado em tempo real. Roupa e botas foram removidas da pintura do corpo e exportadas como camadas opcionais. O PNG original tem 26×56 pixels; o arquivo entregue tem uma tela transparente de 64×96, com o desenho em `(19,20)`. Não houve ampliação, redução ou interpolação da fonte. Os previews usam apenas nearest neighbor. As primeiras interpretações estão guardadas somente como histórico.
+
+### O elenco vivo e as ferramentas do mestre
+
+Cada ficha da mesa é uma pessoa com corpo — e agora esse corpo **corre sozinho**, esteja quem estiver sendo controlado. Até aqui, sair do controle de alguém era congelá-lo no tempo: a fome parava, a ferida parava de infeccionar, o sangue parava de escorrer. Agora só o desenho é que é barato; a simulação é a mesma de todo mundo.
+
+- **Os sistemas, ligados por padrão.** Saúde (ferimentos, infecção, sangue, morte), fome e sede, e física. A saúde de todos corre no **mesmo relógio do mestre** — de propósito: *SAÚDE PAUSADA* tem de parar a mesa inteira, e não só quem está no corpo do jogo. A fome corre com as **regras da mesa**; só as duas barras e as condições são de cada pessoa.
+- **Desligar o que não interessa.** Cada um dos três liga e desliga para a mesa inteira (seção **Ferramentas**) ou para uma pessoa de cada vez (os três selos na linha dela, na seção **Elenco**). O selo de uma pessoa tem três estados: ligado, desligado e *segue a mesa* — para o mestre poder mudar o padrão depois sem desfazer o que decidiu caso a caso.
+- **O cadáver cai.** Quem morre fora do controle desaba onde está, em ragdoll, e a pose fica guardada: trocar de cena, assumir outra pessoa ou recarregar a página não levanta ninguém do chão. Quem sai do corpo do jogo caído — porque morreu, desmaiou ou o mestre o derrubou — continua caído na mesma pose e no mesmo lugar.
+- **O ragdoll é de todos.** Arraste qualquer pessoa da cena e você pega o corpo dela com física, no mesmo gesto do personagem controlado. Um corpo parado no chão **dorme** e passa a custar nada até alguém encostar nele.
+- **Arrastar não machuca.** O dano do arremesso nasce **desligado**: encenar não pode abrir uma fratura sem querer. Ligue em *Ferramentas* quando a queda for do jogo, e não sua.
+- **O pedaço decepado não muda de dono.** Um membro separado passa a ter esqueleto próprio, tingido uma vez com a pele, a roupa e as feridas de quem o perdeu. Antes ele era redesenhado com o rig do jogo, e bastava assumir outra pessoa para o braço de alguém trocar de cor.
+
+#### A mão, a seleção e o desfazer
+
+O gesto do mouse na cena é o de qualquer editor, e só o primeiro movimento decide o que ele é:
+
+| Gesto | O que faz |
+| --- | --- |
+| Clique numa pessoa | escolhe ela (e só ela) |
+| **Shift**+clique | soma e tira da seleção |
+| **Shift**+arrastar no vazio | a caixa de seleção; pega quem ela encostar |
+| Arrastar quem **não** está selecionado | pega o corpo dele com física (ou desliza, com a ferramenta *Posicionar*) |
+| Arrastar quem **está** selecionado | leva o grupo inteiro, guardando as distâncias |
+| **Alt**+arrastar | duplica a pessoa e já sai arrastando a cópia |
+| Botão direito | o menu dela, com tudo isto para uma pessoa só |
+
+Teclas: <kbd>Q</kbd> derrubar · <kbd>V</kbd> levantar · <kbd>X</kbd> congelar no lugar · <kbd>O</kbd> ocultar dos jogadores · <kbd>Del</kbd> tirar de cena · <kbd>Esc</kbd> limpar a seleção · <kbd>Ctrl</kbd>+<kbd>A</kbd> escolher todos em cena · <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicar · <kbd>Ctrl</kbd>+<kbd>←</kbd>/<kbd>→</kbd> empurrar (com <kbd>Shift</kbd>, a passo largo) · <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfazer.
+
+A seção **Ferramentas** do mapa do mestre reúne os três sistemas, a mão do mouse, o dano do arremesso e as ações em massa sobre a seleção — derrubar, levantar, congelar, travar, esconder, virar, trazer, duplicar, curar por inteiro, entrar e sair de cena, espalhar em fila, ir até e tirar de cena. **Travar** faz o clique atravessar a pessoa, para pegar quem está atrás. **Esconder** tira a pessoa do quadro dos jogadores sem tirá-la da cena: ela continua agindo, e o mestre a encontra por um contorno tracejado que só ele vê. **Desfazer** guarda os últimos 24 gestos do mestre — mover, tirar de cena, derrubar, duplicar, excluir — e devolve inclusive a ficha apagada.
+
+#### SUBSTÂNCIA no osso e na cura
+
+O vigor da ficha já dizia quanto cada região de carne aguenta. Agora ele faz mais duas coisas, pelo mesmo caminho (`health.definirVigor`):
+
+- **O osso tem vida, e o vigor a aumenta.** Cada região guarda `boneHp` e `maxBoneHp`; um osso com o dobro de vida resiste ao dobro de pancada antes de fraturar, e a consolidação fecha no teto **dele** — comparar com um 100 fixo deixava o osso grande fraturado para sempre.
+- **A regeneração natural é mais rápida.** O ritmo da cura passa a ter três fatores: a taxa de sempre, o metabolismo (fome e sede) e o vigor. A cura também sobe até o teto do vigor, e não até um 100 fixo. Em SBT 1 — o personagem padrão — tudo dá exatamente o que sempre deu.
+
+Enquanto um corpo cai, o desenho fica até 1/30 s atrás da física — é o que faz quatro corpos caírem juntos sem derrubar o quadro. O quadro pronto carrega a **moldura dele** junto: posicioná-lo pelo recorte recém-medido fazia `putImageData` recusar o dado nos quadros em que os tamanhos não batiam, e o personagem sumia da tela por um quadro. Era isso que fazia o sprite piscar durante o arrasto, num quarto dos quadros.
+
+Validação: `node tests/elenco.test.js` (bastidores, ligar e desligar, morte fora do controle, cadáver que viaja na troca, pegar o corpo com o mouse, dano opcional, seleção, grupo, desfazer e sessão), `node tests/health.test.js` (o vigor no osso e na regeneração), `node tests/ragdoll.test.js` (o pedaço decepado guarda a aparência de quem o perdeu) e `node tests/browser-ferramentas.test.js` (tudo isso no Chrome, com capturas em `pixel_art/generated/ferramentas/`).
+
+### IA do trânsito da estrada
+
+O carro do jogador tem prioridade: os NPCs mantêm maior distância, antecipam movimentos manuais e cancelam mudanças que fechariam sua passagem. Quando ele chega rápido por trás, procuram uma faixa livre; em risco de colisão, podem ceder pelo acostamento da própria mão, retornando quando houver espaço seguro. Na aproximação frontal, freiam e procuram uma saída livre. A prioridade muda as decisões, preservando as dimensões reais de contato e os danos. `node tests/transito-prioridade.test.js` verifica essas situações, inclusive saídas ocupadas e retorno após a passagem.
+
+Os motoristas antecipam filas olhando além do líder imediato e comparam o fluxo da faixa vizinha antes de ultrapassar. Quem está sendo ultrapassado mantém o ritmo, e quem recebe um pedido de retorno pode reduzir suavemente para abrir espaço, com limite de duração. A IA acompanha o progresso da ultrapassagem e volta à direita se perder a vantagem ou se o líder mudar para a mesma faixa. O piloto automático compartilha suas intenções com o trânsito; o comando manual continua livre. Essas situações são verificadas por `node tests/transito-cooperacao.test.js`.
+
+O trânsito usa `mestre/transito-estrada.js`, independente do desenho e sem dependências externas. Cada veículo percebe o líder mais próximo no próprio sentido, pontos cegos e aproximações por trás; freia até parar, acompanha filas e retoma gradualmente. Chuva, neblina, curvas e danos reduzem o ritmo. Os perfis cauteloso, comum e apressado são sorteados uma única vez (25%, 60%, 15%) com semente reproduzível.
+
+Mudanças de faixa têm sinalização prévia e reserva do espaço previsto. Na mão dupla, a ultrapassagem depende da visibilidade, do tráfego contrário e do espaço para retornar; termina pela posição relativa ao veículo ultrapassado. Curvas fortes, cristas e zonas de cruzamento impedem iniciá-la. O acostamento serve a emergências. Veículos incapacitados permanecem como obstáculos com pisca-alerta. Colisões usam o movimento entre passos, com dano e separação longitudinal, sem empurrar preventivamente um carro para outra faixa.
+
+A simulação avança a 60 passos por segundo, com decisões normais a 10 Hz e frenagem de emergência em cada passo. O controlador conserva `criar/draw/relatorio` e oferece `atualizar(dt)` para simular sem desenhar. `ctl.transito[i].ia` expõe perfil, estado, motivo e manobra; `ctl.trafego` expõe percepção e distância circular. O piloto automático usa os mesmos critérios de percepção e espaço. Semáforos e novas regras de cruzamentos não fazem parte desta alteração.
+
+Validação: `node tests/transito-simulacao.test.js` (filas, retomada, dois sentidos, emenda, jogador parado, ponto cego, ultrapassagem, aborto, disputa de faixa, cortes, contato contínuo, chuva e 30/60/120 FPS) e `node tests/sinalizacao-transito.test.js` (setas de ambos os lados, alerta, freios e cache dos carros e motos). A variável opcional `TRANSITO_PREVIA` indica o caminho de uma prancha PNG para inspeção da sinalização. As regressões do minigame, acelerador, veículos, arte, pane e percurso continuam aplicáveis.
 
 ## Usar
 
@@ -15,11 +88,14 @@ A base atual refina **a anatomia, a pose e o cabelo**, preservando os arquivos d
 - Passe o mouse pela cena: os olhos acompanham o ponteiro.
 - **Guarda-roupa** (**G** ou o botão ROUPAS na cena): cabelos, chapéus, blusas, casacos, calças, saias, calçados, acessórios, tons de pele e cor dos olhos, tudo desenhado por código sobre os mesmos ossos do corpo, com cor própria, conjuntos prontos e física nas peças soltas. Detalhes em [Guarda-roupa](#guarda-roupa).
 - **Ragdoll**: segure o botão esquerdo sobre o personagem e arraste. O ponto segurado acompanha o mouse; o corpo gira com gravidade e inércia e colide com o chão. Ao soltar, ele mantém o impulso. A recuperação parte da postura física atual: de bruços, busca apoio; de costas, senta e recolhe as pernas; invertido, primeiro se desvira; agachado, firma os pés e sobe. Se já estiver em pé, faz só um ajuste de equilíbrio. Os pés ficam plantados durante a subida, e a posição da queda é preservada. Enquanto estiver no ar ou segurado, continua em ragdoll. É possível pegá-lo novamente durante a recuperação. Funciona nas duas direções e com zoom da página.
+- **Ficha da mesa** (**C**, ou o botão na lateral): cinco atributos em cartas de tarô, 28 perícias, vitalidade ligada ao corpo em barra de casulos — um casulo é um ponto —, vela de sanidade e d20 animado — e o HUD some enquanto ela está aberta. Tem **página separada** (`ficha.html`) para mandar aos jogadores. Detalhes em [Ficha da mesa](#ficha-da-mesa).
 - **Mapa do mestre** (**M**): o cenário é uma cena que o mestre troca ao vivo para os jogadores, com prévia, transições, luz, clima, objetos, efeitos, documentos e uma janela limpa para TV, projetor ou Discord. O cenário inicial é o **Escritório**, em três camadas. Detalhes em [Mapa do mestre](#mapa-do-mestre).
+- **Elenco e ferramentas do mestre**: cada ficha é uma pessoa com corpo próprio, e o corpo dela corre sozinho — saúde, fome e física — esteja você controlando-a ou não. Arraste qualquer pessoa da cena para pegar o corpo dela com física; clique para escolhê-la, **Shift**+clique para somar, **Shift**+arrastar no vazio para a caixa de seleção, **Alt**+arrastar para duplicar. Detalhes em [O elenco vivo e as ferramentas do mestre](#o-elenco-vivo-e-as-ferramentas-do-mestre).
 - **Escritório do Jorge**: terceira cena do mapa do mestre (**Shift+3**), inspirada em *Five Nights at Freddy's* sem animatrônicos — mural da investigação, edições do livro, computador, câmeras que reagem à investigação e uma impressora que liga sozinha. Detalhes em [O Escritório do Jorge](#o-escritório-do-jorge).
-- **Jogar**: A/D ou setas movem, Espaço pula, **Shift** corre e **F** derruba a personagem. A corrida entra acima de 96 px/s. Após a queda, ela se levanta onde caiu com o clipe **levantar**: apoia as mãos, sobe o peito, põe um pé à frente, agacha e fica de pé. Virar de lado inclina o corpo na direção nova por alguns quadros.
+- **Jogar**: A/D ou setas movem, Espaço pula, **Shift** corre e **F** derruba o personagem. A corrida entra acima de 96 px/s. Após a queda, o personagem se levanta onde caiu com o clipe **levantar**: apoia as mãos, sobe o peito, põe um pé à frente, agacha e fica de pé. Virar de lado inclina o corpo na direção nova por alguns quadros.
+- **O personagem não tem gênero.** Ele é uma **base** para o jogador de RPG de mesa montar o personagem dele — rosto, corpo, cabelo, roupa e cor são escolha de quem joga. Por isso os textos do jogo nunca decidem isso por ele: onde precisa de um nome, é **“o personagem”** (o termo de mesa, que serve para qualquer ficha); onde precisa de um estado, é **substantivo** (*Fome forte*, *Desidratação*, *Com ferimentos*), porque substantivo não combina com gênero nenhum; e os conjuntos do guarda-roupa têm nome de tema (*Expedição*, *Estrada*, *Batalha*), não de pessoa.
 - **Esqueleto**: mostra articulações e hierarquia.
-- **Cores**: uma fileira de amostras — cabelo, cada olho, faixas, camiseta, short, botas e manto. Cada amostra já é a cor que ela define, então a fileira também é a leitura do que ela está vestindo; escolher a cor de uma roupa veste a roupa.
+- **Cores**: uma fileira de amostras — cabelo, cada olho, faixas, camiseta, short, botas e manto. Cada amostra já é a cor que ela define, então a fileira também é a leitura do que o personagem está vestindo; escolher a cor de uma roupa veste a roupa.
 - No inspetor, escolha um osso, ajuste o ângulo e oculte peças. **Restaurar aparência** desfaz ajustes visuais, sem mudar a posição ou interromper a física.
 - A linha do tempo permite pausar e percorrer o ciclo. Há controles de toque em telas pequenas.
 
@@ -58,7 +134,7 @@ O mapa do mestre crescia como uma aba comprida, e cada recurso novo empurrava o 
 
 - **Ao vivo, sempre à vista**: a miniatura do que os jogadores veem, a cena, a luz e a hora, e os três botões de urgência — **Abrir tela dos jogadores**, **Cortina** e **↶ Anterior**.
 - **Avisos clicáveis** logo abaixo: *Pedido: Porta 101* (quando alguém tenta uma passagem sem destino), *Pistas 3/11*, *Som desligado*, *Som ligado* ou a música que está tocando, *Jogadores clicam* ou *não clicam* e, quando for o caso, **Cortina fechada ×** e **Documento na tela ×**. Um clique no aviso leva à seção certa; os avisos com **×** abrem a cortina ou recolhem o documento na hora.
-- **Blocos que recolhem**: cada título (▾) fecha o seu bloco, vários podem ficar abertos, e o painel lembra quais estavam recolhidos e qual seção estava aberta, mesmo depois de recarregar. *Como a personagem usa* e *Atalhos* começam recolhidos.
+- **Blocos que recolhem**: cada título (▾) fecha o seu bloco, vários podem ficar abertos, e o painel lembra quais estavam recolhidos e qual seção estava aberta, mesmo depois de recarregar. *Como o personagem usa* e *Atalhos* começam recolhidos.
 - **Filtro de pistas**: digitar em *Filtrar pistas* mostra só as que têm aquilo no nome, no tipo ou na nota (sem ligar para acentos). As notas do mestre aparecem em duas linhas; um clique mostra a nota inteira.
 - **Teclado**: com o foco na coluna, **↑ ↓** trocam de seção. Em tela muito baixa (celular deitado), a janela inteira rola e a coluna fica presa no topo.
 
@@ -66,11 +142,11 @@ O mapa do mestre crescia como uma aba comprida, e cada recurso novo empurrava o 
 | --- | --- |
 | **Cenas** | Biblioteca, prévia só do mestre, luz, clima, entrada, transição, letreiro e **Enviar aos jogadores** |
 | **Montar** | Biblioteca de cenas genéricas e conjuntos prontos, cenas montadas da sessão e o editor: prancheta de arrastar, objetos, inspetor, peças e sala |
-| **Luz e clima** | Iluminação e relógio, clima, objetos da cena, efeitos (tremor, relâmpago, escuridão…) e a personagem (teleporte, parede) |
+| **Luz e clima** | Iluminação e relógio, clima, objetos da cena, efeitos (tremor, relâmpago, escuridão…) e o personagem (teleporte, parede) |
 | **Som** | Som ambiente com os canais e as músicas |
 | **Pistas** | Pistas da cena (criar, abrir, editar, filtro), conclusões, o que já foi encontrado e anotações da cena |
 | **Exploração** | Pedidos de improviso, passagens de qualquer cena (destino, chegada, tranca, elevador), mapa de conexões, eventos e preferências |
-| **Itens** | Entregar itens, o que está no chão desta cena e como a personagem usa cada um |
+| **Itens** | Entregar itens, o que está no chão desta cena e como o personagem usa cada um |
 | **Jogadores** | Tela dos jogadores, cliques deles nas pistas, cortina e documento |
 | **Sessão** | Exportar, importar, recomeçar e a lista de atalhos |
 
@@ -82,28 +158,28 @@ O mapa do mestre crescia como uma aba comprida, e cada recurso novo empurrava o 
 
 ### Preparar em silêncio, enviar quando quiser
 
-Como no modo estúdio do OBS e na diferença entre “ver” e “ativar” cena do Foundry, a seção **Cenas** tem uma **prévia que só o mestre vê**: escolha a cena na biblioteca (miniaturas; **1–9**), a luz, o clima, os objetos e o ponto de entrada, e mova a câmera da prévia. **Enviar aos jogadores** (**Ctrl+Enter**) aplica tudo com a transição escolhida: esmaecer, dissolver, íris em volta da personagem, persiana ou corte seco, com duração e **letreiro** opcional (nome e subtítulo em fonte de pixel). **Shift+número** envia uma cena na hora. **↶ Anterior** desfaz a última mudança ao vivo.
+Como no modo estúdio do OBS e na diferença entre “ver” e “ativar” cena do Foundry, a seção **Cenas** tem uma **prévia que só o mestre vê**: escolha a cena na biblioteca (miniaturas; **1–9**), a luz, o clima, os objetos e o ponto de entrada, e mova a câmera da prévia. **Enviar aos jogadores** (**Ctrl+Enter**) aplica tudo com a transição escolhida: esmaecer, dissolver, íris em volta do personagem, persiana ou corte seco, com duração e **letreiro** opcional (nome e subtítulo em fonte de pixel). **Shift+número** envia uma cena na hora. **↶ Anterior** desfaz a última mudança ao vivo.
 
 ### Ambiente ao vivo
 
 Em **Luz e clima**, tudo muda para os jogadores sem recarregar nada, com uma dissolução pontilhada:
 
-- **Iluminação**: Manhã, Tarde, Pôr do sol, Noite e Luzes apagadas. Cada uma pinta de novo as camadas pela luz, não por filtro, e também escurece ou esfria a personagem.
+- **Iluminação**: Manhã, Tarde, Pôr do sol, Noite e Luzes apagadas. Cada uma pinta de novo as camadas pela luz, não por filtro, e também escurece ou esfria o personagem.
 - **Relógio da cena**: o relógio de parede mostra a hora escolhida e continua andando.
 - **Clima**: céu limpo ou chuva (céu fechado, chuva na janela, sem sol no chão).
 - **Objetos**: aparecem e somem (luminária, monitor, café, envelope lacrado, molho de chaves, papéis no chão, bilhete na porta, arquivo entreaberto, retrato torto, pegadas e poça de sangue).
-- **Efeitos**: tremor (**T**), relâmpago com trovão (**L**), luzes piscando, escuridão com raio em volta da personagem e pulso de tensão com batimento.
+- **Efeitos**: tremor (**T**), relâmpago com trovão (**L**), luzes piscando, escuridão com raio em volta do personagem e pulso de tensão com batimento.
 - **Som ambiente**: sintetizado no navegador. Ruído de sala, relógio, chuva, grilos à noite, vento em cena externa, trovão e batimento. Liga num botão, porque o navegador só permite som depois de um clique. **Cada som tem a própria chave** — tom da sala, chuva, vento, relógio, grilos e pingos, batimento, trovão e os passos do personagem — e o que foi escolhido fica salvo na sessão.
 - **Passos**: a camada de movimento avisa quando um calcanhar pousa (dois por passada, alternando os pés, mais fortes correndo, um ao aterrissar de um salto) e o som toca conforme o piso — madeira no escritório (batida surda com um estalo em cima), grama na cena de campo (um esmagado de ruído).
 - **Música**: cinco trilhas curtas escritas em notas e tocadas pelo navegador, em loop, uma de cada vez, com volume próprio e lembradas na sessão (voltam a tocar quando o som é ligado): *Investigação* (baixo andante em ré menor, piano abafado, colchão de cordas), *Tensão* (bordão grave, quintas desafinadas, um sopro), *Chuva calma* (arpejos de triângulo sobre maj7), *Perseguição* (baixo quadrado, caixa de ruído, arpejo), *Lamento* (melodia triste em lá menor). Ficam em `MUSIC` no `som-ambiente.js`: cada voz é uma onda, um ganho, um envelope e as notas como `[tempo, altura MIDI, duração]`.
-- **Personagem**: leva a personagem para qualquer ponto de entrada da cena.
+- **Personagem**: leva o personagem para qualquer ponto de entrada da cena.
 
-### Itens para a personagem
+### Itens para o personagem
 
 A seção **Itens** entrega qualquer item que não tenha história própria — bandagem, tala, antibiótico e o taco de beisebol (roupa sai do guarda-roupa, pista sai do cenário):
 
 - **Na bolsa**, com quantidade para o que empilha; se não couber tudo, diz quanto coube.
-- **No chão**: cai deitado na frente da personagem, na cena atual, e os jogadores veem. Ela guarda com um clique perto, ou arremessa.
+- **No chão**: cai deitado na frente do personagem, na cena atual, e os jogadores veem. O personagem guarda com um clique perto, ou arremessa.
 - **Na mão** (só armas): vai para a bolsa e já é empunhado; **E** golpeia.
 
 A seção mostra os espaços usados da bolsa, o que está na mão e quantos itens estão soltos na cena, e **Recolher tudo para a bolsa** guarda o que estiver no chão, perto ou longe dela. A lista vem de `ITEM_DEFS` (`inventory.js`), então um item novo aparece ali sozinho; a ponte com o jogo é o `itemDesk` de `app.js`.
@@ -164,7 +240,7 @@ O computador da mesa foi redesenhado **virado para a cadeira**: da câmera se v�
 | **N** | recolhe o documento |
 | **T** · **L** | tremor · relâmpago |
 | **P** | mostra as áreas das pistas |
-| **I** · **E** | bolsa da personagem · golpe com o taco na mão |
+| **I** · **E** | bolsa do personagem · golpe com o taco na mão |
 | **Esc** | fecha a pista aberta · pula a cinemática |
 | **F** · **E** | na tela dos jogadores: tela cheia · escala |
 
@@ -173,12 +249,12 @@ O computador da mesa foi redesenhado **virado para a cadeira**: da câmera se v�
 O primeiro cenário segue a imagem de referência: parede bege sobre lambri escuro, dois quadros de avisos em volta do brasão, estante, banco sob a janela, chão de tábuas encerado pegando sol e, na frente, a mesa com luminária de banqueiro, monitor e documentos. A sala foi alargada para um mapa fechado de 1680 px, três telas e meia: entrada à esquerda, cabideiro e estante; quadros e brasão no centro; janela, arquivo de gavetas, relógio, bebedouro e a porta do **ARQUIVO** à direita.
 
 - **Parede** (fundo): 573×62 pixels de arte, rola a 0,68 da velocidade do jogador.
-- **Chão** (onde a personagem pisa): desenhado **linha por linha**, cada linha na sua profundidade, como o chão de *Street Fighter II*. Tábuas, juntas, tapete, sol e manchas ficam em coordenadas do mundo, então mantêm a perspectiva enquanto a câmera anda. A linha de fator 1 é o chão do jogo (y = 229).
-- **Frente**: mesa, cadeira, planta de vaso e espada-de-são-jorge, a 1,17–1,3; passam na frente da personagem.
+- **Chão** (onde o personagem pisa): desenhado **linha por linha**, cada linha na sua profundidade, como o chão de *Street Fighter II*. Tábuas, juntas, tapete, sol e manchas ficam em coordenadas do mundo, então mantêm a perspectiva enquanto a câmera anda. A linha de fator 1 é o chão do jogo (y = 229).
+- **Frente**: mesa, cadeira, planta de vaso e espada-de-são-jorge, a 1,17–1,3; passam na frente do personagem.
 - **Janela**: céu, prédios e árvores em três planos ainda mais lentos, com nuvens, estrelas e chuva animadas.
-- **Paredes laterais**: nas pontas do mapa a sala se fecha em perspectiva (placa de saída, diploma, calendário). A câmera para no fim da sala, a personagem para na parede e o ragdoll também.
+- **Paredes laterais**: nas pontas do mapa a sala se fecha em perspectiva (placa de saída, diploma, calendário). A câmera para no fim da sala, o personagem para na parede e o ragdoll também.
 
-Todas as camadas vêm de **um só modelo de câmera**: `x = 240 + (X − câmera) · f` e `y = horizonte + (olho − altura) · f`. Por isso o canto das paredes, a borda do chão e a janela se encontram em qualquer posição. Arte em pixels 2×2, a mesma densidade da personagem, e posições arredondadas.
+Todas as camadas vêm de **um só modelo de câmera**: `x = 240 + (X − câmera) · f` e `y = horizonte + (olho − altura) · f`. Por isso o canto das paredes, a borda do chão e a janela se encontram em qualquer posição. Arte em pixels 2×2, a mesma densidade do personagem, e posições arredondadas.
 
 **Luz pintada, não filtrada.** Cada pixel é pintado como *material + nível* (rampa de 8 tons em OKLab, sombras frias e luzes quentes), e a luz sobe ou desce o pixel na própria rampa, sempre para uma cor da rampa. O sol entra pela janela e desenha no chão e na mesa as vidraças com os caixilhos, calculado como raio de luz; arandelas, luminária, monitor e placa de saída acendem poças com pontilhado só na transição. Nenhuma cor é cinza neutro: a cegueira parcial do jogo detecta pixels cinza. As camadas de cada luz são calculadas uma vez e guardadas; um quadro custa menos de 1 ms.
 
@@ -207,7 +283,7 @@ Copie `mestre/cena-modelo.js`, uma sala simples e funcional com comentários, tr
 | `mestre/ferramentas/previa-pistas.html` | Ferramenta de arte: a cena com as pistas clicáveis, sem personagem |
 | `jogadores.html` · `mestre/jogadores.js` | Tela dos jogadores |
 
-Integração com o jogo em `app.js`: o fundo vem da cena, a frente é desenhada depois da personagem, do sangue e dos restos, a câmera respeita os limites da sala e as dicas de câmera, a personagem é tingida pela luz, e o quadro pronto segue para os jogadores antes dos marcadores do mestre. Sem os scripts de `mestre/`, o jogo desenha o fundo original, que é o que o teste sem navegador executa.
+Integração com o jogo em `app.js`: o fundo vem da cena, a frente é desenhada depois do personagem, do sangue e dos restos, a câmera respeita os limites da sala e as dicas de câmera, o personagem é tingida pela luz, e o quadro pronto segue para os jogadores antes dos marcadores do mestre. Sem os scripts de `mestre/`, o jogo desenha o fundo original, que é o que o teste sem navegador executa.
 
 ### Validação
 
@@ -217,7 +293,7 @@ Integração com o jogo em `app.js`: o fundo vem da cena, a frente é desenhada 
 
 `node tests/browser-pistas.test.js`: no Chrome, abre pistas clicando na cena sem o painel, lê os três X e usa o barbante e a lupa, os jogadores clicam na foto pela janela deles e ela vai para a bolsa, de onde o mestre a examina para todos e eles a viram, digita a senha durante o boot sem acionar atalhos, abre o arquivo corrompido, levanta o teclado, abre gaveta, erra e acerta a senha da tampa, aperta NÃO APERTE, confere a cinemática na tela dos jogadores e pula, confere o botão apertado e o estrago na sala e o rearma pelo painel, os jogadores digitam 0317 e a porta do arquivo abre na cena, cria uma pista pelo editor marcando a área na cena (que vai para a bolsa) e confere tudo depois de recarregar. `node tests/som.test.js` cobre as chaves de cada som, os passos vindos da marcha e as cinco trilhas com um AudioContext de mentira. Capturas em `pixel_art/generated/pistas/`.
 
-`node tests/browser-painel.test.js`: no Chrome, a página com o nome do RPG e o botão que abre o mapa; as nove seções com ícone e nome, trocadas com as setas; cada controle na sua seção; a janela do mesmo tamanho em todas as seções, com o topo e a coluna parados enquanto só a seção rola (e a janela inteira rolando num celular deitado); o filtro de pistas; blocos recolhidos e a última seção de volta depois de recarregar; e os avisos do topo (pistas, som, cliques dos jogadores, cortina e documento) levando à seção certa. Captura em `pixel_art/generated/painel/`.
+`node tests/browser-painel.test.js`: no Chrome, a página com o nome do RPG e o botão que abre o mapa; as onze seções com ícone e nome, trocadas com as setas; cada controle na sua seção; a janela do mesmo tamanho em todas as seções, com o topo e a coluna parados enquanto só a seção rola (e a janela inteira rolando num celular deitado); o filtro de pistas; blocos recolhidos e a última seção de volta depois de recarregar; e os avisos do topo (pistas, som, cliques dos jogadores, cortina e documento) levando à seção certa. Captura em `pixel_art/generated/painel/`.
 
 `node tests/browser-mestre.test.js`: no Chrome, abre a tela dos jogadores e confere que ela recebe a mesma imagem do mestre. Testa cortina só para os jogadores, documento, olhar para uma pista, as cinco luzes, chuva, objetos, efeitos, teleporte, parede direita e limite da câmera, transições íris e dissolver com letreiro, e sessão restaurada depois de recarregar. Capturas em `pixel_art/generated/mestre/`. Com os testes das pistas, da anatomia das animações, do guarda-roupa, dos gestos de tratamento, dos itens no cenário, do som, da roupa que acompanha o corpo, do Escritório do Jorge, do próprio painel e da exploração são 40 arquivos de teste, todos passando.
 
@@ -269,7 +345,7 @@ As conclusões (regra das três pistas): *Jorge não escreveu a frase, mas ela �
 - **As câmeras mudam enquanto ninguém olha.** Ler um e-mail da Publisher, consultar a pasta do Kakau e examinar a Nova Bíblia mexem na CAM 04, sempre na mesma ordem, qualquer que seja a pista: primeiro uma caixa aberta, depois um livro no chão, depois o livro aberto. Na primeira vez que a mudança aparece, o sinal rasga.
 - **A impressora liga sozinha.** Com **6 descobertas** (campo *Descobertas para a impressora* na pista “Folha na impressora”; 0 faz imprimir logo) e ninguém com uma pista aberta, a câmera vai até a impressora, ela imprime por alguns segundos e a folha fica na bandeja. O mestre pode ligar o objeto *Folha na impressora* à mão.
 - **O que Jorge fechou.** A linha nova usa `{objeto}`: é a última coisa fechada antes da impressão (o arquivo, o livro, a Bíblia, a pasta, o envelope…). Apague `{objeto}` no editor para deixar o texto fixo.
-- **CAM 07.** Depois de ler a linha nova aparece uma câmera que Jorge nunca instalou: o próprio escritório, ao vivo, com a personagem dentro. O campo *CAM 07* da pista das câmeras escolhe *depois da folha*, *sempre* ou *nunca*.
+- **CAM 07.** Depois de ler a linha nova aparece uma câmera que Jorge nunca instalou: o próprio escritório, ao vivo, com o personagem dentro. O campo *CAM 07* da pista das câmeras escolhe *depois da folha*, *sempre* ou *nunca*.
 - **Zerar progresso** desfaz tudo isso: descobertas, CAM 04 e a folha na impressora.
 
 #### Tudo editável
@@ -312,13 +388,13 @@ No painel (seção **Pistas → Editar**), cada pista do escritório traz todos 
 
 Entrar numa sala, mexer nas coisas e sair por uma porta, um corredor, uma escada, um elevador ou pela lateral da tela direto para outra cena — e, quando os jogadores forem para onde nada foi preparado, abrir uma cena genérica que combine, ligar e continuar sem quebrar o ritmo.
 
-**Atravessar.** Perto de uma passagem aparece a dica **↑** com o que ela faz (*Entrar*, *Subir*, *Descer*, *Chamar o elevador*, *Seguir*); **↑** ou **W** atravessa. Clicar na porta — também pela janela dos jogadores, se o mestre deixar — leva a personagem até ela. Encostar e empurrar a borda da sala sai pela lateral. A chegada é na passagem de lá, virada para dentro da sala; a cena de destino volta com a luz, o clima e os objetos de quando foi deixada, e a hora e a chuva seguem da cena de onde ela vem. O mesmo **↑** usa objetos: abrir gaveta, examinar, acender a luz, ligar a TV.
+**Atravessar.** Perto de uma passagem aparece a dica **↑** com o que ela faz (*Entrar*, *Subir*, *Descer*, *Chamar o elevador*, *Seguir*); **↑** ou **W** atravessa. Clicar na porta — também pela janela dos jogadores, se o mestre deixar — leva o personagem até ela. Encostar e empurrar a borda da sala sai pela lateral. A chegada é na passagem de lá, virada para dentro da sala; a cena de destino volta com a luz, o clima e os objetos de quando foi deixada, e a hora e a chuva seguem da cena de onde ela vem. O mesmo **↑** usa objetos: abrir gaveta, examinar, acender a luz, ligar a TV.
 
 **Trancas.** Aberta; trancada (com a mensagem que o mestre escrever); **chave** (o item *Chave* com o mesmo nome, na bolsa, ignorando maiúsculas e acentos); **código** (teclado na tela, que os jogadores digitam pela janela deles, com um bilhete opcional ao lado); ou **só com a liberação do mestre**, que vira um pedido *Quer passar*.
 
 **Elevador.** Uma lista de andares (`RÓTULO | cena | chegada`); o painel mostra os botões e o andar atual; a porta abre com a transição de portas de elevador. O mesmo painel pode valer para todos os andares do prédio. Andar sem cena também vira pedido.
 
-**Pedidos de improviso.** Uma passagem sem destino não abre para os jogadores (*NÃO ABRE*) e aparece para o mestre no topo do mapa e na seção **Exploração**, com miniaturas de sugestões: primeiro pelo nome da passagem (*Banheiro* sugere banheiro, *Estoque* sugere depósito, *Diretoria* sugere escritório), depois pelo lugar onde ela está (numa rua: loja, lanchonete, portaria…). Um clique **cria a cena, liga ida e volta e leva a personagem** — a cena criada é a mesma da miniatura. Também dá para escolher outro modelo, ligar a uma cena que já existe (escolhendo por onde chega) ou deixar como está.
+**Pedidos de improviso.** Uma passagem sem destino não abre para os jogadores (*NÃO ABRE*) e aparece para o mestre no topo do mapa e na seção **Exploração**, com miniaturas de sugestões: primeiro pelo nome da passagem (*Banheiro* sugere banheiro, *Estoque* sugere depósito, *Diretoria* sugere escritório), depois pelo lugar onde ela está (numa rua: loja, lanchonete, portaria…). Um clique **cria a cena, liga ida e volta e leva o personagem** — a cena criada é a mesma da miniatura. Também dá para escolher outro modelo, ligar a uma cena que já existe (escolhendo por onde chega) ou deixar como está.
 
 **Biblioteca de improviso.** Dezoito modelos genéricos, sem nada da história, cada um um gerador: a mesma semente dá a mesma sala; outra semente, outras cores, móveis, bagunça e detalhes. **Conectores**: corredor de prédio (residencial, comercial, hospital ou hotel), escadaria e portaria. **Casa**: apartamento, quarto e banheiro (de casa ou público). **Trabalho**: escritório, sala administrativa, depósito e oficina mecânica. **Comércio**: loja de conveniência, lanchonete e bar com fliperama. **Rua**: rua, beco e estacionamento subterrâneo. **Saúde**: enfermaria. **Abandonado**: prédio abandonado. Cada modelo tem pelo menos três coisas para mexer e eventos próprios. **Conjuntos prontos** criam várias cenas já ligadas: *Prédio residencial* (9 cenas, com escada e elevador), *Hospital* (8), *Quarteirão comercial* (7), *Prédio de escritórios* (8, com uma sala sem destino para improvisar) e *Prédio abandonado* (5).
 
@@ -366,6 +442,421 @@ Tudo — cenas montadas, ligações, trancas, eventos, preferências e o estado 
 - Improviso com lugares evocativos e “três aspectos fantásticos” em cada um: *Develop Fantastic Locations* no [Lazy GM’s Resource Document, Sly Flourish](https://slyflourish.com/lazy_gm_resource_document.html).
 - Consertar a luz como puzzle curto e claro: a tarefa [Fix Lights de Among Us](https://among-us.fandom.com/wiki/Fix_Lights).
 
+## Sair de casa: 9 cenas novas, 3 carros e o que se come no caminho
+
+O Escritório, o Escritório do Jorge e o Campo de ruínas deixaram de ser ilhas. Cada um virou um **lugar com saída**: dá para andar até a porta, atravessar o prédio inteiro e chegar na rua, onde tem um carro estacionado — um carro diferente para cada grupo, porque cada um é de um jeito. Tudo continua pintado por código, na mesma câmera e com a mesma luz das cenas antigas.
+
+| De onde | Para onde se vai | O que tem lá |
+| --- | --- | --- |
+| **Escritório** (Prefeitura, 2º andar) | porta de vidro → **Corredor do 2º andar**; porta do arquivo (depois do cadeado 0317) → **Sala do arquivo** | — |
+| **Corredor do 2º andar** | escada → **Escadaria do 1º andar**; portas → **Banheiro**, **Copa**; Gabinete trancado; sala 204 e elevador para o mestre improvisar | bebedouro de pressão, quadro de avisos, a placa de 1987, carrinho de limpeza |
+| **Escadaria · 1º andar** | sobe → corredor; desce → **Saguão**; porta de vidro do 1º andar (improviso) | vitral com o brasão, o balde da limpeza |
+| **Saguão · térreo** | escada; **portas de vidro → Praça da Prefeitura**; elevador em manutenção | portaria com o livro de ocorrências, bebedouro, mesinha do cafezinho (garrafa térmica), o relógio parado às 3h17 |
+| **Praça da Prefeitura** | portão → saguão; a rua continua para os dois lados (improviso) | **sedã oficial** na vaga do gabinete, chafariz, carrinho de pipoca, carrinho de água de coco, banca de jornal |
+| **Sala do arquivo** | porta → Escritório; **escada do porão trancada** (para depois) | caixas de 1987, a caixa “ANEXO — NÃO DESCER”, arquivo de aço, leitora de microfilme |
+| **Banheiro / Copa da Prefeitura** | porta → corredor | pia, privada; geladeira, armário, fogão, micro-ondas, cafeteira, sanduicheira, bebedouro de galão |
+| **Escritório do Jorge** | porta do corredor → **Corredor do prédio** | — |
+| **Corredor do prédio** | portas do depósito, das caixas e das cópias (improviso), **banheiro**, **copa**; escada → **Porta da frente** | a porta 12, o hidrante, a câmera CAM 01 com o LED vermelho |
+| **Porta da frente** | escada → corredor; **porta → Rua do prédio** | capacho, cartas no chão, ganchos com o casaco, caixas de correio |
+| **Rua do prédio** | porta → hall; a rua segue para os dois lados | **hatch azul desbotado**, trailer de lanches 24 h, orelhão, poste de sódio, gato de rua |
+| **Copa / Banheiro do Jorge** | porta → corredor | filtro de barro, fogão, micro-ondas, cafeteira, geladeira; pia, privada, chuveiro |
+| **Campo de ruínas** (refeito em perspectiva) | lateral → **Estrada de terra**; o outro lado, improviso | bica, poço com manivela, cocho, goiabeira, mangueira, fogueira |
+| **Estrada de terra** | lateral → campo; a estrada segue (improviso) | **picape enferrujada**, porteira, bananeira, a placa “ESTAÇÃO VELHA 2 KM” |
+
+As cenas do prédio do Jorge batem com o que as câmeras dele mostram (CAM 01 corredor, CAM 02 porta da frente, CAM 05 exterior), e a praça mostra a mesma Prefeitura da foto pregada no quadro de avisos do Escritório — prédio branco com colunas e cúpula. O Campo virou uma sala em perspectiva com muro de pedra e arcos, guardando as cores do fundo antigo.
+
+### Os carros, na perspectiva certa
+
+`mestre/veiculos.js` desenha carro por raio, pixel a pixel, dentro da câmera da própria cena: a lateral de perto na escala da profundidade, o teto e o capô vistos de cima e **a ponta que aparece muda de lado conforme a câmera anda**, como na vida. A imagem fica em cache por modelo, cor, sujeira, luz e posição da ponta, e acende com as luzes do preset (sol, poste, faróis) com sombra de contato no chão.
+
+- **Sedã oficial** escuro com o brasão da cidade na porta, calotas e antena — poder e burocracia (Prefeitura).
+- **Hatch velho** azul desbotado, para-choque preto, uma calota faltando, papéis e livros no banco de trás — o escritor obcecado (Jorge).
+- **Picape enferrujada** com lama nas rodas e lona amarrada na caçamba — os lugares esquecidos (Campo).
+
+O mestre coloca carro em **qualquer cena** pela seção **Exploração** do mapa do mestre: *Adicionar carro*, *Mover no palco* (arrasta na cena: horizontal muda o lugar, vertical a profundidade), virar, cor, faróis, pisca-alerta, motor ligado, sujeira e placa. Interagir com o carro chama `Veiculos.aoUsar({veiculo, cena, fonte, sys})` — o gancho que a **viagem de carro** usa (a seção seguinte).
+
+## Fome e sede
+
+Quatro estágios em cada uma, e o mestre manda: **Satisfeita → Com fome → Faminta → Fraca** e **Hidratada → Com sede → Sedenta → Desidratada** (limites em 30, 60 e 85).
+
+- **Estágio 1**: um pouco mais devagar, cura mais lenta. **Estágio 2**: devagar, sem fôlego para correr e a vista escurecendo nas bordas. **Estágio 3**: bem mais devagar, a vinheta pulsando e **perda lenta de vida**, que o mestre desliga e que nunca passa do piso que ele escolher. Fome e sede juntas se multiplicam (com piso), e o personagem fala o que está sentindo (“Minha boca está seca”, “Minhas pernas estão fracas de fome”).
+- Na tela aparecem **dois ícones de pixel art** — um pão e uma gota — que enchem de cor conforme aperta, e só aparecem quando há o que mostrar. Os jogadores veem junto.
+- **Seção FOME E SEDE** do mapa do mestre: os dois medidores com os quatro estágios (um clique põe o personagem em qualquer um), nível fino, congelar, **automático com prazo** (“chegar em COM FOME em 45 min”, com a conta do que falta em tempo real), ritmo lento/normal/puxado, perda de vida com piso, **pular tempo** (+5 min, +15 min, +1 h, +4 h), as condições ativas e o histórico do que ele comeu e bebeu.
+- O relógio é o mesmo da saúde (**H** → *Iniciar saúde*): com ele parado, fome e sede só mudam quando o mestre mexer.
+- **Condições**: enjoo, dor de barriga, intoxicação alimentar, **infecção intestinal com fases** (incubação → enjoo → gastroenterite, com vômitos que dão mais sede e fome → fraqueza), cafeína (“ligada”), tremedeira, moleza depois da marmita e o bônus de uma refeição boa. O chá de boldo e o soro caseiro ajudam; o mestre cura qualquer uma com um clique.
+
+## A viagem de carro e o minigame de estrada
+
+Entrar no carro agora leva a algum lugar. O caminho inteiro:
+
+1. **Entrar** — chegando perto do carro, <kbd>↑</kbd> abre a **interface do carro por dentro**: para-brisa com a estrada correndo, retrovisor com o nome do modelo, velocímetro, conta-giros, combustível e temperatura, as luzes de bateria e óleo acesas enquanto o motor está frio, volante com a placa no cubo, rádio com cinco estações, faróis, pisca-alerta e buzina.
+2. **Ligar** — *GIRAR A CHAVE*: a chave gira, o motor pega (os ponteiros acordam, as luzes de aviso apagam) e aparece o botão **PARTIR**.
+3. **Sair do mapa** — o carro **anda de verdade dentro da cena**, na perspectiva dela, levantando poeira, até sumir na beira. O personagem some do cenário, porque está dentro do carro.
+4. **Para onde?** — o carro vira um **pedido no mapa do mestre**, no mesmo lugar em que as portas sem destino já viravam pedido: seção **Exploração → Pedidos**, com as sugestões de cena (rua, estacionamento, oficina, loja, prédio abandonado, beco) em miniatura, a lista das cenas que já existem e o botão de **criar uma na hora**. Ali mesmo o mestre marca **o tamanho do percurso** (de “logo ali” a “outra cidade”), se a viagem tem o **minigame de estrada** e qual trecho.
+5. **A estrada** — se o mestre quiser, roda o minigame (abaixo). Se não quiser, corta direto.
+6. **Chegar** — a cena de destino entra, o personagem desce e **o carro vai junto**: ele sai da cena de origem e estaciona na de destino com a mesma cor, placa e sujeira.
+
+A viagem **custa tempo do relógio do mestre** — quanto, depende do percurso que ele escolheu (8 min para o quarteirão ao lado, 110 para outra cidade) — e esse tempo passa na fome e na sede. Batida na estrada pode virar hematoma — o mestre liga e desliga isso.
+
+### O minigame, estilo Rad Racer
+
+Um trecho de direção em **pseudo-3D**, em pixel art, no mesmo buffer de 240×135 das cinemáticas.
+
+- **A técnica** é a dos anos 80, que a pesquisa desta fase levantou ([Lou's Pseudo 3D Page](https://www.extentofthejam.com/pseudo/), [Jake Gordon](https://jakesgordon.com/writing/javascript-racer-v2-curves/)): a pista é uma fila de segmentos com curva e altura; cada um é projetado por `escala = profundidade/z` e pintado **do fundo para a frente**, e cada segmento só pinta acima do topo do anterior (`maxy`) — é isso que faz um morro esconder o que vem depois, de graça. A curva não mexe no mundo: é um deslocamento que se acumula linha a linha (`x += dx; dx += curva`), o mesmo truque de série aritmética do Enduro do Atari. Os sprites da beira e o trânsito escalam por `1/z` e são cortados pelo mesmo `maxy`. A neblina é desbotamento exponencial com **pontilhado ordenado**, nunca degradê liso.
+- **O carro é o do jogador.** A traseira não é um desenho à parte: é o **modelo 3D do próprio carro** com que o jogador interagiu, girado 90° em torno do eixo da altura (`Veiculos.traseira`). Cada plano do sólido gira, e o sombreador continua recebendo as coordenadas do modelo — por isso vidros, lanternas, placa, brasão, ferrugem, a lona da picape e os papéis no banco do hatch caem exatamente onde deviam, sem uma linha nova de pintura. Nas curvas o carro **inclina de verdade**, porque o ângulo do giro muda. O trânsito usa os mesmos modelos, de frente ou de costas, em poucas distâncias guardadas em cache.
+- **Sete trechos**, para a viagem nunca ser a mesma: *Rodovia ao sol*, *Serra ao entardecer* (curvas fechadas e o sol baixo), *Estrada de terra* (poeira, cerca, gado e sulcos), *Rodovia à noite* (faróis, olhos de gato, lua e estrelas), *Chuva forte* (asfalto molhado, limpador e pouca aderência), *Neblina de madrugada* (enxerga pouco, as coisas aparecem em cima da hora) e *Beira da cidade* (prédios, outdoor e trânsito). Cada trecho tem céu, chão, pista, beira, clima e trânsito próprios, e a pista sai de uma semente. No sorteio, nunca repete o da viagem anterior.
+- **A arte, e por que ela fecha.** Nada é pintado em RGB: tudo entra num `PixelBuffer` em **(rampa, nível)**, como o resto do jogo, e só vira cor no fim (`K.resolve`). Isso dá as três coisas que separam pixel art boa de amadora — **a paleta fecha** (toda cor sai de uma rampa de 8 tons construída em OKLab, com matiz deslocando na sombra e na luz; um teste confere que não escapa uma cor sequer); **degradê é pontilhado, não é mistura** (céu, neblina e sombreado andam entre dois níveis vizinhos com bayer 4×4, faixa chapada no meio do nível e pontilhado fino só na travessia); e **distância tira contraste em vez de jogar cinza por cima** (a perspectiva atmosférica puxa o *nível* na direção do tom do horizonte e só bem longe dissolve a rampa, então o campo lá no fundo continua sendo campo). O resto veio da mesma cartilha: silhueta legível antes do detalhe, contorno com um tom mais escuro da própria rampa em vez de preto chapado, três a quatro níveis por material, textura de chão irregular (grama espaçada igual vira tapete de plástico) e leitura conferida em 1×.
+- **Cada trecho tem a paleta dele.** A noite não é o dia escurecido: é a paleta inteira puxada para o azul (variante `estradaNoite`), como as cenas já faziam com o humor da luz. Entardecer esquenta, chuva lava, neblina achata o contraste, terra empoeira. O carro segue a mesma regra pela variante da paleta dos veículos (`night`, `sunset`, `rain`, `moon`).
+- **O que está na tela**: céu em degradê chapado com nuvens de três bolhas (topo na luz, barriga na sombra), sol baixo com halo pontilhado e as listras clássicas, lua em foice e estrelas que piscam, serra em camadas com crista iluminada, touca de neve nos picos e mata na crista em tufos, horizonte de prédios com janelas acesas, asfalto com trilhas de roda, remendos, linha de bordo, zebra vermelha e branca, acostamento de terra com um risco escuro que assenta a estrada no terreno, e uma beira povoada de pinheiros, árvores, cercas, postes, placas, guarda-corpo, olhos de gato, silos, caixas d'água, vacas e capim — cada peça um mapa de pixels com silhueta e três tons.
+- **Jogar**: <kbd>A</kbd> <kbd>D</kbd> (ou as setas) guiam, <kbd>W</kbd> **acelera**, <kbd>S</kbd> **reduz** (as lanternas acendem), <kbd>H</kbd> buzina, <kbd>Esc</kbd> pula. **Sem ninguém tocando, o carro se vira sozinho**: fica na mão da direita, segura atrás de quem está na frente e desvia pelo acostamento da mão dele — dá para só assistir. Quem encostar numa seta assume o volante.
+- **O acelerador é de CRUZEIRO: não se segura botão.** O veículo guarda uma **velocidade escolhida**; para a frente ela sobe, para trás ela desce até parar, e soltando as duas o veículo continua no que ficou. O motor persegue essa escolha com a mesma aceleração e o mesmo freio de antes — por isso ele ainda demora a chegar lá, ainda escorrega no cascalho e ainda perde nas subidas: quem mudou foi quem decide, não a física. Antes o veículo ia sozinho até o talo e a única coisa que o pé fazia era frear.
+- **O velocímetro mostra as DUAS velocidades.** No canto do painel, um relógio de 240° em pixel art: o **ponteiro** é a velocidade que se tem, o **risco âmbar na borda** é a que se pediu. Aperta para a frente, o risco anda na frente e o ponteiro vai atrás — é assim que se lê, num relance, que ninguém precisa segurar tecla nenhuma. O fundo de escala é o teto **daquele veículo**: uma bicicleta com o ponteiro parado no primeiro quinto seria uma mentira sobre o esforço de quem pedala.
+- **Cada classe no ritmo dela.** A **bicicleta** anda a um quinto do carro (~35 km/h) e custa a engrenar; a **moto** corre um pouco mais que o carro e arranca bem antes dele; o **carro** é a régua. Aceleração, freio e atrito saem do teto do próprio veículo, então todos levam os mesmos segundos para chegar ao *seu* máximo — e como o teto encolhe com a lataria amassada, carro batido também fica mole no pé, de graça. A pista encolhe e estica na mesma proporção, então a viagem dura o mesmo de relógio: o que muda é a paisagem passando depressa ou devagar.
+- **A estrada é larga o bastante para desviar.** Um carro ocupava 26% da meia-pista — a proporção de uma estrada de verdade, e apertada como uma: o desvio saía por três centésimos de pista e qualquer imprecisão era mato ou contramão. Como a pista ocupa a tela inteira, alargar a estrada e diminuir o carro são a mesma coisa, então o carro encolheu um quinto e a estrada passou a caber quase cinco carros de ponta a ponta — a proporção de jogo de corrida. As faixas ficam onde as **duas** coisas cabem: acostamento largo o bastante para fugir de quem está parado na frente, e mão contrária longe o bastante para cruzar com ela em paz. (Os tamanhos relativos entre carro, moto e bicicleta não mudaram: todos saem da mesma régua.)
+- **O percurso é seu.** Antes de mandar o carro, o mestre escolhe **o tamanho da viagem** no mesmo pedido: *Logo ali* (3 km), *Do outro lado da cidade* (12 km), *Estrada afora* (34 km), *Outra cidade* (80 km) ou **Personalizado**, digitando os números na mão. A escolha amarra as três coisas de uma vez — a **distância** que aparece no painel do minigame e vai descendo enquanto se dirige, o **tamanho da pista** (de 13 a 80 segundos de estrada montada) e o **tempo de relógio** que a viagem cobra (de 8 a 110 minutos, que passam na fome e na sede). Ir mais longe custa mais, mesmo quando o mestre pula o minigame. O que ficou marcado no pedido vira o padrão da próxima viagem, e dá para trocar o padrão na seção **Exploração → Viagem de carro**.
+- **A beira da estrada tem volume, perspectiva e variação.** As peças eram chapadas, repetidas e pequenas; foram refeitas do zero como **geradores** em vez de desenhos fixos. Um tronco é um cilindro (barriga clara em 72% da largura, as duas quinas escuras), uma copa é um amontoado de bolhas com o alto à direita na luz e a borda picotada, uma pedra tem facetas, e **o que é caixa mostra a face lateral e o topo** — placa, casa, prédio, outdoor, silo, caixa d'água. Cada peça tem **três variantes** guardadas, e cada instância ainda sorteia espelho, escala e um degrau de tom: uma fileira de árvores deixou de ser o mesmo carimbo. Elas também ganharam o dobro de resolução e mais tamanho no mundo, então quando passam rente à câmera varrem o quadro. E a sombra de contato virou uma **elipse** pontilhada no chão, em vez de um risco.
+- **Marco de estrada é marco.** O sorteio da beira é **pesado**: mato, arbusto, cerca e árvore saem quase sempre; silo, prédio, casa, outdoor, caixa d'água e torre saem raramente. Sorteando por igual, um trecho de oito peças punha silo em uma de cada quatro posições e a estrada de terra virava um pátio de silos. (O sorteio continua gastando **um** número do gerador, porque o trânsito divide o mesmo gerador e precisa nascer onde nascia.)
+- **O campo tem dono.** Enfeitar a beira não resolvia o que estava atrás dela: um pasto chapado até o horizonte. O que enche um campo de verdade não é mais enfeite, é ele ter **dono** e ter **fundo**:
+  - **Talhões** — a cada tantos metros o campo de cada lado muda de lavoura, e com ela de tom. É a colcha de retalhos que se vê da estrada.
+  - **Sulcos de plantação** — linhas paralelas à pista, num mesmo afastamento do eixo. Como a largura da pista encolhe com a distância, elas **convergem sozinhas** para o ponto de fuga: profundidade sem gastar um sprite.
+  - **Coisas compridas que correm junto** — cerca de arame com mourão, carreador de terra, valeta alagada, cerca-viva, muro, meio-fio e calçada. Cada uma no seu afastamento, contínua até o horizonte.
+  - **Campo distante** — logo acima da linha do horizonte, uma faixa de talhões com mata de divisa e telhado de sítio (o *distant ground graphic* do Lotus). O relevo dela é liso e o tom é por talhão: se o recorte também fosse por talhão, o fundo virava uma fila de caixas marrons.
+  - **E o contraste morre com a distância.** A neblina já lavava o *tom* de cada pixel, mas talhão e sulco são **diferença** de tom, e diferença lavada pela metade continua sendo diferença: as listras de lavoura ficavam tão fortes no fundo quanto na frente, e corriam atravessadas na profundidade — o olho lia faixas de cor, não chão que se afasta. Agora o desenho do talhão perde força junto com a distância, que é o que a vista faz.
+  - **Cada coisa com o seu material.** Na serra ao entardecer, o pasto, a cerca-viva, a colina e o campo distante eram todos o mesmo verde escuro, e a tela virava uma mancha só. O pasto ganhou material próprio: a cerca-viva voltou a ser uma linha escura atravessada no campo claro, que é o que ela é, e a serra se descolou do chão.
+- **A estrada FAZ coisas.** Uma estrada longa que nunca muda é um corredor. Sete acontecimentos aparecem ao longo do percurso, sempre em reta (para dar tempo de ver) e nunca colados um no outro: **cruzamento** (a via que cruza, placas de PARE nas quatro esquinas e **um carro atravessando** de um lado ao outro), **entroncamento** (a esquina: o asfalto abre num triângulo para um lado só, com a seta da saída), **ponte** (o campo dá lugar à água, com tabuleiro de concreto e guarda-corpo dos dois lados), **passagem de nível** (trilhos e estrado de madeira atravessando, com a cruz de Santo André e as lanternas), **viaduto** (o pórtico que passa por cima e por baixo do qual se atravessa), **pedágio** (praça com ilhas e cabines de cancela) e **acostamento largo** (um lugar para encostar). Cada trecho tem os seus: não há pedágio em estrada de terra.
+- **A estrada tem uma frota.** O modelo de cada veículo do trânsito era sorteado com peso igual entre *todos* os modelos do jogo. Com três carros isso dava três carros; com três motos e uma bicicleta no catálogo, virou quase metade de moto e uma bicicleta a cada sete — numa rodovia. Agora a frota é do **trecho**: na rodovia o que passa é carro (moto ~13%, bicicleta nenhuma), na estrada de terra e na beira da cidade há muito mais duas rodas, e é só ali que uma bicicleta faz sentido. O peso é por **classe** e dividido entre os modelos dela, então acrescentar uma quarta moto ao jogo não dobra a quantidade de moto na estrada. Nunca houve ligação entre o que o jogador pilota e o que vem na estrada — o que faltava era a estrada ter frota. Cada veículo também ganhou **a sua cor** (uma fila de sedãs idênticos lê como adesivo repetido) e **o seu passo** (a bicicleta do trânsito não vem a setenta por hora).
+- **O piloto automático chega vivo.** Metade das cinemáticas sem ninguém no comando acabava em pane, por duas razões que nada tinham a ver com dificuldade: ele ia a oitenta por cento contra a traseira de quem estava na frente (o trânsito já casava velocidade entre si; só o *nosso* carro não), e, quando não havia outra faixa para onde ir, desviava **para o meio da estrada** — que numa via de mão dupla é a contramão, a poucos metros de quem vinha de lá. Agora ele segura atrás do carro da frente, enxerga quem vem de frente três vezes mais cedo (dois se aproximam com a soma das velocidades), tira o pé quando o contravolante já come o volante inteiro — o que faz chuva, terra e lataria torta pedirem para desacelerar sozinhas — e sai pelo **acostamento da mão dele**.
+- **Dentro do acontecimento, a beira sai da frente.** Árvore no meio do cruzamento, poste em cima da ponte e mato na cancela fariam o acontecimento não ser lido — ali só entram as peças dele.
+- **A beira tem camadas.** As peças nascem em duas faixas de profundidade — uma rente ao acostamento e outra bem atrás — e são desenhadas de longe para perto, então uma passa na frente da outra. Entre elas entra o miudinho (arbusto, pedra, capim, balizador), que é o que tira a sensação de objetos espaçados numa linha só.
+- **Trânsito de verdade, não obstáculo.** Cada carro da pista tem uma **faixa alvo** separada da posição em que está: a decisão muda o alvo, o movimento persegue o alvo devagar, e a faixa ocupada **veta** o movimento em vez de empurrar — é o que tira o tremor de quem fica mudando de ideia. Com isso eles **fazem fila** (copiam a velocidade de quem está na frente, nunca a distância), **desviam** de quem está parado, **ultrapassam** quando há espaço e **freiam** quando não há. Uma mudança de faixa começada vai até o fim, senão o carro fica balançando no meio da pista.
+- **Cada trecho corre no tipo de via dele.** Rodovia, noite e cidade são **pista dupla**: duas faixas na nossa mão, e quem vem de frente está longe, do outro lado do canteiro — que agora é pintado, com o asfalto e a faixa da contramão à vista. Serra, terra, chuva e neblina são **mão dupla**: uma faixa de cada lado, e ultrapassar é invadir a contramão de propósito, com o risco que isso tem. Ninguém mais anda nas duas vias ao mesmo tempo.
+- **Eles batem, não atravessam.** A colisão separa os dois carros em profundidade (o nosso volta atrás do outro, nunca por cima), tira velocidade proporcional à **velocidade de fechamento**, empurra de lado, solta **faíscas** no ponto do contato e deixa o carro **de través por uns sete décimos de segundo** — durante a derrapagem o volante não responde e o acelerador não pega, e a traseira gira junto porque o ângulo do modelo 3D muda. Quem levou a batida **reage**: freia, guina para o lado contrário, se estraga e se afasta. Duas batidas em sentidos opostos se cancelam, então ninguém fica preso num pinball.
+- **Profundidade nos carros que vêm de frente.** Cada carro do trânsito é desenhado com o **ângulo** que a posição dele pede (calculado do deslocamento lateral e da guinada, arredondado a passos de 0,12 rad para não tremer), espelhado conforme o lado, com **sombra de contato** no asfalto embaixo dele e a névoa do trecho aplicada por cima — é isso que faz um carro pequeno lá na frente parecer longe, e não pequeno.
+- **Quatro rodas, não duas.** Os modelos de carro tinham roda só de um lado: agora cada eixo gera as duas rodas e os dois poços de roda, então no minigame — que é justamente onde se vê a traseira inteira — o carro tem as quatro.
+
+- **A cinemática fica com a tela inteira.** Os botões de **bolsa** e **guarda-roupa** moram nos dois cantos de baixo da cena — exatamente onde o minigame põe o velocímetro e a dica de comando. Como ninguém abre a mala no meio de uma ultrapassagem, eles saem de cena enquanto uma cinemática roda, junto com o crachá de saúde, e voltam sozinhos quando ela acaba. Os atalhos de teclado continuam valendo para quem insistir.
+- **É sempre opcional.** Quem decide é o mestre: a cada viagem, no pedido, ou de uma vez na preferência *Minigame: escolho a cada viagem / sempre / nunca · ir direto* da seção **Exploração → Viagem de carro**, onde também ficam o trecho fixo, a duração, quantos minutos do relógio a viagem custa, se a batida machuca e um botão **Ver o minigame agora** para você olhar sem viajar.
+
+### O som da estrada
+
+Som sintetizado na hora, sem um arquivo de áudio no projeto — como o resto do som do jogo. Quem liga é o minigame; quem manda é o mestre.
+
+- **O motor é o do carro.** A nota do escape não é inventada: sai da conta de verdade de um motor quatro tempos — `explosões por segundo = rotação / 60 × cilindros / 2`. Por isso o **sedã oficial** (seis cilindros) soa mais cheio e mais agudo que o **hatch velho** (quatro pequeno, filtro mais aberto, mais chiado de admissão) e a **picape** (diesel: quatro cilindros girando baixo, muito ruído, sub pesado e um tremor de marcha lenta de propósito). Quatro osciladores por motor — corpo, batimento levemente desafinado, harmônica e sub — passando por um passa-baixa que abre com a carga: acelerando o som abre, aliviando o pé ele fecha.
+- **Caixa de cinco marchas.** A rotação sobe dentro da marcha e **cai na troca**, com um estalo seco do câmbio — é isso que faz soar como carro e não como sirene subindo. Da primeira à quinta, a faixa vai de 900 a 5.600 rpm, e cada modelo estica de um jeito.
+- **Pneu, vento e canto.** Ruído marrom filtrado para o rolamento (grave no asfalto, **agudo e alto no cascalho** quando o carro sai da pista), ruído branco em banda para o vento, que só aparece de verdade em velocidade, e um canto de pneu estreito que entra na guinada forte ou na freada.
+- **Sete trilhas, uma por trecho**, no mesmo formato das músicas do mapa do mestre: *Rodovia* (rock de viagem, 138 bpm), *Serra* (96, mais aberta), *Terra* (112, seca), *Noite* (124, sintética), *Chuva* (88, pesada), *Neblina* (72, um drone que nunca resolve) e *Cidade* (150, baixo sincopado e bateria cheia). Elas entram na lista de músicas do mapa do mestre como qualquer outra.
+- **Ajustável no mapa do mestre.** Seção **Som → SOM DA ESTRADA**: liga e desliga tudo, escolhe a trilha (*combinar com o trecho*, uma fixa, ou **silêncio**) e regula em separado **motor**, **pneus e vento**, **efeitos** (batida, cascalho, buzina) e **música da viagem**. Tem um botão **Ouvir o motor** para testar o timbre de cada carro sem viajar. A escolha fica salva na sessão. Quando a viagem acaba, a música que estava tocando na mesa **volta sozinha**.
+
+### O carro se estraga, e a velocidade é que manda
+
+A lataria é **um número de 0 a 100** e tudo o mais sai dele — o que se vê, o que atrapalha dirigir e a hora em que o carro simplesmente não liga. É um número e não uma lista de peças quebradas porque, na mesa, o que se pergunta é “dá para ir com esse carro?”.
+
+- **O que machuca não é bater, é a velocidade com que se bate.** Na batida, o jogo calcula a **velocidade de fechamento** (a diferença entre os dois carros; de frente, a soma) e ela decide tudo. Três faixas bem separadas: **ROÇOU** (até um quarto do máximo: um susto, tinta arranhada, nenhum ferimento), **BATIDA** e **BATIDA FEIA**. Encostar num carro que vai quase junto custa 1 ou 2 pontos de lataria; jogar o carro contra um de frente, no talo, custa quase quarenta — e de frente pesa mais 35%. Nenhuma batida sozinha destrói o carro: sempre sobra o que consertar.
+- **E no personagem também.** Só impactos acima do limiar viram ferimento, e a força do hematoma sai da força da batida. Acima de 85% de fechamento já não é hematoma: **corta**. Um passeio de raspadinhas não machuca ninguém. (O mestre continua podendo desligar isso.)
+- **Aparece no carro**: riscos na lataria a partir de 12, chapa cedida a partir de 28, **farol estourado** aos 35 (e o carro deixa de jogar luz no chão), para-brisa trincado aos 50, ferrugem no fundo dos amassados aos 60 e **fumaça saindo do capô** aos 70. Nada disso é ruído: o amassado é um relevo de ondas nas coordenadas do modelo, e o dano é o nível do mar — por isso o estrago de um carro é sempre o mesmo, só cresce, e o mesmo shader serve para a cena, a miniatura do painel e a traseira dentro do minigame.
+- **Atrapalha dirigir**: menos aderência, menos velocidade máxima e uma **puxada constante para um lado** (a geometria torta), que é sempre o mesmo lado para o mesmo carro. Cascalho em alta também castiga o carro, devagar.
+- **Aos 90, acabou**: a chave gira, o motor rateia e morre — e a viagem não sai. Se ele chegar aos 90 **no meio da estrada**, a viagem para onde está (ver *a pane*, adiante). Só volta se alguém consertar.
+- **O mestre manda**: cursor **Lataria** no bloco CARROS da seção Exploração, com o estado escrito ao lado (*Inteiro · sem uma marca*, *Amassado · chapa cedida, um farol estourado*…), e um botão **Consertar**. Quem está na mesa conserta com o **kit de reparo** (adiante).
+
+### O porta-malas
+
+Guardar coisas no carro é duas grades lado a lado e arrastar — sem menu, sem botão “transferir”.
+
+- **Abre pelo carro**: botão **PORTA-MALAS** no painel de dentro do carro (ou pelo bloco CARROS do mapa do mestre, que mostra quanta coisa tem dentro). A bolsa abre junto, encostada ao lado — as duas grades à vista é o que torna o arrasto óbvio.
+- **Três caminhos para a mesma coisa**: arrastar de uma grade para a outra (nos dois sentidos, com o mesmo fantasma verde/vermelho da bolsa), **dois toques** no item para mandá-lo para o outro lado, e dentro do porta-malas o item se arruma como na bolsa (<kbd>R</kbd> gira, <kbd>Esc</kbd> cancela).
+- **Cada modelo leva o que leva**: o hatch velho tem 6×4, o sedã oficial 8×5 e a picape uma **caçamba** de 10×6.
+- **O que está em uso não entra**: a roupa vestida, o taco na mão, o suprimento no meio de um curativo — o porta-malas recusa e diz por quê.
+- **A carga mora no carro, não na janela**: ela fica nos dados da pista do veículo, então é salva com a sessão, sobrevive a trocar de cena e **viaja junto** quando o carro vai para outra cena.
+
+### O kit de reparo
+
+Consertar deixou de ser só um botão do mestre: virou uma coisa que o personagem **faz**, com as mãos, ao lado do carro.
+
+- **É um item da bolsa** (2×2, pilha de 2, tipo *Peça*): caixa de ferramentas com chaves, fita e uma lata de massa. Quem entrega é o mestre, pela seção **Itens** do mapa do mestre, como qualquer outro item.
+- **Só perto do carro, na cena.** O menu do item só oferece *Consertar o carro* quando há um carro a menos de 170 px do personagem; fora disso ele explica o porquê. O personagem **anda até o carro**, se ajoelha, encaixa a chave e trabalha.
+- **O tempo depende do estrago.** A animação tem uma volta de chave a cada meio segundo, e o número de voltas sai da lataria: um arranhado sai em poucos segundos, um carro batido leva mais de vinte. É tempo de animação, não do relógio do mestre — a pane já custou o que tinha de custar.
+- **Um kit, um conserto**: o kit é gasto na confirmação e tira 40 pontos de lataria. Um carro morto (90) volta a andar; um carro destruído precisa de dois.
+
+### A moto, e o personagem pilotando
+
+Três motos entram no jogo pela mesma porta dos carros: **Moto de rua** (naked, com bauleto e carenagem baixa), **Moto de trilha** (roda grande, bico alto, protetor de mão, postura em pé) e **Moto cargueira** (baú de entrega quadrado, a silhueta mais pesada das três). Elas têm cor, placa, sujeira, faróis, pisca, lataria de 0 a 100, manejo, e **baú 4×3** como porta-malas — tudo pelo mesmo sistema, sem nada em paralelo.
+
+- **O piloto é o personagem, e está DENTRO da geometria.** A moto é traçada por raio, como os carros; o piloto foi modelado junto, em sólidos (coxa, canela, bota, tronco, braço com o cotovelo para fora, luva, pescoço, cabeça). Por isso ele ganha de graça a perspectiva do minigame, a luz do trecho, a névoa da distância e a sujeira — nada disso precisou ser imitado à mão. Um piloto colado por fora erraria em todas.
+- **Quem está em cima é o personagem modular, não um boneco parecido com ele.** O guarda-roupa entrega duas coisas ao veículo, e não uma: as **cores** com que o personagem está pintado agora e a **forma** do que ele está vestindo. As cores redefinem as rampas do piloto em tempo de execução (foi preciso ensinar a paleta a refazer uma rampa sem perder o id nem as variantes de luz). A forma **reconstrói o corpo dele**: cada troca de roupa joga fora a geometria das motos e monta outra.
+  - **O cabelo é o do personagem**, com volume por penteado — raspado não desenha nada, o cacheado engorda a cabeça, o comprido e a trança **caem por fora das costas** (por dentro elas ficariam enterradas no tronco e não apareceriam), o rabo sai atrás, o coque sobe.
+  - **O que ele veste aparece**: chapéu de aba, boné, gorro, coroa de flores; capuz **caído na nuca** (levantado só na capa e no manto, senão qualquer moletom apagava a cabeça do personagem); capa que voa aberta; mochila com alças por cima dos ombros; ombreiras; cachecol; e vestido, saia ou batina, que trocam as duas pernas por uma barra de pano.
+  - **De regata, o braço é pele**; de colete sobre a regata também. Quem dá manga é o casaco, se tiver; senão a blusa; senão ninguém.
+  - Tudo isso é **sólido dentro da geometria da moto**, não adesivo colado depois — por isso ganha a mesma perspectiva, a mesma luz e a mesma névoa que o resto.
+- **A moto nasce SEM capacete.** O que ela tem de diferente é mostrar o personagem do jogador, e uma casca lisa por padrão jogaria isso fora. O capacete continua a um clique no mapa do mestre, moto por moto — e aí cabelo e chapéu somem debaixo dele.
+- **A moto deita na curva, para o lado de quem guia.** Carro guina; moto **inclina**. A geometria ganhou um segundo giro, em torno do eixo do comprimento e da linha onde o pneu toca o chão — então a moto e o piloto se deitam como um corpo só, e o pneu continua no asfalto em vez de a moto flutuar. Quem manda na inclinação é o volante; a curva da pista entra por cima, com teto. O sinal é convenção interna (rol negativo deita para a direita, porque o z cresce para a esquerda da câmera) e convenção é o que se inverte sem ninguém notar — foi o que aconteceu: guiando para a direita ela deitava para a esquerda. Agora os testes **medem o desenho**, e não o sinal: o topo da moto está à direita ou à esquerda do pé dela?
+- **Moto parada não tem ninguém em cima.** Na cena, a mesma moto é desenhada sem o piloto — quem pilota está andando pelo cenário.
+- **Por dentro é outra interface.** Em vez de para-brisa, capô, volante e rádio, quem sobe na moto vê o **céu aberto** com a pista fugindo, os dois **espelhos**, o **guidão** atravessado com os punhos e as manetes, o **painel redondo** (velocímetro grande, giro pequeno, as luzes de bateria, óleo, farol e pisca) e o **tanque** entre os joelhos, na cor da moto, com a placa gravada na tampa. Os controles são os mesmos: dar a partida, partir, faróis, pisca, buzina, baú.
+- **A estrada é a mesma, e o tamanho também.** Todo veículo é desenhado pela **distância** — a mesma projeção da pista —, com uma única régua convertendo unidade de modelo em unidade de estrada. Antes o enquadramento de cada classe saía de uma conta própria (a moto pela altura, o carro pela largura) e ela chegava gigante ao lado dos carros do trânsito. Agora os tamanhos relativos saem certos sozinhos, inclusive para qualquer veículo que o jogo ganhe depois.
+- **A pane sabe o nome de quem parou.** Uma bicicleta furava o pneu e a tela anunciava que *o carro* parou. Cada modelo diz como se chama, com artigo e flexão (`a moto`, `da bicicleta`, `o carro quebrado`), e os avisos do minigame, os recados da viagem e o painel do destino usam isso.
+
+### A bicicleta, e o que a batida faz com quem não tem lataria
+
+Um modelo só, e ele **pedala**. A bicicleta entra pela mesma porta das motos — enquadra pela altura, deita na curva, leva o personagem modular em cima, tem painel de guidão — e é diferente no que precisa ser.
+
+- **A pedalada é geometria, não um sprite trocado.** É o único veículo do jogo cuja forma muda com o tempo: o pedivela gira, e a perna deixa de ser uma pose fixa para virar uma corrente — quadril (fixo no selim) → joelho → **pé em cima do pedal, onde quer que ele esteja agora**. O joelho sai da lei dos cossenos e dobra para a frente. Oito fases por volta, cada uma construída uma vez e guardada.
+- **Ela anda com a DISTÂNCIA, não com o relógio.** Quem é lento pedala devagar; quem para de andar para com o pé onde estava. A cadência sai em ~80 pedaladas por minuto na velocidade de cruzeiro, que é cadência de gente.
+- **O corpo balança.** Vista de trás, a perna que sobe e a que desce são espelho uma da outra: meia volta de pedal dava o desenho idêntico e a pedalada aparecia com metade da cadência. Quem pedala de verdade rola o corpo para o lado da perna que empurra — dois pixels de balanço quebram a simetria *e* são o que faz a pedalada parecer esforço.
+- **Devagar sem ser chata, e devagar de verdade.** Ela anda a ~35 km/h em vez de 180 — um quinto do carro, e bem abaixo da moto —, e a **pista encolhe junto**: mesma duração de tela, mesmo número de acontecimentos, só que devagar e com menos chão vencido. Quem conta as horas da viagem é o mapa do mestre, não o minigame. O empurrão também é o dela: aceleração e freio saem do teto do próprio veículo, senão era um motor de carro aplicado a um quinto da velocidade e a bicicleta saltava ao máximo em meio segundo, sem peso nenhum na perna. Guiar, não: a toda ela é tão ágil quanto o carro a toda — lenta basta.
+- **Sem motor.** Não tem chave (o botão é *PÉ NO PEDAL*), não tem placa, o porta-malas é a **cesta** (3×2), e o som não tem ronco nenhum: fica o pneu, o vento e o **tique da corrente**, um por volta de pedal.
+
+**Os modelos batidos.** Num carro a batida é pintura: a chapa cede e enferruja. Numa moto ou numa bicicleta quase não há chapa — o que a batida faz é **torcer o que é fino e arrancar o que é pendurado**, e isso é geometria. Três faixas (inteira até 34, batida até 69, acabada acima disso), para o estrago ler como estrago e não como tremedeira:
+
+| | batida | acabada |
+|---|---|---|
+| **Moto** | guidão torto, espelho da direita pendurado, escapamento no lugar | espelho da direita **arrancado**, o da esquerda pendurado, guidão muito torto, ponteira caída, roda de trás empenada |
+| **Bicicleta** | guidão torto, cesta amassada, paralama tortos, selim de lado | guidão muito torto, uma manete quebrada, aro em **oito**, cesta esmagada, refletor perdido |
+
+*(De quebra: o dano não entrava na chave do cache da vista girada. O carro amassado na cena aparecia inteiro na estrada — agora não mais.)*
+
+**E dói mais.** Num carro quem bate primeiro é a lataria: o para-choque amassa, o cinto segura, e o corpo leva o que sobra. De moto e de bicicleta não há lataria nenhuma — quem bate é a pessoa, e ela ainda cai e desliza no asfalto. O mesmo impacto vale **1,75×** de moto e **2,1×** de bicicleta, a ordem das partes atingidas muda (a canela e o braço vêm antes do tronco), e acima de meia força entra a **raspada no asfalto** como ferimento à parte. O **capacete** desconta a cabeça, e só ela: é exatamente para isso que ele serve, e é o que faz valer a pena o mestre marcar aquela caixinha.
+
+### Quando o carro morre na estrada: a pane e as sete beiras
+
+Se a lataria bate no limite **no meio da viagem**, a viagem não chega: ela **para onde estava**.
+
+1. **Na pista**, o motor engasga três vezes e morre (som próprio), o volante fica solto, o carro **rola até parar** e escorre para o acostamento, soltando fumaça. A tela escurece só depois que ele para de vez: *O CARRO PAROU · A viagem acaba aqui, na beira da estrada*.
+2. **No mapa do mestre** abre um **pedido de pane**, no mesmo lugar dos outros pedidos — mas aqui não se escolhe para onde ir, e sim **onde eles ficaram parados**. O pedido diz em que trecho foi e quanto do percurso eles venceram (*“Quebrou em neblina de madrugada · venceram 43% do percurso”*), e não tem botão de desistir: o carro já parou.
+0. **Os cantos da cena, em mapa aberto.** Numa cena montada, as pontas da tela caem **fora** do mapa — a perspectiva encolhe a sala, e quem cobre aquele pedaço é a parede lateral. Numa beira de estrada não há parede, e aquele canto ficava com o **quadro anterior**: quem chegasse vindo do escritório via uma tira do assoalho de madeira dele no canto da estrada. Num mapa aberto o chão agora **continua** — a linha é repetida para os lados até encher a tela, que é o que o campo faz de verdade além do fim do mapa.
+3. **As sugestões são sete beiras de estrada novas**, uma para cada trecho do minigame, e **a do trecho em que eles estavam vem primeiro** — depois as outras seis e, por último, a oficina. Um clique cria a cena, leva o personagem para lá e **estaciona o carro quebrado do lado dele**, com a lataria acabada, o motor desligado e o que estava no porta-malas.
+4. **O relógio cobra só o pedaço que eles andaram**, e as batidas do caminho doem igual.
+
+| A beira | O que tem nela |
+| --- | --- |
+| **Beira de rodovia** (rodovia ao sol) | campo aberto até o horizonte, defensa metálica com olhos de gato, placa de destino e marco de quilômetro |
+| **Curva da serra** (serra ao entardecer) | serra em camadas contra o céu de fim de tarde, barranco de corte com sulcos de enxurrada, pinheiros, pedra caída e a defensa amassada de quem não fez a curva |
+| **Estrada de terra** | chão batido com sulcos de pneu, cerca de arame com mourão torto, porteira de sítio, árvore seca |
+| **Rodovia à noite** | um poste de sódio e o resto no escuro, olhos de gato acesos na defensa, placa de destino que só se lê no farol |
+| **Rodovia na chuva** | pista molhada com poça refletindo o céu, defensa enferrujada, e a cena **já nasce chovendo** |
+| **Estrada na neblina** | madrugada sem luz, pinheiros que aparecem em cima da hora, cerca molhada, poste antigo piscando |
+| **Entrada da cidade** | muro pichado, primeiro poste do bairro, ponto de ônibus e os prédios começando no fundo |
+
+Cada beira é uma **cena montável de verdade** (`mestre/cenas-estrada.js`), com as peças novas de estrada (`mestre/modulos-estrada.js`): horizonte que abre o céu, pista no chão, defensa (de longe e perto da câmera), placa de rodovia, marco de quilômetro, cerca de arame, mato do acostamento, mato na frente da câmera, árvore de beira, pedra de barranco e barranco de corte. A estrada **continua para os dois lados**, com passagem de cada lado, então dá para sair da pane a pé — e a placa, o marco e a defensa se examinam, cada um com o que contam. O mestre pode editar tudo no montador, como qualquer outra cena.
+
+## Ficha da mesa
+
+O sistema de ficha de "O Céu tem Fome": cinco atributos em cartas de tarô, vinte e oito perícias, vitalidade ligada ao corpo do jogo, uma vela de sanidade que queima para sempre e um d20 animado. A folha usa Canvas 960×540; a árvore de habilidades tem interface HTML responsiva e pixel art por código em resolução própria.
+
+Ela abre em dois lugares, com a mesma tela:
+
+- **No jogo**, com **C** (ou o botão *Abrir as fichas*). A ficha ocupa a janela inteira numa camada própria e **o HUD sai da frente** — nenhum botão, painel ou barra do jogo fica por cima. **Esc** ou **C** fecha e tudo volta.
+- **Na página do jogador**, `ficha.html`. É a página que o mestre manda para a mesa. O botão *Ficha para os jogadores* abre uma cópia; `pixel_art/tools/build_ficha_solo.js` gera **`Claude outputs/ficha-do-jogador.html`**, um arquivo único com tudo dentro, que se manda por Discord, e-mail ou pendrive. Abre com dois cliques, sem a pasta do jogo, sem servidor e sem internet.
+
+### Árvore de perícias
+
+Em **Perícias**, clique em uma perícia para abrir a árvore radial. São **28 nós visuais**, um por perícia, em quatro setores: **Cosmo** azul, **Senso** vermelho, **Substância** verde e **Máquina** dourada. O olho violeta central é decorativo. Taumaturgia continua na ficha e não possui setor de perícias.
+
+Cada nó tem uma ilustração própria de **64×64**, desenhada por código, dentro de uma moldura de **96×96**. As três marcas indicam Treinada, Veterana e Expert. A planta mede 1200×1200, com centro em 600×600, raios de 360 e 510 e seis graus entre setores. As ramificações são decorativas; perícias diferentes não dependem umas das outras.
+
+A visão geral se ajusta à janela. **Aproximar**, **Afastar** e **Ver tudo** controlam quatro distâncias; arraste o fundo para explorar. Tab percorre os controles, as setas selecionam nós e Esc fecha a busca ou retorna à ficha. A busca oferece 28 resultados possíveis, sem repetir graus. A piscada do olho respeita movimento reduzido.
+
+O painel mostra descrição, bônus atual e requisitos do próximo grau. **Aprender/Aprimorar** custa um ponto por grau, exige o grau anterior e atributo de pelo menos 1, 2 ou 3. **Devolver um grau** recupera um ponto sem afetar outras perícias. Expert mostra **Grau máximo**. Uma perícia aprendida continua acesa quando o próximo grau está bloqueado. **Gerenciar árvore** permite redistribuir tudo com confirmação; o mestre ajusta a reserva, que começa em 18 pontos.
+
+Arte em `mestre/ficha-pericias-arte.js`, rasterização e molduras em `mestre/ficha-icones.js`, apresentação em `mestre/ficha-arvore-dom.js` e `.css`, regras em `ficha.js`. Não usa bibliotecas, fontes remotas ou imagens externas.
+
+- `node pixel_art/tools/build_ficha_solo.js` atualiza `Claude outputs/ficha-do-jogador.html`, com todos os módulos e artes embutidos.
+- `node pixel_art/tools/build_pericias_gallery.js` gera a prancha comparativa e os 28 SVGs em `pixel_art/generated/skill-tree/`.
+- Testes: `node tests/ficha.test.js`, `node tests/arvore.test.js`, `node tests/browser-ficha.test.js` e `node tests/browser-skill-tree.test.js`. Os testes de navegador usam Playwright/Chrome; `PLAYWRIGHT_MODULE` aceita o caminho da instalação local.
+- Capturas desktop, celular, zoom, jogo e pranchas 64×64/128×128 ficam em `pixel_art/generated/skill-tree/`.
+
+### Os cinco atributos
+
+Cada um é uma carta, com o naipe, a cor e a moldura do baralho do jogo. Clicar na carta rola o d20 daquele atributo.
+
+| Carta | O que é | Naipe |
+| --- | --- | --- |
+| **TAUMATURGIA** (TMG) | a arte de realizar milagres | roxo · *o milagre* |
+| **COSMO** (CSM) | inteligência e percepção | azul · *a mente* |
+| **SENSO** (SNS) | carisma e vontade | vermelho · *a vontade* |
+| **SUBSTÂNCIA** (SBT) | destreza e vigor | verde · *o corpo* |
+| **MÁQUINA** (MQN) | força e constituição | ouro · *a força* |
+
+**Compra de pontos:** cada atributo começa em **1** e o jogador tem **4 pontos** para distribuir. **Deixar um atributo em 0 devolve 1 ponto** — sacrificar uma parte de si é como se compra o resto. O **pico é 7**. Ao lado de cada carta a ficha escreve a consequência do número: `CD 11 · 50%`.
+
+**Resolução:** rola-se **1d20** e cada ponto do atributo **tira 1 da dificuldade**. A **dificuldade base é do mestre** (padrão 14: atributo 0 acerta 35%, atributo 7 acerta 70% — ninguém fica seguro, ninguém fica inútil); ele ajusta na própria ficha, de 6 a 20, e o valor viaja para as páginas dos jogadores. **20 é triunfo** e **1 é desastre** — e um desastre cobra da vela.
+
+**Perícias:** as vinte e oito, agrupadas pelos atributos novos, na segunda página (botão *PERÍCIAS* ou **Tab**). Cada uma tem quatro graus — destreinada, treinada, veterana e expert — e **cada grau tira mais 1 da dificuldade**. TAUMATURGIA não tem perícia: quem faz milagre não treina, paga.
+
+### O que o corpo sofre
+
+- **VITALIDADE** nasce do **vigor de SUBSTÂNCIA**: `10 + SBT×2`. Não é uma segunda barra de vida — ela **conversa com o sistema de saúde por região**: a ficha lê a condição do corpo que já existe, e o vigor **muda quanto cada região aguenta**. A régua tem dois pregos, e os dois são escolha de mesa: **SBT 1**, o ponto que todo mundo tem de graça, é o **corpo inteiro (100%)**, e **SBT 7**, o pico do atributo, **fecha em 300%** — o triplo. Entre eles a reta sobe **um terço por ponto**, e desce até o único ponto abaixo do padrão: quem **zera** SUBSTÂNCIA para comprar outra coisa fica com **67%** — o sacrifício custa um terço de si.
+
+| SBT | 0 | **1 (padrão)** | 2 | 3 | 4 | 5 | 6 | **7 (pico)** |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Quanto cada região aguenta | 67% | **100%** | 133% | 167% | 200% | 233% | 267% | **300%** |
+
+  Isso muda o **teto**, e não a saúde: um corpo de 300 inteiro está tão sadio quanto um de 100 inteiro — só tem três vezes mais o que perder. Por isso **tudo que lê o corpo lê em fração**: a condição (o crachá, a barra, a ficha e a lista do elenco) é quanto deste corpo ainda está de pé; o mancar começa quando a perna cai abaixo de **45% dela**; a visão é a porcentagem do próprio olho; e o piso da fome é os **%** que o painel promete. Régua fixa num teto que deixou de ser fixo é bug silencioso: um `< 100` chegou a pintar de cego o olho de quem nunca levou um arranhão, e a atrasar a perna de quem estava inteiro. O pico, note, só se alcança **sacrificando** outros dois atributos até zero — o corpo de 300 é de quem abriu mão de ser outra coisa.
+
+- **SANIDADE** é uma **vela de seis pontos**, com a chama em quatro estágios (alta, baixa, bruxuleando, apagada). Quando apaga, o personagem **não morre**: ganha uma **MARCA** permanente, o **teto da vela cai 1 para sempre** e ela reacende pela metade. As marcas ficam escritas na ficha e nunca saem.
+- **CORRUPÇÃO** sobe com o **milagre**, que cobra dos dois lados: um ponto de vela agora e um ponto de corrupção para sempre. A corrupção pilota o renderizador — grão, scanlines, a carta de TAUMATURGIA tremendo — e, no alto, **a ficha passa a mentir**: números trocam por um instante.
+
+### O d20
+
+O número é sorteado **antes** da animação: a animação é encenação, não mecânica, e por isso o clique pode **pular** sem trapaça. São ~61 quadros — antecipação, arremesso com troca de face a cada dois quadros, desaceleração com esperas crescentes, dois quiques, assentamento, três quadros de congelamento com clarão e a revelação com o número passando do tamanho e voltando. O dado é um hexágono com o triângulo do meio de ponta para baixo e três faces em volta — a silhueta fica parada e só a repartição de claro e escuro muda, que é o que o olho lê como rotação. O número é **contornado**, e não chapado: ele cai sobre facetas claras e escuras conforme o dado gira, e só o contorno o deixa legível nas duas. A sombra embaixo encolhe e se esgarça quando ele sobe. Sucesso é seco; falha é suja e treme a tela.
+
+### A arte
+
+Nove cores e nada mais, tiradas das cartas do baralho pixel a pixel: seis da moldura magenta, iguais em todo naipe, e três do naipe. As figuras são desenhadas numa tela **três vezes maior** e trazidas de volta por um **filtro de maioria com peso no centro, na luz e na raridade** — detalhe fino sobrevive, pixel solto é descartado e nenhuma cor fora da paleta é inventada.
+
+Desenhar grande e diminuir só funciona com três regras, e foi o que custou:
+
+**Espessura é em pixels da tela grande.** Uma linha de 1 px desenhada em triplo vira um terço de pixel na redução: some, ou pior, vira chuvisco. Por isso todo traço, anel e cápsula recebe a espessura em `F` — `F` é um pixel no resultado, `2F` são dois. A faixa de meio-tom do sombreamento e a espessura do contorno e da oclusão também crescem com `F`, senão em triplo a figura vira só claro e escuro sem meio.
+
+**Sobre o breu, a escada de tons é invertida.** O tom escuro de cada naipe é quase preto: ele serve de sombra *dentro* de uma forma acesa e nunca de traço solto no escuro — raiz, arco ou cinta desenhada nele simplesmente não existe na carta. Então a silhueta nasce no tom **vivo**, o brilho é a faixa estreita que a luz pega e o meio é a sombra. Pintar a silhueta no meio, como se pinta no claro, afunda a figura no preto da janela.
+
+**A silhueta primeiro, e o vão é vazio.** Cada figura se desenha na ordem: a forma inteira num tom só, o volume de uma luz só (cima à esquerda, terminador ondulado), os vãos **cavados depois do volume** — e cavados de verdade, em vazio, não pintados de preto, senão a luz de borda não acha a silhueta e os quatro dedos voltam a ser um bloco —, a gravura, e a luz de borda por último, numa camada à parte para não acender o que está atrás. No máximo quatro acentos, cada um com corpo: acento fino demais não é acento, é sujeira.
+
+**As cinco figuras são animadas.** Cada uma tem um ciclo de dezesseis quadros: a auréola da TAUMATURGIA respira e o olho da palma pisca; o olho de COSMO fecha inteiro por um instante, a íris gira e o poço ondula; o coração de SENSO **bate duas vezes** — a segunda mais fraca, como coração de verdade —, a chama da vela treme e a gota escorre; a planta de SUBSTÂNCIA balança e uma seiva acesa desce de vértebra em vértebra; e no punho de MÁQUINA um reflexo atravessa o metal acendendo o nó e o rebite por onde passa, com as brasas subindo do pulso. Os cinco correm em **compassos diferentes** de propósito, e a corrupção acelera todos.
+
+Isso custa quase nada: cada quadro nasce uma vez, passa pelo pipeline de 3× e fica guardado. Como só **um desenho novo por quadro de tela** é permitido, os oitenta quadros nascem espalhados ao longo do primeiro ciclo e o pior quadro fica em 10 ms, com folga nos 16 que os 60 fps dão.
+
+O resto também se mexe: as cartas são **dadas na mesa** quando a ficha abre, **levantam** com o cursor em cima, **viram** quando o valor muda e **piscam** quando são roladas; a cinza desce no ar, uma lanterna atravessa a mesa e a corrupção corrói o que estiver na tela.
+
+### Compatibilidade das perícias
+
+A API conserva os identificadores `grau:<pericia>:<nivel>`: são **84 estados lógicos** agrupados em **28 nós visuais**. Os graus I, II e III reduzem respectivamente a dificuldade do teste em 1, 2 e 3. A mesma ilustração identifica a perícia em todos os graus.
+
+Fichas antigas mantêm seus graus e a reserva configurada pelo mestre. Compras de brotos, veredas, marcos, milagres, enxertos, Quedas e Coroas deixam de contar como gasto. A devolução ocorre pelo recálculo do saldo: a migração não acrescenta pontos à reserva e pode rodar várias vezes sem duplicar créditos. Exportação, recarga e códigos compartilhados preservam as perícias. As outras funções da ficha, incluindo os milagres de Taumaturgia, continuam separadas.
+
+### Do jogador para o mestre
+
+O jogador preenche e clica em **COPIAR CÓDIGO**: sai um texto de ~340 caracteres que sobrevive a qualquer mensageiro. O mestre cola com **COLAR FICHA** e a ficha entra na mesa — se já existir, atualiza no lugar. Quem chega nunca toma o palco: o **EM CENA** continua sendo escolha do mestre. E se jogador e mestre estiverem no mesmo navegador, a ficha aparece lá sozinha, sem código nenhum.
+
+## O elenco da mesa
+
+Cada ficha é uma **pessoa**, e cada pessoa tem **corpo**. A mesa deixou de ter uma ficha e um personagem: agora o mestre monta o elenco, põe em cena quem participa e **assume o controle** de qualquer um deles clicando com o **botão direito** no personagem, dentro da cena.
+
+### Uma ficha, uma pessoa
+
+Além dos atributos e das perícias, cada ficha passa a guardar o que faz dela alguém dentro do cenário:
+
+| | |
+| --- | --- |
+| **Onde está** | a posição e o lado para onde olha, **por cena** — quem ficou no Escritório não aparece na estrada |
+| **A aparência** | o guarda-roupa dela: cabelo, roupa, pele, olhos. Um personagem novo nasce **vestido**, com uma cara tirada do id da ficha — a mesma ficha é sempre a mesma pessoa em qualquer navegador, e duas fichas nunca saem gêmeas |
+| **As feridas** | o corpo dela, região por região, com os cortes, as fraturas, o sangue, a infecção e os membros que faltam |
+| **A fome e a sede** | o metabolismo dela; o ritmo e as regras continuam sendo da mesa |
+
+**Só um desses corpos é simulado**: o do personagem **controlado**. Ele é o corpo do jogo — ragdoll, bolsa, tratamento, exploração, saúde, fome, tudo o que já existia. Os outros são **figurantes**: esqueleto próprio, respiração própria, roupa própria, de pé na mesma linha do chão, sem física e sem custo de simulação.
+
+### Assumir o controle
+
+Clique com o **botão direito** num personagem, dentro da cena:
+
+- **Assumir o controle** — o corpo do jogo passa a ser o dele
+- **Abrir a ficha** — a ficha dele, em tela cheia
+- **Trazer para perto** — ele vem para o lado de quem você controla
+- **Virar de lado** · **Tirar de cena**
+
+Assumir é uma **troca**, e não um teletransporte: o que está no corpo agora (posição, lado, roupa, feridas, fome) vai para o registro de quem sai, e o registro de quem entra veste o corpo. Quem saiu **continua lá, de pé, onde estava** — agora como figurante, com a mesma roupa e as mesmas feridas. É por isso que dá para ir e voltar quantas vezes a cena pedir sem ninguém perder nada no caminho. O vigor de **SUBSTÂNCIA** de quem entrou passa a valer no mesmo instante: a ficha muda de dono **antes** do corpo, porque é ela que manda na resistência de cada região.
+
+Um personagem que nunca foi jogado chega **inteiro**. Arraste qualquer um pela cena para posicioná-lo. O nome aparece acima da cabeça **só para o mestre**, e o menu também: os dois são desenhados depois do quadro que vai para a tela dos jogadores — eles veem a pessoa, não a plaquinha com o nome dela.
+
+### A seção ELENCO no mapa do mestre
+
+Uma linha por pessoa, com o **retrato** — o mesmo desenho que está no cenário, pelo mesmo rasterizador, para a lista nunca mentir sobre quem é quem —, o nome, onde ela está, a condição do corpo e os botões que o mestre aperta no meio de uma cena: **Assumir**, **Pôr/Tirar de cena**, **Trazer**, **Ficha** e **Excluir** (com confirmação, porque não volta). O campo do alto cria a ficha e já põe em cena.
+
+Excluir quem está sendo controlado **não deixa o corpo órfão**: o elenco passa o corpo para outra ficha antes de apagar o registro. O limite da mesa continua sendo **doze fichas**.
+
+Na ficha em tela cheia, o botão que dizia *POR EM CENA* agora diz o que faz — **ASSUMIR** — e ao lado aparece **+ EM CENA** para quem não está no corpo. Na página do jogador (`ficha.html`) nada disso existe: lá não há elenco, e a ficha continua sendo só a dele.
+
+### O que custa, e por que deixou de custar
+
+Desenhar um figurante custa ~10 ms. Cinco pessoas em cena derrubavam o jogo de 50 para **17 quadros por segundo** — inaceitável para uma mesa ao vivo. Então **o quadro é guardado por assinatura de pose**: tudo que muda o desenho — onde cada osso está, o desvio da roupa, o piscar, o olhar — vira uma chave em passos de um pixel, e dois quadros com a mesma chave reusam o mesmo desenho. Como a respiração é um ciclo, a partir da segunda volta o figurante praticamente não desenha mais nada: repete o que já tem guardado. Some-se a isso que quem está **fora do enquadramento** não anima nem desenha, e que figurante **não tem física de cabelo** — é ela que faria o desenho depender do tempo, e não só da pose. Com as três coisas, cinco pessoas em cena rodam nos mesmos quadros por segundo de uma.
+
+A **luz**, essa sim, é aplicada a cada quadro e nunca guardada junto com o desenho: o mestre muda a luz ao vivo, e todo mundo escurece com a sala no mesmo instante.
+
+### Arquivos e testes do elenco
+
+- `mestre/elenco.js` — o elenco: registros, figurantes, desenho, etiquetas, teste de clique pelo alfa do desenho, a troca de corpo e o menu do botão direito. Não conhece o documento nem o canvas do jogo: quem desenha passa um contexto, e quem troca de corpo passa um adaptador (`ler()` e `vestir()`), que é o que deixa o elenco rodar em node
+- `mestre/elenco-painel.js` · `mestre/elenco.css` — a seção ELENCO do mapa do mestre e o menu sobre a cena
+- `app.js` — as duas metades da troca (`ler()` e `vestir()`): a única parte que conhece o corpo do jogo por dentro
+- `wardrobe-ui.js` — `look()` e `vestirLook()`: a **pessoa** inteira (cabelo, barba, corpo, pele, olhos e roupa), e não só a trouxa de roupa que cabe na bolsa
+- `node tests/elenco.test.js` — a mesa sem navegador: criar, pôr em cena sem pisar em ninguém, assumir e voltar com as feridas de cada um, arrastar, a parede da sala, excluir sem deixar corpo órfão, o limite de doze e a sessão que volta
+- `node tests/browser-elenco.test.js` — no Chrome: a seção ELENCO e o retrato, a etiqueta acendendo sob o cursor, o menu do botão direito, assumir o controle, andar com a pessoa nova, machucá-la, voltar e conferir que o corte ficou com ela, tirar de cena, excluir com confirmação, cinco pessoas em cena acima de 30 fps e o elenco de volta depois de recarregar. Capturas em `pixel_art/generated/elenco/`
+
+## Fome e sede na aba de saúde
+
+Fome e sede deixaram de ser um medidor à parte: elas são o **metabolismo do corpo**, e a aba de saúde (<kbd>H</kbd>) mostra isso num bloco próprio, **NUTRIÇÃO E HIDRATAÇÃO**, com as duas barras, o estágio, quanto falta em minutos do relógio para piorar e o que a falta está fazendo no corpo agora. Nos dois sentidos:
+
+| Fome e sede → corpo | |
+| --- | --- |
+| **Cicatrização** | corte fechando, osso colando e hematoma sumindo passam pelo metabolismo: com fome vão a 40%, no último estágio **param** |
+| **Defesa** | desnutrida, a infecção avança até **duas vezes** mais rápido |
+| **Sangue** | o corpo **repõe** o volume perdido (~1,2% por minuto) — mas só com água e comida; desidratada, não repõe nada |
+| **Último estágio** | a sede tira volume de sangue e castiga os **rins**; a fome consome o corpo e o **fígado** sente primeiro — tudo com piso e desligável |
+
+| Corpo → fome e sede | |
+| --- | --- |
+| **Febre** (infecção e necrose) | dá sede, e um pouco de fome |
+| **Sangramento** e sangue a repor | dão **muita** sede: o corpo quer repor o volume |
+| **Suspender piora** (aba de saúde) | para a fome e a sede junto |
+| **Morte** | para as duas |
+
+O estado da aba de saúde passa a dizer *Faminta*, *Sedenta*, *Desidratada* ou *Faminta e desidratada* quando é a falta que manda, e o bloco lista em uma linha cada coisa que está acontecendo (“Sem água, o corpo não repõe o sangue perdido”, “Defesa baixa: infecção avança 60% mais rápido”, “O corpo pede mais água (febre, sangue a repor): sede 84% mais rápida”).
+
+## Comida, água e cozinhar
+
+39 itens novos (pão francês, pão de queijo, coxinha, bolacha, paçoca, banana, laranja, goiaba, manga, ovo, queijo, presunto, leite, miojo, marmita, milho de pipoca, pó de café, açúcar, sal, óleo, boldo, suco, água de coco, garrafa PET…), cada um com ícone próprio na bolsa e com o que faz pela fome e pela sede — e as bebidas que já existiam agora matam a sede de verdade.
+
+- **Água**: 13 fontes com interface própria — pia de banheiro, pia de cozinha, bebedouro de pressão, bebedouro de galão, torneira, filtro de barro, chafariz, bica, poço com manivela, córrego, cocho, chuveiro e **privada**. Cada uma tem qualidade (potável, duvidosa, contaminada): a duvidosa pode dar dor de barriga, a contaminada infecção intestinal, e a privada mata a sede mas dá enjoo e risco que cresce a cada gole. Dá para **encher a garrafa** (3 goles, guardando a qualidade da água) e **ferver** para limpar.
+- **Cozinhar**: fogão, fogareiro, chapa, fogueira, cafeteira, micro-ondas, sanduicheira, chaleira e bancada, cada uma desenhada de perto, com o caderno de receitas ao lado, a bandeja de ingredientes vinda da bolsa, verbos grandes por passo e a **barra de ponto** CRU → NO PONTO → QUEIMADO. 11 receitas: café coado, café com leite, ovo frito, pão na chapa, misto quente, miojo, marmita no micro-ondas, pipoca, chá de boldo, água fervida e soro caseiro. Sai ★, ★★ ou ★★★ — e às vezes sai **gororoba**.
+- **Conseguir comida**: geladeiras e armários com comida de verdade, carrinho de pipoca e de água de coco, estufa de lanchonete, balcão de padaria, mesa do cafezinho e ambulantes (pagos em moedas), árvores frutíferas que acabam e rebrotam com o tempo do jogo.
+
+### Comer e beber, animado
+
+`consumo.js` anima **28 jeitos** de levar algo à boca, e o item só sai da bolsa na hora do contato — mexer antes cancela sem gastar nada. Comer de pacote, barra, fruta, sanduíche, salgado, prato, tigela e pipoca; beber de lata (com o “pssht”), garrafa, copo, xícara (soprando antes), caixinha e coco; beber no bebedouro, na torneira com as mãos em concha, do balde do poço e **da privada** (com hesitação, nojo e ânsia); encher a garrafa; colher fruta no alto e no chão. E as reações: barriga roncando, boca seca, enjoo, vômito, tontura e arrepio. Tudo com o objeto desenhado na mão diminuindo a cada mordida, farelos, água, vapor e 26 sons feitos na hora.
+
+### Cada coisa com a sua interface
+
+Toda peça do jogo foi auditada para que **nada abra a interface de outra coisa** — a pia do banheiro abria como caixa de papelão, e agora abre como pia, com cuba, torneira, espelho e o armário embaixo. Oito interfaces novas entraram em `mestre/interacoes-moveis.js`: **estante** (cinco estilos, revistada prateleira por prateleira), **copiadora** (tampa, varredura, cópias, atolamento), **relógio de ponto** (cartões e o carimbo da hora), **caixa registradora** (teclas, bobina e a gaveta que salta), **leito hospitalar** (manivela, prontuário, embaixo da cama), **monitor cardíaco** (seis ritmos e alarme), **negatoscópio** (chapas de raio-X e a lupa) e **jukebox** (moeda, braço mecânico e o disco girando). Dezoito peças do montador foram apontadas para a interface certa.
+
+### Arquivos desta fase
+
+| Arquivo | Função |
+| --- | --- |
+| `mestre/cenas-prefeitura.js` | Corredor do 2º andar, Escadaria do 1º andar e Saguão do térreo |
+| `mestre/cenas-prefeitura-salas.js` | Sala do arquivo, Banheiro dos funcionários e Copa |
+| `mestre/cenas-jorge-predio.js` | Corredor, Porta da frente, Copa e Banheiro do prédio do Jorge |
+| `mestre/cenas-ruas.js` | Praça da Prefeitura e Rua do prédio (exteriores com carro) |
+| `mestre/cena-campo.js` · `mestre/cena-estrada.js` | Campo de ruínas em perspectiva e a Estrada de terra |
+| `mestre/veiculos.js` | Carros em perspectiva: 3 modelos, cache, luz, sombra, a pista `veiculo` e o gancho `Veiculos.aoUsar` |
+| `comidas.js` | 39 itens de comida e bebida, efeitos no corpo, garrafas e a máquina de preparo |
+| `mestre/interacoes-comida.js` | Fontes de água, cozinha, servir, vendedores e árvores frutíferas, cada um com a sua interface |
+| `mestre/interacoes-moveis.js` | Estante, copiadora, relógio de ponto, caixa registradora, leito, monitor cardíaco, negatoscópio e jukebox |
+| `consumo.js` | Comer, beber, encher garrafa, colher e as reações do corpo: pose, objeto na mão, partículas e sons |
+| `necessidades.js` | Fome e sede: estágios, automático com prazo, condições, perda de vida com piso e sessão |
+| `mestre/painel-necessidades.js` | Seção **Fome e sede** do mapa do mestre e os dois ícones na tela |
+| `mestre/viagem-carro.js` | Interface do carro por dentro, a saída do mapa, o pedido de destino e a chegada com o carro junto |
+| `mestre/minigame-estrada.js` | O minigame de estrada em pseudo-3D: pista por segmentos, sete trechos, trânsito e clima |
+| `mestre/som-estrada.js` | O som da viagem: motor por modelo com caixa de marchas, pneu, vento, as sete trilhas e o mixer do mestre |
+| `porta-malas.js` | A segunda grade: a janela do porta-malas e o arrasto entre ela e a bolsa |
+| `mestre/modulos-estrada.js` | As peças da beira: horizonte, pista no chão, defensa (longe e perto), placa de rodovia, marco de km, cerca de arame, mato, árvore, pedra e barranco |
+| `mestre/cenas-estrada.js` | As sete beiras de estrada, uma por trecho do minigame, para as cenas de pane |
+| `mestre/veiculos.js` (motos) | Os três modelos de moto, o piloto modelado em sólidos, a inclinação na curva, e as cores **e a forma** do piloto vindas do guarda-roupa |
+| `mestre/veiculos.js` (bicicleta) | O quadro em tubos, a roda de raios, o pedivela girando e as pernas presas ao pedal; as três faixas de avaria de moto e bicicleta |
+| `wardrobe.js` (`formaDoPiloto`) | Traduz a roupa do personagem no que se vê dele de costas: volume do cabelo, chapéu, capuz, capa, mochila, ombreiras, cachecol, saia, luvas, braço nu |
+
+`node tests/cenas-prefeitura.test.js`, `tests/cenas-prefeitura-salas.test.js`, `tests/cenas-jorge-predio.test.js`, `tests/cenas-ruas.test.js` e `tests/cenas-campo.test.js`: cada cena nova em todas as luzes e climas, sem cinza neutro, sem buraco de parede fora das janelas, chão sem falha, arte determinística, textos desenháveis e as passagens do contrato ligadas nos dois sentidos. `node tests/veiculos.test.js`: os três modelos em salas e câmeras diferentes, a lateral com a largura projetada, a ponta trocando de lado, cache e sombra. `node tests/comidas.test.js`: itens, receitas, o preparo passo a passo, garrafas, as 13 fontes e o risco da privada. `node tests/consumo.test.js`: os 28 estilos, o item gasto só no contato, nenhum ângulo fora dos limites do rig e a mão chegando à boca. `node tests/necessidades.test.js`: os quatro estágios, o automático cumprindo o prazo, o relógio parado, os efeitos no corpo com piso e a sessão de ida e volta. `node tests/interacoes-moveis.test.js`: as oito interfaces novas desenhadas em todos os estados. `node tests/minigame-arte.test.js`: a arte do minigame nos sete trechos — a tela fecha sem buraco, **nenhuma cor fora da paleta**, o céu clareia na direção do horizonte, o campo distante perde contraste sem virar céu, quase nada de cinza neutro, os sete trechos visualmente distintos, cada peça com silhueta e três tons, e o quadro dentro do orçamento de 30 fps. `node tests/necessidades-saude.test.js`: o metabolismo escrito no corpo, a reposição de sangue só com água, a cicatrização e a infecção passando pela nutrição, a febre e o sangramento dando sede, a piora suspensa parando as duas e a ficha clínica da aba de saúde. `node tests/dano-carro.test.js`: a escada de estados da lataria, o limite em que o motor não pega mais, a lataria mudando de verdade na tela (com ferrugem só no fim e sem cinza neutro), a batida pesando pela **velocidade do impacto** e não pelo fato de bater (e de frente pesando mais que por trás, com o mesmo fechamento), o estrago tirando velocidade e puxando o carro para um lado numa reta, e o porta-malas de cada modelo. `node tests/browser-porta-malas.test.js`: no Chrome, o porta-malas abrindo ao lado da bolsa, o item indo e voltando arrastando entre as duas grades, os dois toques nos dois sentidos, o que está em uso sendo recusado, a carga morando no carro (e sobrevivendo a trocar de cena e a viajar), e o cursor da lataria, o motor que não pega e o conserto no painel do mestre. `node tests/percurso-viagem.test.js`: os quatro atalhos de percurso crescendo juntos em quilômetros, pista e relógio, o “Personalizado” respeitando os limites do minigame (e aceitando zero minuto de propósito), a escolha do pedido tendo a última palavra sobre o padrão do mestre, e a pista, os km e os minutos chegando inteiros no minigame. `node tests/som-estrada.test.js`: as sete trilhas registradas no mapa do mestre e bem formadas, o motor com as cinco marchas na ordem e a rotação caindo nas quatro trocas, a frequência de explosão batendo com a conta de cada modelo e saindo num oscilador de verdade, o cascalho mais alto fora da pista, e o mixer do mestre mandando em motor, pneus, efeitos, trilha e liga/desliga. `node tests/browser-viagem.test.js`: no Chrome, entrar no carro, girar a chave, o carro saindo do mapa, o pedido de destino no mapa do mestre com as sugestões, o percurso escolhido no pedido montando uma estrada mais longa e cobrando mais relógio (e o curto, menos, mesmo sem minigame), o minigame rodando com o modelo certo e obedecendo às setas, a chegada com o carro estacionado na cena nova, o tempo cobrado na fome, o bloco **SOM DA ESTRADA** na seção Som (trilhas, carros, cursores e a escolha ficando salva) e o bloco de nutrição na aba de saúde. `node tests/moto.test.js`: as três motos no mesmo sistema dos carros (cor, placa, dano, baú 4×3, manejo), o piloto dentro da geometria e ausente na moto parada, o capacete decidido pelo mestre mudando o desenho, as cores do personagem virando as rampas do piloto **sem tocar na tinta da moto**, a moto deitando em torno do ponto em que o pneu toca o chão (e o carro continuando sem inclinar), e o minigame inclinando com o volante e endireitando quando se solta. `node tests/browser-moto.test.js`: no Chrome, a moto no catálogo do mestre, parada sem piloto, o painel de quem está em cima dela, as cores do personagem indo para o piloto, o minigame com a moto deitando na curva e a chegada com ela junto. `node tests/transito-estrada.test.js`: o trânsito do minigame — cada trecho declarando em que tipo de via corre, ninguém andando fora de faixa nem na contramão sem motivo, a fila atrás de um carro lento, o desvio de quem está parado, a ultrapassagem que começa e termina, a freada quando não dá, e a colisão que separa em profundidade em vez de deixar um sprite por cima do outro. `node tests/pane-estrada.test.js`: o carro morrendo no meio da corrida (e a corrida parando onde estava, com `quebrou` e o quanto andaram no relatório), uma beira de estrada para cada trecho respeitando a luz, o fundo e as peças do seu mapa, a chuva nascendo chovendo, e as sugestões do pedido de pane começando pela beira do trecho certo. `node tests/browser-pane.test.js`: no Chrome, a viagem que não chega, o pedido de pane no mapa do mestre com o trecho e a porcentagem escritos, a beira daquele trecho como primeiro cartão, o carro quebrado (com a carga) estacionando lá junto com o personagem, e o kit de reparo consertando na beira. `node tests/browser-fase2.test.js`: no Chrome, a travessia do Escritório até a praça e de volta, os três carros com a dica e o gancho, beber no bebedouro, comer da bolsa (com o cancelamento preservando o item), o último estágio no corpo, o relógio do mestre comandando a fome, a pia abrindo como pia, o ícone de vida saindo da frente das interfaces e o fogão cozinhando.
+
+### Pesquisa desta fase
+
+- Carro em perspectiva de um ponto: a lateral perto em escala, o teto visto de cima e a ponta visível mudando de lado com a câmera — a mesma geometria dos cenários 2.5D de arcade dos anos 90.
+- Comer e beber em pixel art: a sequência olhar → levar à boca → morder → mastigar → engolir → voltar, com o item encurtando a cada mordida (*Stardew Valley* come em ~2,5 s e bebe em ~2 s).
+- Fome e sede com estágios e efeitos que o jogador sente antes de morrer: *Don't Starve*, *The Long Dark* e *Project Zomboid* — e a decisão de deixar o mestre no comando, como nas mesas de RPG.
+- Cozinhar como minijogo curto com janela de ponto e nota no fim: a barra de ponto das fritadeiras e chapas dos jogos de restaurante.
+- Água duvidosa, fervura e doença intestinal como consequência com tempo de incubação, em vez de dano imediato.
+- **Pixel art profissional**: matiz deslocando entre sombra e luz, rampas de valor, paleta limitada como restrição criativa, pontilhado para degradê (e nunca em objeto pequeno ou pele), silhueta legível antes do detalhe, contorno selecionado, textura por material e leitura em 1× ([Pixnote](https://pixnote.net/en/learn/tips/), [drububu](https://drububu.com/tutorial/pixel-art-and-dithering.html)).
+- **Moto em jogo de estrada com câmera atrás** (Hang-On e Super Hang-On, na Super Scaler da Sega): a leitura da curva vem quase toda da **inclinação** do conjunto moto+piloto, não da guinada; o piloto de verdade ainda se desloca para dentro da curva e mantém a cabeça mais em pé que a moto. Daí a decisão de dar à geometria um giro em torno do comprimento em vez de desenhar quadros de moto inclinada à mão.
+- **Perspectiva atmosférica e camadas** ([SLYNYRD, *Landscape Pixeling*](https://www.slynyrd.com/blog/2018/11/16/pixelblog-11-landscape-pixeling) e *Plant Life*): o que está longe perde saturação e contraste e sobe na direção do horizonte; o que dá profundidade é a **sobreposição** entre planos; folhagem se abstrai em cachos com propósito, nunca folha por folha — desenhar todas vira ruído.
+- **Trânsito em jogo de estrada** (OutRun e o que se escreveu sobre ele): faixa alvo separada da posição, janela de proximidade multiplicativa em z, bits de lado **vetando** o movimento em vez de empurrar, compromisso com a faixa começada para matar o tremor, carro seguindo o da frente copiando a **velocidade** (nunca a distância), e a colisão resolvida com perda de velocidade proporcional ao fechamento + separação em z + derrapagem lateral **com duração** (o `skid_counter` do OutRun) e perda de controle.
+- **Pseudo-3D de estrada** (Rad Racer, OutRun, Enduro): z-map por linha de varredura, curva por acúmulo de deltas, ladeira pela altura real do segmento entrando na projeção, `maxy` escondendo o que está atrás do morro, sprites escalados por `1/z` e neblina exponencial pontilhada.
+- **Fome e sede como metabolismo**, e não como um segundo medidor de vida: em *Project Zomboid* e *The Long Dark* a falta mexe na cura, na defesa e no sangue — foi esse caminho que ligou as necessidades à aba de saúde.
+
 ## Arquivos principais
 
 | Arquivo | Função |
@@ -386,13 +877,25 @@ Tudo — cenas montadas, ligações, trancas, eventos, preferências e o estado 
 | `mestre/scene-engine.js` | Motor de cenas: câmera em perspectiva, três camadas, paredes laterais, luz pré-calculada, transições e efeitos |
 | `mestre/cena-escritorio.js` | O Escritório, pintado inteiramente em código |
 | `mestre/painel-mestre.js` | Janela do mestre: biblioteca, prévia, ao vivo, mesa, tela e sessão |
+| `ficha-arvore-dados.js` | Catálogo dos quatro setores e descrições específicas das 28 perícias |
+| `ficha-grafo.js` | Monta os 84 graus das 28 perícias; dependências apenas entre graus da mesma perícia |
+| `ficha-planta.js` | Planta de 1200×1200 com 28 nós em dois arcos alternados, quatro setores e espaçamento livre |
+| `ficha.js` | Ficha: 5 atributos 0–7 por compra de pontos, 28 perícias, vela de sanidade, corrupção, d20, o motor da carta (estados, requisitos com motivo, investimento dentro e fora, cascata, poda) e o código que vai para o mestre |
+| `mestre/ficha-ui.js` | A tela da ficha em 960×540: layout, digitação, animação das cartas e o glitch da corrupção |
+| `mestre/ficha-arte.js` | A arte por código: plotador de 9 cores, cartas de tarô, ícones, d20 e o redutor que guarda o detalhe |
+| `mestre/ficha-dado.js` | A encenação do d20: 61 quadros, quique, congelamento e revelação, com pulo |
+| `mestre/ficha-arvore.js` | O desenho da carta: 28 glifos de perícia, as formas dos oito tipos em quatro estados, as seis cartas em miniatura, o olho animado do miolo, as fatias e as arestas |
+| `mestre/ficha-pagina.js` / `ficha.html` / `ficha.css` | A página que o jogador abre sozinho, e a camada da ficha dentro do jogo |
+| `mestre/elenco.js` | O elenco da mesa: um registro por ficha (onde está, roupa, feridas, fome), os figurantes com esqueleto próprio, o desenho guardado por assinatura de pose, as etiquetas só do mestre, o clique pelo alfa e a troca de corpo |
+| `mestre/elenco-painel.js` / `mestre/elenco.css` | A seção ELENCO do mapa do mestre, com retrato por pessoa, e o menu do botão direito sobre a cena |
+| `pixel_art/tools/build_ficha_solo.js` | Monta `Claude outputs/ficha-do-jogador.html`, o arquivo único que se manda para a mesa |
 | `assets.js` | Pixels dos PNGs embutidos para funcionar até por `file://` |
 | `wardrobe.js` | Guarda-roupa: 85 peças (cabelos, barbas, corpo, chapéus, roupas, acessórios), tons de pele, rampas de cor, fios das peças soltas e 25 conjuntos, 14 deles os personagens das imagens |
 | `itens-cena.js` | Itens soltos no cenário: física, paredes, clique/carregar/arremessar, golpe no corpo |
 | `armas.js` | O taco: empunhado no ombro, golpe com E, alcance do golpe |
 | `treatment-motion.js` | O gesto de usar um item: inclinar, agachar, sentar; IK dos dedos com limites; o braço que sobra |
 | `pixel_art/tools/audit_treatment.js` / `audit_treatment_sheet.py` | Auditoria dos 207 gestos de tratamento com os ângulos contra os limites |
-| `wardrobe-ui.js` / `wardrobe.css` | A janela do guarda-roupa em pixel art, com a personagem viva na prévia |
+| `wardrobe-ui.js` / `wardrobe.css` | A janela do guarda-roupa em pixel art, com o personagem viva na prévia |
 | `pixel_art/tools/audit_animations.js` / `audit_sheet.py` | Auditoria: renderiza cada clipe e imprime os ângulos das juntas por quadro, com o esqueleto por cima |
 | `pixel_art/tools/probe_ragdoll_limits.js` | Arremessa o ragdoll centenas de vezes e mede o ângulo máximo de cada junta |
 | `pixel_art/tools/render_showcase.js` / `preview_showcase.py` | GIFs do guarda-roupa, dos clipes corrigidos e dos tons de pele |
@@ -544,7 +1047,7 @@ As duas animações foram **copiadas quadro a quadro** das folhas de referência
 
 **A corrida** (`png/Run`) não é uma caminhada rápida: o apoio dura um terço do ciclo, os dois pés saem do chão entre as passadas, o corpo se inclina para a frente e os cotovelos ficam fechados em noventa graus com as mãos dentro da largura do peito. O ciclo segue a distância percorrida, não o relógio — uma passada são 96 px de cena —, então os pés não patinam em nenhuma velocidade.
 
-**A queda** (`png/Dead`) foi medida, não inventada: o ângulo entre o quadril e o peito de cada desenho da folha vai de 10° no primeiro a 85° no último, e essa curva está em `FALL_PITCH`. O giro é dividido entre dobrar na cintura e girar o corpo inteiro: no começo os pés ainda estão no chão e a personagem se dobra sobre eles; quando os pés saem, a raiz assume o giro e as pernas ficam para trás. Os pés que ainda sustentam peso são resolvidos por IK e não saem do lugar — o pé próximo sai no quarto desenho e o distante no sexto, como na referência. A cabeça gira menos que o peito para o rosto continuar legível até o fim.
+**A queda** (`png/Dead`) foi medida, não inventada: o ângulo entre o quadril e o peito de cada desenho da folha vai de 10° no primeiro a 85° no último, e essa curva está em `FALL_PITCH`. O giro é dividido entre dobrar na cintura e girar o corpo inteiro: no começo os pés ainda estão no chão e o personagem se dobra sobre eles; quando os pés saem, a raiz assume o giro e as pernas ficam para trás. Os pés que ainda sustentam peso são resolvidos por IK e não saem do lugar — o pé próximo sai no quarto desenho e o distante no sexto, como na referência. A cabeça gira menos que o peito para o rosto continuar legível até o fim.
 
 ### A batida no chão
 
@@ -555,7 +1058,7 @@ O que sai dali se espalha, cada parte no seu próprio ritmo:
 - as costelas **cedem** contra o chão e voltam — cerca de um pixel, mola dura e bem amortecida, porque mais que isso deixa de parecer carne contra o piso e passa a parecer o piso engolindo;
 - o corpo **desliza** e a fricção o para (≈1,7 px), e ele fica onde parou — escorregar para a frente e voltar não é como chão funciona;
 - os membros **tremem** em frequências diferentes umas das outras, senão o sprite inteiro balança como um objeto só;
-- o **cabelo** leva a maior parte, porque é a coisa mais solta nela: um impulso de verdade (velocidade, não força) na mecha simulada, com peso maior na ponta. Pico de 4,6 px na batida, 0,5 px depois de assentar — deitada de bruços o cabelo está no chão, e brisa não levanta o que o chão segura;
+- o **cabelo** leva a maior parte, porque é a coisa mais solta nela: um impulso de verdade (velocidade, não força) na mecha simulada, com peso maior na ponta. Pico de 4,6 px na batida, 0,5 px depois de assentar — de bruços no chão o cabelo fica no chão, e brisa não levanta o que o chão segura;
 - **a respiração perde o fôlego**: para no meio, volta curta e irregular — o próprio comprimento de cada respiração varia — e só recupera o ritmo ao longo de uns quatro segundos.
 
 Números conferidos: nos 15 desenhos de cada clipe, nada sai da tela e nada atravessa o chão; em 900 quadros de simulação com física do cabelo, os dois clipes mantêm o cabelo inteiro e **0 pixels transparentes cercados**; o impacto dispara exatamente uma vez por queda.
@@ -570,7 +1073,7 @@ Uma fileira de oito amostras redondas, cada uma já pintada com a cor que ela de
 
 **Os olhos são um pixel cada**, então são pintados um a um, não por rampa. A cor segue a íris quando o olhar a move para o outro lado da órbita — é o mesmo olho olhando para o outro lado, não outro olho —, e piscar continua fechando os dois. Tudo isso está no teste.
 
-**Nenhuma rampa encosta no corpo.** Era o contrário no começo: o short usava `denim_light`, que é a cor da íris, e as botas usavam o couro e um tom de pele. Tingir o short teria mudado os olhos dela. Agora cada rampa tem os seus próprios tons, e a validação reprova se alguma voltar a dividir um índice com o corpo — a única exceção é o cabelo, que é parte do corpo por desenho.
+**Nenhuma rampa encosta no corpo.** Era o contrário no começo: o short usava `denim_light`, que é a cor da íris, e as botas usavam o couro e um tom de pele. Tingir o short teria mudado a cor dos olhos. Agora cada rampa tem os seus próprios tons, e a validação reprova se alguma voltar a dividir um índice com o corpo — a única exceção é o cabelo, que é parte do corpo por desenho.
 
 Junto veio uma regra que faltava: **duas entradas de paleta não podem ter a mesma cor**. Todo PNG aqui é a fonte de verdade dos próprios pixels, e o *baker* volta de pixel para índice comparando a cor; duas entradas com o mesmo hex são a mesma entrada, uma delas vence em silêncio, e uma rampa construída sobre a perdedora nunca pode ser tingida. Foi exatamente o que aconteceu quando as botas pegaram emprestado o couro do rosto: uma bota tingia e a outra não. A validação agora reprova duplicatas.
 
@@ -578,7 +1081,7 @@ Restaurar tudo é um clique em **Cores originais**, e o teste confere que devolv
 
 ## As faixas
 
-Um slot, `wraps`, que enfaixa o corpo do pescoço para baixo — pescoço, tronco, abdômen, quadril, braços, antebraços, coxas e canelas —, deixando livres só as mãos, os pés e a cabeça. Sem esse detalhe a personagem vira múmia; com ele lê como alguém enfaixado.
+Um slot, `wraps`, que enfaixa o corpo do pescoço para baixo — pescoço, tronco, abdômen, quadril, braços, antebraços, coxas e canelas —, deixando livres só as mãos, os pés e a cabeça. Sem esse detalhe o personagem vira múmia; com ele lê como alguém enfaixado.
 
 **Por baixo de tudo.** Cada roupa é pintada sobre a pele do osso em que ela pendura; as faixas também, mas **meio passo mais abaixo** (`z` do osso + 0,25 contra + 0,5 das outras). Então camiseta, short, botas e manto passam por cima delas exatamente como pano passa por cima de um curativo. O teste diz isso de forma exata: **vestir as faixas só pode substituir pele nua** — qualquer pixel que já pertencia a outra roupa tem de sair do composto sem mudar, com a camiseta, com o kit inteiro e com o manto por cima.
 
@@ -592,7 +1095,7 @@ A validação confere que cada pixel de faixa cai dentro da silhueta do próprio
 
 Um slot de roupa novo, `cloak`, com duas camadas: `cloak_hood`, soldado à cabeça do mesmo jeito que o cabelo — mesma âncora, mesma transformação, então não tem como escorregar um pixel contra o rosto — e `cloak_body`, que pende do peito e é **simulado**.
 
-**Fica por cima de tudo.** Até aqui toda roupa era desenhada logo atrás do osso em que ela pendura, que é onde as outras devem ficar. O manto carrega um `z` próprio e entra na mesma ordem das peças do corpo, acima da camada mais alta — sem isso o cabelo e a camiseta sairiam por cima dele. Há um teste que, com a personagem em repouso (nada girado, nada balançando), exige que **cada pixel opaco do desenho do manto** chegue intacto ao raster final.
+**Fica por cima de tudo.** Até aqui toda roupa era desenhada logo atrás do osso em que ela pendura, que é onde as outras devem ficar. O manto carrega um `z` próprio e entra na mesma ordem das peças do corpo, acima da camada mais alta — sem isso o cabelo e a camiseta sairiam por cima dele. Há um teste que, com o personagem em repouso (nada girado, nada balançando), exige que **cada pixel opaco do desenho do manto** chegue intacto ao raster final.
 
 **O que é de dentro fica dentro.** A peça declara o que ela `covers`: a massa de cabelo das costas e os dois braços inteiros. Cabelo comprido vai dentro do capuz e braço vai dentro do manto — sem isso a mão cruza na frente do pano durante a corrida e lê como uma mão solta. A franja continua aparecendo, que é justamente o que se vê de quem está de capuz.
 
@@ -654,13 +1157,13 @@ Além do que já era verificado: nenhum sistema pode dormir (todos precisam disp
 
 ## Saúde e ferimentos
 
-O coração sobre a personagem acompanha a posição dela. Clique nele ou pressione **H** para abrir o painel; **Esc** fecha. O mapa frontal possui 19 regiões selecionáveis (incluindo os dois olhos) e mantém direita/esquerda anatômicas quando o sprite vira. Passe o mouse ou foque uma região para consultar seus ferimentos; clique para fixar a seleção e tratar. Os olhos têm branco lilás, pupila e rótulos D/E próprios.
+O coração sobre o personagem acompanha a posição dele. Clique nele ou pressione **H** para abrir o painel; **Esc** fecha. O mapa frontal possui 19 regiões selecionáveis (incluindo os dois olhos) e mantém direita/esquerda anatômicas quando o sprite vira. Passe o mouse ou foque uma região para consultar seus ferimentos; clique para fixar a seleção e tratar. Os olhos têm branco lilás, pupila e rótulos D/E próprios.
 
 - **Hematomas:** impactos acima de 65 unidades/s na física do ragdoll. Não provocam sangramento por si só.
 - **Cortes:** impactos acima de 145 unidades/s; causam marcas na pele, gotas/manchas no cenário e perda progressiva de sangue.
 - **Bandagem:** trata somente a região selecionada, estanca o sangramento e permite que o corte cicatrize lentamente. O jogo continua enquanto o painel está aberto. **Pausar saúde** congela a progressão fisiológica; pausar a animação não interrompe o relógio de saúde.
 - **Desmembramento:** impactos extremos acima de 330 unidades/s em extremidades podem separar a peça atingida e seus descendentes. A ligação é removida do ragdoll, as articulações internas do membro continuam funcionando e a peça pode ser arrastada separadamente. A lesão aberta fica na região que permaneceu ligada ao corpo. Cabeça, braços, antebraços, mãos, coxas, canelas e pés podem ser separados.
-- **Consequências:** lesões não fatais preservam a vida. A personagem anda mais devagar com lesões nas pernas e não pula com fraturas. Após perder partes das pernas, ou com múltiplas fraturas nas pernas sem tala, permanece em ragdoll ativo e pode se arrastar com A/D ou setas; os membros separados não recebem força dos controles. Decapitação, cérebro destruído e sangue zerado causam morte imediata. Zerar cabeça, pescoço ou tórax inicia falência progressiva, com janela crítica e agonia. Trocar de animação e restaurar a aparência não cura nem recria membros. Não há regeneração de membros; recarregue a página para iniciar outra sessão intacta.
+- **Consequências:** lesões não fatais preservam a vida. O personagem anda mais devagar com lesões nas pernas e não pula com fraturas. Após perder partes das pernas, ou com múltiplas fraturas nas pernas sem tala, permanece em ragdoll ativo e pode se arrastar com A/D ou setas; os membros separados não recebem força dos controles. Decapitação, cérebro destruído e sangue zerado causam morte imediata. Zerar cabeça, pescoço ou tórax inicia falência progressiva, com janela crítica e agonia. Trocar de animação e restaurar a aparência não cura nem recria membros. Não há regeneração de membros; recarregue a página para iniciar outra sessão intacta.
 
 Em **Ferramentas do mestre**, é possível aplicar hematoma, corte ou desmembramento diretamente para experimentar o sistema. Os valores são regras desta simulação, não dados médicos. Há um intervalo de proteção por região para que várias iterações do mesmo contato não multipliquem o dano. Sangue e ferimentos pertencem à sessão local; não há armazenamento entre recarregamentos.
 
@@ -670,7 +1173,7 @@ Validação: `node tests/health.test.js`. O teste de navegador `tests/browser-he
 
 ### HUD em pixel art, ossos e visão
 
-Arraste o HUD pela faixa superior **ARRASTE AQUI**. O painel permanece onde foi colocado ao fechar/abrir e é limitado à janela; também pode ser movido em passos de 8 pixels com as setas quando o cabeçalho está focado. O ícone de coração continua ligado à personagem.
+Arraste o HUD pela faixa superior **ARRASTE AQUI**. O painel permanece onde foi colocado ao fechar/abrir e é limitado à janela; também pode ser movido em passos de 8 pixels com as setas quando o cabeçalho está focado. O ícone de coração continua ligado ao personagem.
 
 Cada região tem **100 pontos de vida próprios**. Hematomas, cortes, fraturas e lesões oculares diminuem a vida somente nas regiões afetadas; a condição geral considera a média e o sangue restante. Ossos têm integridade própria. Impactos acima de 215 unidades/s podem fraturar ossos; **Imobilizar osso** aplica uma tala, alivia a limitação de mobilidade e permite recuperação lenta. A bandagem não cura fraturas.
 
@@ -763,7 +1266,7 @@ Cada clipe foi renderizado quadro a quadro com o esqueleto por cima e os ângulo
 - **Corrida inclinada para trás.** O sinal do tronco estava trocado: `-.13` inclinava a corredora 15° para trás, como quem cruza a linha de chegada. O torso desenhado já pende 8° para trás; caminhar e correr agora inclinam para a frente, e o queixo recolhe para o rosto continuar olhando adiante sem girar a unidade da cabeça (que fica abaixo de `UNIT_SNAP`, senão a franja pisca).
 - **Salto sem corpo.** Os joelhos dobravam 36° e nada mais. Agora o salto tem três formas misturadas pela fase (`amount`): subindo as pernas recolhem e os braços sobem com o impulso; no ápice o corpo relaxa; descendo as pernas esticam para o chão, ponta do pé primeiro, e os braços abrem para equilibrar. Antes de pular o corpo junta (quadril baixa, peito à frente, braços atrás) e o pouso absorve para a frente com os braços vindo à frente — não para trás, como estava.
 - **Deitada com as pernas no ar.** Os últimos desenhos da queda seguravam as duas pernas horizontais na altura do quadril, a oito pixels do chão, para sempre. Nos quatro últimos desenhos as pernas baixam e deitam no chão, a distante um pouco mais atrás.
-- **Levantar era a queda de trás para a frente.** Ela flutuava a 60° com as pernas atrás e nada embaixo. O clipe `levantar` (1,5 s) é um movimento com apoio: as mãos deslizam até embaixo dos ombros e empurram, o peito sobe, o corpo vem de quatro, um pé desce atrás e vem para a frente, os dois pés ficam embaixo dela num agachamento com as mãos ainda no chão, e ela se ergue. Os quadros de contato são resolvidos por IK no próprio rig na primeira vez em que o clipe toca, e um teste garante que nenhum pixel rígido passa do chão em nenhum instante.
+- **Levantar era a queda de trás para a frente.** O corpo flutuava a 60° com as pernas atrás e nada embaixo. O clipe `levantar` (1,5 s) é um movimento com apoio: as mãos deslizam até embaixo dos ombros e empurram, o peito sobe, o corpo vem de quatro, um pé desce atrás e vem para a frente, os dois pés ficam embaixo do corpo num agachamento com as mãos ainda no chão, e o personagem se ergue. Os quadros de contato são resolvidos por IK no próprio rig na primeira vez em que o clipe toca, e um teste garante que nenhum pixel rígido passa do chão em nenhum instante.
 - **Limites articulares.** `JOINT_LIMITS` em `skeleton.js` prende cada junta ao que um corpo permite — ombro 172° à frente e 57° atrás, cotovelo e joelho só para um lado (6° e 5° além do reto), quadril 120° à frente e 29° atrás, tornozelo 26° para cima e 52° para baixo, pescoço e coluna assimétricos — e `clampPose()` é a última coisa que a camada de movimento faz, depois de respiração, peso, gestos, dor e pouso. Quando um agachamento fundo exigiria mais dorsiflexão do que o tornozelo tem, o calcanhar levanta (`plantFoot`).
 - **Ragdoll dobrando ao contrário.** Os limites do ragdoll eram simétricos: um arremesso levava o ombro a 165° atrás das costas, o quadril a 107° atrás e o joelho e o cotovelo 10–14° ao contrário (medido por `pixel_art/tools/probe_ragdoll_limits.js`, 160 arremessos). Os limites agora são os mesmos do esqueleto; medido de novo, o pior caso fica em 67° no ombro e 33° no quadril, que é o transbordo de um solver iterativo num arremesso forte.
 - **Virar.** O sprite espelha num quadro, como pixel art vira, mas por 0,16 s o corpo se inclina na direção nova, o braço próximo cruza e a cabeça vira primeiro. O cabelo faz a parte dele sozinho: o vento que o puxa troca de sinal.
@@ -782,7 +1285,7 @@ Validação: `node tests/tratamento-anatomia.test.js` — os 207 gestos em sete 
 
 Nada aqui é PNG. `wardrobe.js` gera cada peça a partir de regras — quase sempre da silhueta da parte do corpo em que ela pendura, então a peça segue o membro em todos os clipes e em qualquer arremesso do ragdoll de graça — e a pinta como uma rampa de cinco tons que o sistema de tingimento já existente recolore. `Wardrobe.extend(asset)` devolve uma cópia do asset com as peças anexadas como camadas de roupa comuns (`bone`, `slot`, `z`, e quando é o caso `sway`, `drift` e `covers`), as cores novas na paleta e uma rampa por peça; o rig e o rasterizador não sabem a diferença entre uma peça desenhada e uma gerada. As referências: as bases de *paper doll* do Mana Seed e do gerador LPC (uma paleta universal por peça, toda peça deitada sobre os próprios quadros do corpo para qualquer combinação animar) e a ordem de camadas deles — chapéu sobre cabelo, cabelo sobre gola, manga distante atrás do tronco.
 
-**As peças** (85, em dez categorias). As 49 originais: cinco penteados além do original — chanel, rabo de cavalo, coque, curtinho, trança — que copiam pixel a pixel a franja, a têmpora e a mecha da bochecha desenhadas (esse é o rosto dela) e trocam só a massa de trás, na paleta do próprio cabelo, então a cor do cabelo tinge todos; chapéu de aba, boné, gorro, bandana, óculos, coroa de flores, tapa-olho; camiseta, regata, camisa com botões, blusa listrada, suéter de gola alta, moletom com capuz, vestido, top esportivo, armadura de couro, túnica; manto com capuz, jaqueta de couro, colete, sobretudo, capa, poncho; short, calça jeans, calça cargo, calça de moletom, legging, bermuda, saia, saia longa; botas, tênis, sandálias, botas altas, sapatilhas; faixas, cachecol, mochila, cinto, luvas, colar, ombreiras, bolsa a tiracolo. Oito tons de pele (a rampa de cinco tons da própria pele, tingida do meio-tom) e a cor dos olhos.
+**As peças** (85, em dez categorias). As 49 originais: cinco penteados além do original — chanel, rabo de cavalo, coque, curtinho, trança — que copiam pixel a pixel a franja, a têmpora e a mecha da bochecha desenhadas (esse é o rosto do personagem) e trocam só a massa de trás, na paleta do próprio cabelo, então a cor do cabelo tinge todos; chapéu de aba, boné, gorro, bandana, óculos, coroa de flores, tapa-olho; camiseta, regata, camisa com botões, blusa listrada, suéter de gola alta, moletom com capuz, vestido, top esportivo, armadura de couro, túnica; manto com capuz, jaqueta de couro, colete, sobretudo, capa, poncho; short, calça jeans, calça cargo, calça de moletom, legging, bermuda, saia, saia longa; botas, tênis, sandálias, botas altas, sapatilhas; faixas, cachecol, mochila, cinto, luvas, colar, ombreiras, bolsa a tiracolo. Oito tons de pele (a rampa de cinco tons da própria pele, tingida do meio-tom) e a cor dos olhos.
 
 **As peças novas, para os personagens das imagens enviadas**: cortes masculinos pintados do zero sobre o crânio (raspado com degradê, curto social, mullet com a massa de trás no fio do rabo, cacheado curto, careca), uma categoria de **barba** (rala, cheia, cavanhaque, bigode, longa trançada — com fio de física — todas na paleta do cabelo, então a cor do cabelo tinge a barba), uma categoria de **corpo** (*forte*: ombros, peito e braços mais largos, pintados na rampa da pele, então o tom de pele tinge junto), máscara de borboleta (asas maiores que a cabeça, nervuras, o corpo sobre os olhos), elmo com chifres, óculos escuros (óculos e tapa-olho passaram para os extras, para empilhar com chapéus), scrubs de gola V, macacão de presídio com o remendo, batina com colarinho e faixa, armadura de placas com ombreiras de espigões e a gema, mortalha de fantasma (capuz, corpo, barra que pinga e some, pernas escondidas), paletó aberto no V da camisa, jaqueta militar de botões dourados, jaqueta aberta com gola contrastante, calça social, grevas de placas, gravata (com fio), corrente com cruz, coldre, luvas sem dedos, arnês de tiras, braçadeira, tatuagens, crachá, estetoscópio, cinto de ferramentas, faixa no braço. Catorze conjuntos novos no grupo **Personagens** reproduzem as imagens: Veterano, Taco rosa, Cavaleiro negro, Fantasma, Anão, Borboleta, Chapéu vermelho, Jaqueta verde, Presidiário, Regata azul, Forte, Couro vermelho, Médico e Padre.
 
@@ -790,7 +1293,7 @@ Nada aqui é PNG. `wardrobe.js` gera cada peça a partir de regras — quase sem
 
 **Física nas peças soltas.** Saia, vestido, saia longa, sobretudo, capa, poncho, cachecol, rabo de cavalo e trança carregam um fio verlet próprio (`strands` na definição da peça), com rigidez, arrasto, dobra e vento próprios, entregue ao rasterizador como deslocamento por linha — o mesmo mecanismo do cabelo e do manto. `HairSway` aceita perfis embutidos e vento por fio, então uma peça nova não precisa mexer em `motion.js`. Um vestido esvazia a categoria das pernas (`excludes`); um penteado esconde as camadas do cabelo desenhado (`covers`); o poncho esconde os braços dentro dele.
 
-**A janela** (`wardrobe-ui.js`) é um painel de 320×248 desenhado a 1× e mostrado ampliado, na tinta roxa do HUD, com as categorias em duas fileiras, três fileiras de ladrilhos com paginação (‹ ›) e os conjuntos em dois grupos (CONJUNTOS e PERSONAGENS): à esquerda a personagem viva — respirando, piscando, com o cabelo e o pano se mexendo — que pode andar no lugar para julgar a física; à direita as categorias, as peças como ladrilhos recortados das próprias peças sobre uma silhueta apagada, uma fileira de cores por peça (mais um seletor livre e "original"), e os conjuntos prontos: Original, Exploradora, Cidade, Inverno, Verão, Noite, Festa, Andarilha, Sobrevivente, Campo e Heroína, mais os catorze personagens. SORTE sorteia. O que foi vestido fica salvo neste navegador; na primeira visita ela começa vestida com o conjunto Original, e a roupa vestida aparece na bolsa como um item (veja *Bolsa de suprimentos*). **G** abre, **Esc** fecha, **Restaurar aparência** despe.
+**A janela** (`wardrobe-ui.js`) é um painel de 320×248 desenhado a 1× e mostrado ampliado, na tinta roxa do HUD, com as categorias em duas fileiras, três fileiras de ladrilhos com paginação (‹ ›) e os conjuntos em dois grupos (CONJUNTOS e PERSONAGENS): à esquerda o personagem vivo — respirando, piscando, com o cabelo e o pano se mexendo — que pode andar no lugar para julgar a física; à direita as categorias, as peças como ladrilhos recortados das próprias peças sobre uma silhueta apagada, uma fileira de cores por peça (mais um seletor livre e "original"), e os conjuntos prontos: Original, Expedição, Cidade, Inverno, Verão, Noite, Festa, Estrada, Sobrevivente, Campo e Batalha, mais os catorze personagens. SORTE sorteia. O que foi vestido fica salvo neste navegador; na primeira visita o personagem começa vestido com o conjunto Original, e a roupa vestida aparece na bolsa como um item (veja *Bolsa de suprimentos*). **G** abre, **Esc** fecha, **Restaurar aparência** despe.
 
 Prévias: `generated/roupas.gif` (os 25 conjuntos parados, andando e correndo), `generated/roupas_contact_sheet.png`, `generated/peles.gif` (tons de pele e penteados). Validação: `node tests/guarda-roupa.test.js` (cada peça renderiza e deixa o corpo em paz, os penteados mantêm a franja pixel a pixel, tingir e destingir é exato, tom de pele não toca as roupas, vestido exclui pernas, conjuntos válidos, peças em todos os clipes e num arremesso, saia, cachecol e rabo balançam e assentam; camisa e jeans sem fio, gravata e barba longa com fio), `node tests/roupa-acompanha-corpo.test.js` (a roupa segue o corpo pixel a pixel em todo quadro) e `node tests/browser-wardrobe.test.js` (Chrome: abre em G, conjunto veste, vestido tira a calça, tinge e destinge, cabelo, pele, olhos, extras um a um, prévia andando com física, Esc, vestida na corrida, lembrada ao recarregar, sorteio e limpar; capturas em `pixel_art/generated/wardrobe/`).
 

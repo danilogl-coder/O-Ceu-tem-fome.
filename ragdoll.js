@@ -44,6 +44,11 @@
     constructor(rig, {autoRecover = true} = {}) {
       this.rig = rig; this.active = false; this.grab = null; this.autoRecover = autoRecover;
       this.recovery = null; this.settledTime = 0; this.readyToStand = false;
+      /* Enquanto isto esta ligado, bater no chao nao machuca. E o que separa o
+         MESTRE encenando (arrastar, jogar, empilhar um corpo) do JOGO
+         acontecendo (uma queda de verdade, um carro, um taco). Quem liga e
+         desliga e a ferramenta do mestre; o corpo nao sabe a diferenca. */
+      this.semDano = false;
     }
     start({ground, vx = 0, vy = 0} = {}) {
       this.ground = ground ?? this.rig.baseline+1;
@@ -412,7 +417,7 @@
           b.omega=clamp((b.angle-b.oldAngle)/h,-angular,angular);
           if(b.contact) {
             if(!b.detached)this.contacts++;
-            if(this.onImpact && !b.detached && !powered && b.impactSpeed>=65)this.onImpact(b.name,b.impactSpeed);
+            if(this.onImpact && !b.detached && !powered && !this.semDano && b.impactSpeed>=65)this.onImpact(b.name,b.impactSpeed);
             const r=rotate(b.contact.x,b.contact.y,b.angle);
             const normal=b.vy+b.omega*r.x;
             if(normal>0) {
@@ -457,14 +462,40 @@
     // walks, turns, falls or recovers. No impulses feed back into the owner.
     class DetachedLimbs {
       constructor(rig){this.rig=rig;this.groups=[];this.grab=null;}
-      add(source,names,origin,facing){
+      /* A APARENCIA de um pedaco e congelada no instante em que ele se separa.
+
+         Antes, todo grupo era desenhado com o rig do jogo — o corpo de quem o
+         mestre esta controlando. Bastava assumir OUTRO personagem para que o
+         braco decepado de alguem trocasse de pele, de roupa e de feridas:
+         ele era redesenhado com a tinta de quem entrou no corpo. Um pedaco
+         que ja saiu do corpo nao tem mais dono, e nao pode mudar de cara.
+
+         Entao cada grupo ganha o RIG DELE, tingido uma unica vez com a tinta
+         de quem o perdeu, mais uma copia da roupa e das feridas daquele
+         instante. Custa um esqueleto por decepamento — e decepamento e coisa
+         rara — e em troca o pedaco continua sendo de quem era. */
+      rigDoGrupo(dye){
+        const Rig=scope.Skeleton2D;
+        if(!Rig||!this.rig?.asset)return null;
+        let rig;
+        try{rig=new Rig(this.rig.asset);}catch(e){return null;}
+        if(dye&&Object.keys(dye).length)try{rig.restyle({...dye});}catch(e){}
+        rig.physical=true;
+        return rig;
+      }
+      add(source,names,origin,facing,aparencia=null){
         const ids=new Set(names),solver=new CharacterRagdoll(this.rig,{autoRecover:false});
         solver.bodies=new Map(names.map(name=>[name,{...source.bodies.get(name),external:false,detached:true}]));
         solver.joints=source.joints.filter(j=>ids.has(j.a.name)&&ids.has(j.b.name)).map(j=>({...j,a:solver.bodies.get(j.a.name),b:solver.bodies.get(j.b.name)}));
         solver.ground=source.ground;solver.active=true;
         for(const name of names)source.bodies.get(name).external=true;
         source.joints=source.joints.filter(j=>!ids.has(j.a.name)&&!ids.has(j.b.name));
-        const group={solver,origin:{...origin},facing,names:ids,last:null};this.groups.push(group);
+        const dye=aparencia?.dye?{...aparencia.dye}:(this.rig?.dye?{...this.rig.dye}:null);
+        const group={solver,origin:{...origin},facing,names:ids,last:null,
+          rig:this.rigDoGrupo(dye)||this.rig,
+          outfit:new Set(aparencia?.outfit||[]),
+          feridas:aparencia?.wounds?new Map([...aparencia.wounds].map(([n,p])=>[n,{...p}])):null};
+        this.groups.push(group);
         if(source.grab&&ids.has(source.grab.body.name)){
           solver.grab={...source.grab,body:solver.bodies.get(source.grab.body.name)};source.grab=null;this.grab=group;
         }
@@ -481,8 +512,8 @@
       release(){this.grab?.solver.release();this.grab=null;}
       snapshot(){return this.groups.flatMap(g=>[...g.solver.bodies.values()].map(b=>({name:b.name,x:g.origin.x+(g.facing>0?b.x:64-b.x)*2,y:g.origin.y+b.y*2,angle:b.angle})));}
       draw(ctx,camera,options){
-        const rig=this.rig;
         for(const g of this.groups){
+          const rig=g.rig||this.rig;
           const saved={world:rig.world,physical:rig.physical,drift:rig.drift,sway:rig.sway};
           rig.world=new Map(rig.world);rig.physical=true;rig.drift=new Map();rig.sway=new Map();
           try{
@@ -494,7 +525,11 @@
             }
             const view={x:Math.floor(l)-3,y:Math.floor(t)-5,width:Math.ceil(r)-Math.floor(l)+6,height:Math.ceil(bottom)-Math.floor(t)+10};
             const hidden=new Set(rig.layers.filter(b=>!g.names.has(b.name)&&!(g.names.has('head')&&b.name.startsWith('hair_'))).map(b=>b.name));
-            const pixels=rig.rasterize({...options,hidden,viewport:view,facing:g.facing});
+            /* A roupa e as feridas sao as DAQUELE instante, e nao as do corpo
+               que o mestre estiver controlando agora. So o raio-X vem de fora:
+               ele e uma lente do mestre, nao a aparencia do pedaco. */
+            const pixels=rig.rasterize({...options,outfit:g.outfit||options?.outfit,
+              wounds:g.feridas||options?.wounds,hidden,viewport:view,facing:g.facing});
             const buffer=g.buffer??=document.createElement('canvas');buffer.width=view.width;buffer.height=view.height;
             buffer.getContext('2d').putImageData(new ImageData(pixels,view.width,view.height),0,0);
             const x=Math.round(g.origin.x-camera+(g.facing>0?view.x:64-view.x-view.width)*2),y=Math.round(g.origin.y+view.y*2);

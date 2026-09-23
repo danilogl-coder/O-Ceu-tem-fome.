@@ -1,5 +1,5 @@
 'use strict';
-// Mapa do mestre in Chrome, the window itself: seven sections in a rail with
+// Mapa do mestre in Chrome, the window itself: ten sections in a rail with
 // pixel icons, arrow keys between them, the live header and the rail staying
 // put while only the section scrolls, blocks that fold and stay folded after
 // a reload, the chips under the live header (clue count, sound, players'
@@ -22,10 +22,10 @@ const output=path.resolve(__dirname,'../pixel_art/generated/painel');fs.mkdirSyn
     await page.locator('#introMaster').click();await wait(300);
     assert(await page.locator('#gmPanel').isVisible(),'the intro button opens the master map');
 
-    // The rail: nine sections, icon and name each, one selected.
+    // The rail: twelve sections, icon and name each, one selected.
     const rail=await P(()=>[...document.querySelectorAll('.gm-rail [data-gm-tab]')].map(b=>({id:b.dataset.gmTab,label:b.textContent.trim(),icon:!!b.querySelector('svg path')?.getAttribute('d'),selected:b.getAttribute('aria-selected')})));
-    assert.deepEqual(rail.map(r=>r.id),['cenas','montar','ambiente','som','mesa','explorar','itens','tela','sessao']);
-    assert.deepEqual(rail.map(r=>r.label),['Cenas','Montar','Luz e clima','Som','Pistas','Exploração','Itens','Jogadores','Sessão'],'sections named in plain words');
+    assert.deepEqual(rail.map(r=>r.id),['cenas','montar','ambiente','som','mesa','explorar','elenco','ferramentas','itens','necessidades','tela','sessao']);
+    assert.deepEqual(rail.map(r=>r.label),['Cenas','Montar','Luz e clima','Som','Pistas','Exploração','Elenco','Ferramentas','Itens','Fome e sede','Jogadores','Sessão'],'sections named in plain words');
     assert(rail.every(r=>r.icon),'every section has its pixel icon');
     assert.equal(rail.filter(r=>r.selected==='true').length,1);
     await page.locator('#gmTab-cenas').focus();
@@ -34,6 +34,10 @@ const output=path.resolve(__dirname,'../pixel_art/generated/painel');fs.mkdirSyn
     assert(await page.locator('#gmSound').isVisible()&&await page.locator('#gmMusic').isVisible(),'sound and music live in Som');
     await page.keyboard.press('ArrowUp');
     assert(await page.locator('#gmPresets').isVisible()&&await page.locator('#gmProps').isVisible()&&await page.locator('#gmTeleport').isVisible(),'light, props, effects and the character in Luz e clima');
+    await page.locator('#gmTab-necessidades').click();
+    assert(await page.locator('#gmNecfomeBarra').isVisible()&&await page.locator('#gmNecsedeBarra').isVisible(),'fome e sede têm seus medidores');
+    await page.locator('[data-nec-estagio="fome:2"]').click();
+    assert.equal(await P(()=>demo.necessidades.nome('fome')),'Fome forte','o mestre põe o personagem no estágio que quiser');
     await page.locator('#gmTab-tela').click();
     assert(await page.locator('#gmDocTitle').isVisible()&&await page.locator('#gmCurtainMode').isVisible(),'the document and the curtain are in Jogadores');
     await page.locator('#gmTab-sessao').click();
@@ -41,7 +45,7 @@ const output=path.resolve(__dirname,'../pixel_art/generated/painel');fs.mkdirSyn
 
     // Switching sections does not resize the window or move the rail.
     const frame=()=>P(()=>({h:Math.round(document.querySelector('.gm-window').getBoundingClientRect().height),rail:Math.round(document.querySelector('.gm-rail').getBoundingClientRect().top)}));
-    const frames=[];for(const id of ['cenas','montar','ambiente','som','mesa','explorar','itens','tela','sessao']){await page.locator('#gmTab-'+id).click();frames.push(await frame());}
+    const frames=[];for(const id of ['cenas','montar','ambiente','som','mesa','explorar','elenco','ferramentas','itens','tela','sessao']){await page.locator('#gmTab-'+id).click();frames.push(await frame());}
     assert(frames.every(f=>f.h===frames[0].h&&f.rail===frames[0].rail),`the window keeps its size and the rail stays put (${JSON.stringify(frames)})`);
 
     // Only the section scrolls: the live header and the rail stay where they are.
@@ -107,7 +111,7 @@ const output=path.resolve(__dirname,'../pixel_art/generated/painel');fs.mkdirSyn
     await page.setViewportSize({width:1440,height:900});
 
     assert.deepEqual(errors,[],'no page errors');
-    console.log('PASS: the page is O Céu tem Fome and its button opens the map; nine sections in a rail with pixel icons and arrow keys; sound, document, curtain and session in their own sections; the window keeps its size between sections; only the section scrolls under a fixed live header and rail (the whole window on a phone lying down); clue filter; folded blocks and the last section survive a reload; chips for clues, sound, players clicks, curtain and document');
+    console.log('PASS: the page is O Céu tem Fome and its button opens the map; ten sections in a rail with pixel icons and arrow keys; sound, document, curtain and session in their own sections; the window keeps its size between sections; only the section scrolls under a fixed live header and rail (the whole window on a phone lying down); clue filter; folded blocks and the last section survive a reload; chips for clues, sound, players clicks, curtain and document');
   }catch(error){console.error(error);if(errors.length)console.error('Page errors:',errors);process.exitCode=1;}
   finally{await browser.close();}
 })();

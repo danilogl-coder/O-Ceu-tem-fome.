@@ -5,7 +5,7 @@
 
    Referências que moldaram o sistema:
    - Portas ao fundo dos side-scrollers 2.5D: chegou na porta, aparece a dica
-     e ↑ entra (a mesma tecla que “olha para cima”); clique leva a personagem
+     e ↑ entra (a mesma tecla que “olha para cima”); clique leva o personagem
      até a porta, como nas aventuras de apontar e clicar.
    - Regiões de teleporte das mesas virtuais (Foundry VTT: Teleport Token com
      região de destino, escolha entre vários destinos): cada passagem aponta
@@ -57,11 +57,25 @@
     [/apart|\bap\.? ?\d|residencia|\bcasa\b/, 'apartamento'], [/corredor|\bandar\b|\bhall\b/, 'corredor'], [/escada/, 'escadaria'], [/garagem|estacionamento|rampa/, 'estacionamento'],
     [/\brua\b|calcada|avenida/, 'rua'], [/beco|fundos|servico/, 'beco'], [/oficina|mecanic/, 'oficina'], [/\bloja|mercad|conveniencia|farmacia/, 'loja'], [/\bbar\b|boteco|fliperama/, 'bar'],
     [/enfermaria|\bleito|\buti\b|hospital|ambulatorio/, 'hospital'], [/portaria|recepcao do predio|lobby/, 'portaria'], [/abandon|ruina|buraco/, 'predio_abandonado']];
-  function sugestoesPara(clue, scene) {
+  function sugestoesPara(clue, scene, extra = {}) {
     const d = clue?.data || {}, tags = new Set((scene?.tags || []).map(plain)), modelo = scene?.modelo || '';
     const tem = t => tags.has(t) || modelo === t;
     let lista;
-    if (d.tipo === 'elevador') lista = ['portaria', 'corredor', 'estacionamento', 'escritorio'];
+    /* Pane na estrada: eles não escolhem para onde ir, eles param onde estão.
+       A primeira sugestão é sempre a beira do trecho que estava rodando no
+       minigame (ver cenas-estrada.js); depois vêm os lugares a que dá para
+       chegar a pé ou de guincho. */
+    if (extra.pane) {
+      const M2 = root.Montador;
+      const daEstrada = (M2 && M2.cenasDeEstrada) || [];
+      const doTrecho = M2 && M2.cenaDoTrecho ? M2.cenaDoTrecho(extra.trecho) : null;
+      const outras = daEstrada.filter(c => c.id !== doTrecho).map(c => c.id);
+      lista = [doTrecho, ...outras, 'oficina', 'rua'].filter(Boolean);
+      return [...new Set(lista)].filter(id => !M2 || M2.modeloDef(id)).slice(0, 8);
+    }
+    // Viagem de carro: o que dá para alcançar dirigindo, não o que tem atrás da porta.
+    if (clue?.type === 'veiculo' || d.tipo === 'carro') lista = ['rua', 'estacionamento', 'oficina', 'loja', 'predio_abandonado', 'beco'];
+    else if (d.tipo === 'elevador') lista = ['portaria', 'corredor', 'estacionamento', 'escritorio'];
     else if (d.tipo === 'escada') lista = d.sentido === 'desce' ? ['estacionamento', 'deposito', 'escadaria', 'predio_abandonado'] : ['escadaria', 'corredor', 'predio_abandonado', 'apartamento'];
     else if (d.tipo === 'lateral') lista = tem('exterior') || tem('rua') || tem('beco') ? ['rua', 'beco', 'estacionamento', 'predio_abandonado'] : ['corredor', 'escadaria', 'sala_administrativa', 'deposito'];
     else if (d.tipo === 'buraco') lista = ['predio_abandonado', 'deposito', 'beco', 'estacionamento'];
@@ -228,10 +242,10 @@
       if (cat !== 'passagem') return false;
       const d = clue.data || {};
       if (source === 'jogadores' && this.prefs.jogadoresAtravessam === false) { this.toast('SÓ O MESTRE', 'Peça ao mestre para atravessar', 'alerta'); return true; }
-      // Longe: a personagem anda até a passagem e tenta de lá.
+      // Longe: o personagem anda até a passagem e tenta de lá.
       const r = this.alcance(clue), pos = this.personagem;
       if (!perto && r && pos && (pos.x < r.x0 - 3 || pos.x > r.x1 + 3)) {
-        if (!pos.livre) { this.toast('NÃO CONSEGUE ANDAR', 'A personagem precisa estar de pé', 'alerta'); return true; }
+        if (!pos.livre) { this.toast('NÃO CONSEGUE ANDAR', 'O personagem precisa estar de pé', 'alerta'); return true; }
         const alvo = d.lateral ? r.cx : clamp(pos.x, r.x0 + 4, r.x1 - 4);
         this.andarAte(alvo, () => this.usar(clue, {source, perto: true}), d.lateral ? 12 : 4);
         return true;
@@ -282,7 +296,7 @@
       return {x, facing: x < mid ? 1 : -1};
     }
     /* Estado com que a cena de destino entra: o que ela tinha da última vez e
-       o horário (e a chuva) da cena de onde a personagem vem. */
+       o horário (e a chuva) da cena de onde o personagem vem. */
     estadoPara(sceneId) {
       const scene = root.SceneLibrary.get(sceneId), lembrado = this.estados[sceneId] || {}, atual = this.stage.state;
       const out = {preset: lembrado.preset, weather: lembrado.weather, props: lembrado.props ? new Set(lembrado.props) : undefined, clock: lembrado.clock};
@@ -353,7 +367,7 @@
         }
       } else this.empurrao = 0;
     }
-    /* ↑/W: usa o que estiver ao alcance. */
+    /* E: usa o que estiver ao alcance. */
     interagir({source = 'mestre'} = {}) {
       if (!this.perto || this.stage.busy || this.clues.busy) return false;
       return this.usar(this.perto, {source, perto: true});
@@ -368,6 +382,8 @@
         if (d.tipo === 'janela') return 'Pular a janela';
         return 'Entrar';
       }
+      const proprio = ClueTypes.get(clue.type)?.rotuloAcao;
+      if (proprio) { const r = typeof proprio === 'function' ? proprio(clue, this) : proprio; if (r) return r; }
       return {recipiente: 'Abrir', exame: 'Examinar', interruptor: this.stage.state?.props.has(d.alvo || 'luzes') ? 'Apagar' : 'Acender', tv: 'Ver TV', telefone: 'Usar o telefone',
         terminal: 'Usar o computador', computador: 'Usar o computador', maquina_venda: 'Comprar', fliperama: 'Jogar', painel_eletrico: 'Abrir o quadro', cofre: 'Abrir o cofre'}[clue.type] || 'Usar';
     }
@@ -379,12 +395,20 @@
       let p = this.pedidos.find(x => x.cena === cena && x.passagem === clue.id && x.tipo === tipo && (x.andar || '') === (extra.andar || ''));
       if (!p) {
         p = {id: 'pd' + Date.now().toString(36) + Math.floor(Math.random() * 1e3).toString(36), cena, passagem: clue.id, nome: clue.name, tipoPassagem: d.tipo || 'porta',
-          tipo, fonte: source, at: Date.now(), andar: extra.andar || '', sugestoes: sugestoesPara(clue, root.SceneLibrary.get(cena))};
+          tipo, fonte: source, at: Date.now(), andar: extra.andar || '', carro: extra.carro || null,
+          // Pane: de que trecho de estrada é a beira, e quanto do caminho eles venceram.
+          trecho: extra.trecho || '', andou: extra.andou ?? null, destino: extra.destino || '', veiculo: extra.veiculo || '',
+          sugestoes: sugestoesPara(clue, root.SceneLibrary.get(cena), {pane: tipo === 'pane', trecho: extra.trecho})};
         this.pedidos.push(p);
       } else p.at = Date.now();
-      this.sfx('porta_trancada');
-      if (tipo === 'liberar') this.clues.toast('TRANCADA', d.mensagem || 'Parece que alguém precisa abrir', 'cadeado');
-      else this.clues.toast(d.tipo === 'elevador' ? 'NÃO RESPONDE' : 'NÃO ABRE', extra.andar || clue.name, 'cadeado');
+      if (tipo === 'viagem') this.clues.toast('O CARRO PEGOU A ESTRADA', 'Escolha o destino no mapa do mestre · Exploração', 'carro');
+      else if (tipo === 'pane') this.clues.toast('O CARRO MORREU NA ESTRADA',
+        'Escolha onde eles ficaram parados · Exploração', 'alerta');
+      else {
+        this.sfx('porta_trancada');
+        if (tipo === 'liberar') this.clues.toast('TRANCADA', d.mensagem || 'Parece que alguém precisa abrir', 'cadeado');
+        else this.clues.toast(d.tipo === 'elevador' ? 'NÃO RESPONDE' : 'NÃO ABRE', extra.andar || clue.name, 'cadeado');
+      }
       this.emit('pedidos', p);
       return p;
     }
@@ -394,17 +418,35 @@
       const p = this.pedidos.find(x => x.id === id);
       if (!p) return null;
       if (p.tipo === 'liberar') return this.liberarPedido(id, {levar});
+      /* Viagem de carro: não há passagem para ligar — o carro é a passagem. A
+         cena de destino é criada (ou escolhida) exatamente como num improviso,
+         e quem leva o personagem até lá é a viagem, com ou sem o minigame. */
+      /* Pane: igual à viagem, mas sem escolha de destino — a cena criada É o
+         lugar onde o carro parou. Quem leva o personagem e estaciona o carro
+         quebrado lá é a própria viagem de carro. */
+      if (p.tipo === 'pane') {
+        const onde = modelo ? this.cenaDoModelo(p, modelo, {nome: opcoes.nome, ...opcoes}) : cena;
+        if (!onde || !root.SceneLibrary.has(onde)) return null;
+        this.pedidos = this.pedidos.filter(x => x !== p);
+        this.emit('pedidos');
+        const VC = root.ViagemDeCarro;
+        if (VC && VC.parar) VC.parar({cena: onde, pedido: p});
+        return onde;
+      }
+      if (p.tipo === 'viagem') {
+        const destino = modelo ? this.cenaDoModelo(p, modelo, opcoes) : cena;
+        if (!destino || !root.SceneLibrary.has(destino)) return null;
+        this.pedidos = this.pedidos.filter(x => x !== p);
+        this.emit('pedidos');
+        const VC = root.ViagemDeCarro;
+        if (VC && VC.viajar) VC.viajar({origem: p.cena, destino, veiculo: p.passagem, carro: p.carro,
+          minigame: opcoes.minigame !== false, percurso: opcoes.percurso});
+        return destino;
+      }
       const origem = this.passagem(p.cena, p.passagem);
       if (!origem) { this.dispensarPedido(id); return null; }
       let destino = cena;
-      if (modelo && root.Montador) {
-        const M = root.Montador, def = M.modeloDef(modelo);
-        const placa = root.SceneLibrary.get(p.cena)?.objetos?.find(o => o.id === p.passagem)?.p?.placa;
-        const nome = opcoes.nome || (p.andar ? `${def.nome} · ${p.andar}` : placa && /^\d{1,4}[A-Z]?$/.test(placa) ? `${def.nome} ${placa}` : def.nome);
-        const R = M.criar(modelo, {nome, desgaste: opcoes.desgaste ?? this.desgasteVizinho(p.cena), ...opcoes});
-        destino = R.id;
-        this.emit('cenas', R.id);
-      }
+      if (modelo && root.Montador) destino = this.cenaDoModelo(p, modelo, opcoes);
       if (!destino || !root.SceneLibrary.has(destino)) return null;
       const entrada = chegada ? this.passagem(destino, chegada) : this.entradaPara(destino, origem, p.cena);
       if (p.andar && origem.data?.tipo === 'elevador') {
@@ -421,6 +463,19 @@
       }
       return destino;
     }
+    /* A cena nova de um pedido: o modelo escolhido, com o nome que a placa da
+       passagem sugere e o desgaste dos vizinhos. */
+    cenaDoModelo(p, modelo, opcoes = {}) {
+      const M = root.Montador;
+      if (!M) return null;
+      const def = M.modeloDef(modelo);
+      if (!def) return null;
+      const placa = root.SceneLibrary.get(p.cena)?.objetos?.find(o => o.id === p.passagem)?.p?.placa;
+      const nome = opcoes.nome || (p.andar ? `${def.nome} · ${p.andar}` : placa && /^\d{1,4}[A-Z]?$/.test(placa) ? `${def.nome} ${placa}` : def.nome);
+      const R = M.criar(modelo, {nome, desgaste: opcoes.desgaste ?? this.desgasteVizinho(p.cena), ...opcoes});
+      this.emit('cenas', R.id);
+      return R.id;
+    }
     liberarPedido(id, {levar = true, sempre = false} = {}) {
       const p = this.pedidos.find(x => x.id === id);
       if (!p) return null;
@@ -435,6 +490,22 @@
     }
     dispensarPedido(id, {mensagem = ''} = {}) {
       const p = this.pedidos.find(x => x.id === id);
+      /* PANE dispensada não pode simplesmente sumir: a tela está segurada na
+         beira da estrada esperando uma cena, e o carro quebrado está com eles.
+         Sem escolha do mestre, eles param na beira do trecho em que quebraram
+         — a primeira sugestão do próprio pedido. Ninguém volta para o lugar de
+         onde o veículo saiu, que é o único lugar onde eles com certeza não
+         estão. */
+      if (p && p.tipo === 'pane') {
+        const modelo = (p.sugestoes || [])[0];
+        if (modelo && this.resolverPedido(id, {modelo})) { if (mensagem) this.legenda(mensagem); return; }
+        this.pedidos = this.pedidos.filter(x => x.id !== id);
+        if (mensagem) this.legenda(mensagem);
+        this.emit('pedidos');
+        const VC = root.ViagemDeCarro;
+        if (VC && VC.parar) VC.parar({cena: p.cena, pedido: p});
+        return;
+      }
       this.pedidos = this.pedidos.filter(x => x.id !== id);
       if (p && mensagem) this.legenda(mensagem);
       this.emit('pedidos');
@@ -579,7 +650,7 @@
     }
     snapshot() {
       return {perto: this.perto ? {id: this.perto.id, type: this.perto.type, acao: this.rotuloAcao(this.perto)} : null, andando: !!this.auto, alvo: this.auto?.x ?? null,
-        viagem: this.viagem ? {...this.viagem} : null, pedidos: this.pedidos.map(p => ({id: p.id, cena: p.cena, passagem: p.passagem, tipo: p.tipo, sugestoes: p.sugestoes})),
+        viagem: this.viagem ? {...this.viagem} : null, pedidos: this.pedidos.map(p => ({id: p.id, cena: p.cena, passagem: p.passagem, tipo: p.tipo, trecho: p.trecho || '', sugestoes: p.sugestoes})),
         legendas: this.legendas.map(l => l.texto), log: this.log.slice(0, 5)};
     }
   }

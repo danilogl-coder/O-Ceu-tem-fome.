@@ -194,7 +194,16 @@
       {id: 'produtos', label: 'Produtos', opcoes: PRODUTOS, padrao: 'mercado'},
       {id: 'tamanho', label: 'Tamanho', opcoes: [['curta', 'Curta'], ['longa', 'Longa']], padrao: 'curta'}
     ],
-    interacao: {tipo: 'exame', marca: 'discreta', dados: o => ({...(EXAME_GONDOLA[o.p.produtos] || EXAME_GONDOLA.mercado)})},
+    interacao: {marca: 'discreta', tipo: () => (root.ClueTypes?.get?.('estante_movel') ? 'estante_movel' : 'exame'),
+      dados: o => {
+        const E = EXAME_GONDOLA[o.p.produtos] || EXAME_GONDOLA.mercado;
+        if (!root.ClueTypes?.get?.('estante_movel')) return {...E};
+        return {titulo: 'Gôndola', estilo: 'gondola',
+          prateleiras: [`Fileira de cima | ${E.texto}`,
+            `Fileira do meio | ${E.detalhe || 'As etiquetas do trilho não batem com o que está em cima delas.'}${E.item ? ' | ' + E.item : ''}`,
+            'Fileira de baixo | O que ninguém alcança sem se abaixar: embalagens amassadas e a poeira intacta atrás delas.'].join('\n'),
+          vazio: 'Só a marca limpa de onde estava a fileira.'};
+      }},
     pinta(b, o, c) {
       P.contato(b, o.u, o.w);
       estruturaGondola(b, o.u, o.v, o.w, o.p.produtos, M.rngDe(o, 1), c.desgaste, {longa: o.p.tamanho === 'longa'});
@@ -216,7 +225,9 @@
       {id: 'ligada', label: 'Ligada', tipo: 'estado', padrao: true}
     ],
     interacao: {tipo: 'recipiente', marca: 'discreta', dados: () => ({titulo: 'Geladeira de bebidas', estilo: 'geladeira',
-      compartimentos: 'Prateleira de cima | Latinhas suando de tão geladas. | refrigerante*2\nPrateleira do meio | Garrafinhas de água mineral. | agua*2\nPrateleira de baixo | Uma cerveja esquecida lá no fundo, com um bilhete: “é do seu Zé, não mexe”.'})},
+      compartimentos: 'Prateleira de cima | Latinhas suando de tão geladas. | refrigerante*2\n' +
+        'Prateleira do meio | Garrafinhas de água mineral, sucos de caixinha e um leite. | agua*2, suco, leite\n' +
+        'Prateleira de baixo | Água de coco e uma cerveja esquecida lá no fundo, com um bilhete: “é do seu Zé, não mexe”. | agua_coco'})},
     pinta(b, o, c) {
       const {u, v, w} = o, on = c.tela(o, 'ligada') > 0, f = on ? EMISSIVE : 0, gasto = c.desgaste, random = M.rngDe(o, 2);
       const portas = o.p.portas === '2' ? 2 : 1;
@@ -283,8 +294,14 @@
   M.modulo({
     id: 'caixa_registradora', nome: 'Caixa registradora', grupo: 'Loja', camada: 'parede', w: 42, h: 36,
     params: [{id: 'cor', label: 'Balcão', tipo: 'cor', opcoes: 'madeira', padrao: 'madeira'}],
-    interacao: {tipo: 'recipiente', marca: 'discreta', dados: () => ({titulo: 'Caixa registradora', estilo: 'gaveteiro',
-      compartimentos: 'Gaveta do caixa | Notas amassadas presas no clipe e um monte de moedas soltas. | moedas*6\nEmbaixo da gaveta | Uma nota fiscal antiga com um número de telefone rabiscado atrás.'})},
+    interacao: {marca: 'discreta', tipo: () => (root.ClueTypes?.get?.('caixa_registradora') ? 'caixa_registradora' : 'recipiente'),
+      dados: () => (root.ClueTypes?.get?.('caixa_registradora') ? {
+        titulo: 'Caixa registradora', mostrador: '0,00', tranca: 'nenhuma',
+        bobina: ['CAFE | 2,00', 'PAO NA CHAPA | 3,50', 'REFRIGERANTE | 5,00', 'SEM VENDA | ---', 'SEM VENDA | ---'].join('\n'),
+        gaveta: 'moedas*6',
+        texto: 'Notas amassadas presas no clipe e moedas soltas fora dos cofrinhos. Embaixo da bandeja, uma nota fiscal antiga com um telefone rabiscado atrás.'
+      } : {titulo: 'Caixa registradora', estilo: 'gaveteiro',
+        compartimentos: 'Gaveta do caixa | Notas amassadas presas no clipe e um monte de moedas soltas. | moedas*6\nEmbaixo da gaveta | Uma nota fiscal antiga com um número de telefone rabiscado atrás.'})},
     pinta(b, o, c) {
       const {u, v, w} = o, cor = o.p.cor, gasto = c.desgaste, random = M.rngDe(o, 3), luz = c.energia;
       P.contato(b, u, w);
@@ -570,6 +587,10 @@
   M.modulo({
     id: 'chapa_cozinha', nome: 'Chapa e fritadeira', grupo: 'Restaurante', camada: 'parede', w: 56, h: 62, v: 0,
     params: [{id: 'ligada', label: 'Ligada', tipo: 'estado', padrao: true}],
+    /* Chapa quente: misto, pão na chapa e ovo frito. */
+    interacao: () => (root.ClueTypes?.get('cozinha')
+      ? {tipo: 'cozinha', marca: 'discreta', dados: {estacao: 'chapa', receitas: '', tranquilo: 'nao', mensagem: 'A chapa vive quente; a gordura chia sozinha.'}}
+      : null),
     area: o => ({u: 0, v: 18, w: o.w, h: 44}),
     pinta(b, o, c) {
       const {u, w} = o, on = c.estado(o, 'ligada'), luz = c.tela(o, 'ligada') > 0, gasto = c.desgaste;
@@ -743,6 +764,14 @@
   M.modulo({
     id: 'prateleira_bar', nome: 'Prateleira de garrafas', grupo: 'Restaurante', camada: 'parede', w: 46, h: 26, v: 12, livreV: true, semSombra: true,
     params: [],
+    interacao: {marca: 'discreta', tipo: () => (root.ClueTypes?.get?.('estante_movel') ? 'estante_movel' : 'exame'),
+      dados: () => (root.ClueTypes?.get?.('estante_movel') ? {
+        titulo: 'Prateleira de garrafas', estilo: 'bar',
+        prateleiras: ['Prateleira de cima | As garrafas caras, com pó por cima do rótulo: ninguém pede.',
+          'Prateleira de baixo | O que se serve todo dia. Duas garrafas foram devolvidas ao contrário, com a dose faltando. | moedas*3'].join('\n'),
+        vazio: 'Só o anel de líquido seco onde a garrafa ficava.'
+      } : {texto: 'Garrafas em duas prateleiras, contra o espelho. As de cima têm pó por cima do rótulo.',
+        detalhe: 'Duas garrafas foram devolvidas ao contrário, com a dose faltando.', item: 'moedas*3'})},
     pinta(b, o, c) {
       const {u, v, w} = o, random = M.rngDe(o, 6), gasto = c.desgaste;
       b.rect(u + 1, v + 1, w, 24, 'carvao', 1);
@@ -769,6 +798,10 @@
   M.modulo({
     id: 'maquina_cafe', nome: 'Máquina de café expresso', grupo: 'Restaurante', camada: 'parede', w: 24, h: 17, v: 25, livreV: true, semSombra: true,
     params: [{id: 'ligada', label: 'Ligada', tipo: 'estado', padrao: true}],
+    /* Tira um café atrás do outro, enquanto houver energia. */
+    interacao: () => (root.ClueTypes?.get('servir')
+      ? {tipo: 'servir', marca: 'discreta', dados: {estilo: 'maquina', item: 'cafe_coado', doses: '12', carga: '1', mensagem: 'Máquina de café do balcão. Aperta e sai.'}}
+      : null),
     pinta(b, o, c) {
       const {u, v} = o, on = c.tela(o, 'ligada') > 0, f = on ? EMISSIVE : 0;
       b.shade(u - 1, v + 17, 26, 1, -1, .7);
@@ -846,7 +879,12 @@
   M.modulo({
     id: 'vitrine_balcao', nome: 'Vitrine de doces', grupo: 'Restaurante', camada: 'parede', w: 44, h: 26,
     params: [{id: 'cor', label: 'Madeira', tipo: 'cor', opcoes: 'madeira', padrao: 'madeira_clara'}],
-    interacao: {tipo: 'exame', marca: 'discreta', dados: () => ({texto: 'Brigadeiros, beijinhos, um bolo de chocolate com uma fatia faltando e sonhos de creme.', detalhe: 'O bolo tem uma velinha apagada espetada. Alguém comemorou sozinho.'})},
+    /* Vitrine com atendente: doces e salgados por moedas. */
+    interacao: () => (root.ClueTypes?.get('vendedor')
+      ? {tipo: 'vendedor', marca: 'discreta', dados: {estilo: 'estufa', titulo: 'DOCES E SALGADOS', aberto: 'sim',
+        produtos: 'Paçoca | 1 | pacoca\nBiscoito recheado | 2 | biscoito\nPão de queijo | 2 | pao_queijo\nCoxinha | 3 | coxinha\nCafé | 1 | cafe',
+        mensagem: 'O bolo tem uma velinha apagada espetada. Alguém comemorou sozinho.'}}
+      : {tipo: 'exame', marca: 'discreta', dados: {texto: 'Brigadeiros, beijinhos, um bolo de chocolate com uma fatia faltando e sonhos de creme.', detalhe: 'O bolo tem uma velinha apagada espetada. Alguém comemorou sozinho.'}}),
     pinta(b, o, c) {
       const {u, w} = o, cor = o.p.cor, gasto = c.desgaste, random = M.rngDe(o, 7);
       P.contato(b, u, w);
@@ -1024,8 +1062,14 @@
   M.modulo({
     id: 'jukebox', nome: 'Jukebox', grupo: 'Diversão', camada: 'parede', w: 24, h: 36,
     params: [{id: 'ligada', label: 'Ligada', tipo: 'estado', padrao: true}],
-    interacao: {tipo: 'exame', marca: 'discreta', dados: () => ({texto: 'Uma jukebox antiga, cheia de discos de brega e samba-canção. A lista de músicas foi datilografada à mão.',
-      detalhe: 'A faixa B7 está riscada com caneta vermelha. Ao lado, alguém escreveu: “não toque esta”. Na bandeja de devolução ficaram duas moedas.', item: 'moedas*2'})},
+    interacao: {marca: 'discreta', tipo: () => (root.ClueTypes?.get?.('jukebox') ? 'jukebox' : 'exame'),
+      dados: o => (root.ClueTypes?.get?.('jukebox') ? {
+        titulo: 'Jukebox', preco: '1', creditos: '0', ligada: o.p.ligada === false ? 'nao' : 'sim',
+        musicas: ['NOITE DE ABRIL | Trio Serrano', 'CARTA QUE NÃO MANDEI | Nilza do Vale', 'O ÚLTIMO ÔNIBUS | Os Aurélios',
+          'CHOVE NA AVENIDA | Trio Serrano', 'SÓ VOLTO DE MANHÃ | Vilma Prado', 'BAILE DO ANEXO | desconhecido'].join('\n'),
+        aviso: 'NÃO TOQUE A ÚLTIMA'
+      } : {texto: 'Uma jukebox antiga, cheia de discos de brega e samba-canção. A lista de músicas foi datilografada à mão.',
+        detalhe: 'A faixa B7 está riscada com caneta vermelha. Ao lado, alguém escreveu: “não toque esta”. Na bandeja de devolução ficaram duas moedas.', item: 'moedas*2'})},
     pinta(b, o, c) {
       const {u, v} = o, on = c.tela(o, 'ligada') > 0, f = on ? EMISSIVE : 0, gasto = c.desgaste;
       const cx = u + 12, cy = v + 12;

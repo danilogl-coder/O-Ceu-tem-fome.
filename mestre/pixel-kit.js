@@ -86,6 +86,26 @@
       }
       if (this.names.length > 255) throw new Error('PixelKit: at most 254 ramps per palette');
       this.variants = {day: base};
+      this.variantOpts = Object.create(null);
+      this.defs = {...defs};
+    }
+    /* Redefine the keys of one ramp that already exists, keeping its id — every
+       variant is rebuilt from the new keys with the options it was made with.
+       This is how a character's own colours (skin, hair, jacket) can drive a
+       ramp that the renderer refers to by name: the art never changes, only
+       the colours the ramp is built from. */
+    redefinir(name, keys) {
+      const id = this.ids[name];
+      if (id === undefined) throw new Error(`PixelKit: unknown ramp "${name}"`);
+      this.defs[name] = keys;
+      this.variants.day[id] = buildRamp(keys, this.levels);
+      for (const [vname, opts] of Object.entries(this.variantOpts)) {
+        const v = this.variants[vname];
+        if (!v) continue;
+        const own = opts.overrides && opts.overrides[name];
+        v[id] = tintRamp(this.variants.day[id], own ? {...opts.opts, ...own} : opts.opts);
+      }
+      return this;
     }
     id(name) {
       const id = this.ids[name];
@@ -93,6 +113,7 @@
       return id;
     }
     variant(name, opts, overrides = {}) {
+      this.variantOpts[name] = {opts, overrides};
       this.variants[name] = this.variants.day.map((ramp, i) => {
         if (!ramp) return null;
         const own = overrides[this.names[i]];

@@ -1,0 +1,40 @@
+'use strict';
+const {clickHUD,masterOp}=require('./tatico-hud-helper');
+const assert=require('node:assert/strict'),path=require('node:path');
+const {pathToFileURL}=require('node:url');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+(async()=>{const browser=await chromium.launch({headless:true,channel:'chrome'});try{
+  const context=await browser.newContext({viewport:{width:1440,height:1100}}),page=await context.newPage(),errors=[];
+  page.on('pageerror',e=>errors.push(e.stack));
+  await page.goto(pathToFileURL(path.resolve(__dirname,'../index.html')).href);await page.waitForFunction(()=>window.demo?.tactical?.terrain);
+  const ids=await page.evaluate(()=>{const t=demo.tactical,a=demo.elenco.controlado(),b=demo.elenco.criar('Turno distante').id;demo.elenco.entrar(b,{x:950});t.toggle.click();const c=t.combat;c.person(a).initiative=30;c.person(b).initiative=10;t.stage.look={target:-360,home:null,t:0,hold:60};t.operation('start');return {a,b};});
+  const centered=()=>page.waitForFunction(()=>{const t=demo.tactical,p=t.combat.current;return Math.abs(demo.state.camera-t.stage.centerCamera(t.position(p.id).x))<1;});
+  const snapshot=()=>page.evaluate(()=>JSON.stringify(demo.tactical.combat.state.participants));
+  const camera=()=>page.evaluate(()=>demo.state.camera);
+  await centered();assert.equal(await page.evaluate(()=>demo.tactical.stage.lookingAt),false,'a pista anterior não deve puxar a câmera');
+  const people=await snapshot(),initial=await camera();
+  await page.locator('#scene').scrollIntoViewIfNeeded();await page.locator('#scene').hover();await page.mouse.wheel(0,200);
+  await page.waitForFunction(x=>demo.state.camera>x+50,initial);const free=await camera();await page.waitForTimeout(250);assert.equal(await camera(),free,'a câmera não volta sozinha durante o mesmo turno');
+  let box=await page.locator('#scene').boundingBox();await page.mouse.move(box.x+box.width*.6,box.y+box.height*.5);await page.mouse.down({button:'right'});await page.mouse.move(box.x+box.width*.4,box.y+box.height*.5,{steps:5});await page.mouse.up({button:'right'});
+  assert.ok(await camera()>free+80,'arrastar o cenário desloca a câmera');assert.equal(await snapshot(),people,'pan não altera participantes ou recursos');
+  await page.keyboard.press('c');await centered();assert.equal(await page.evaluate(()=>demo.tactical.cameraMode),'follow');
+  await page.keyboard.press('ArrowLeft');assert.ok(await camera()<initial-20);await page.keyboard.press('c');await centered();
+  // Follow the rendered walk, including intermediate animation positions.
+  assert.ok(await page.evaluate(()=>{const t=demo.tactical,p=t.combat.current;return t.combat.move(p.id,{x:p.cell.x+3,z:p.cell.z});}));
+  await page.waitForTimeout(90);
+  assert.ok(await page.evaluate(()=>{const t=demo.tactical,id=t.combat.current.id;return Math.abs(t.transformFor(id,t.camera()).x-240)<2;}),'o ator animado deve permanecer no centro');
+  await page.waitForFunction(()=>!demo.tactical.combat.state.busy&&!demo.tactical.combat.state.pending);await centered();
+  await page.keyboard.press('ArrowLeft');const panBeforeTurn=await camera();
+  await masterOp(page,'skip');await centered();assert.equal(await page.evaluate(()=>demo.tactical.combat.current.id),ids.b);assert.ok(await camera()>panBeforeTurn+100,'novo turno segue o NPC, não o corpo controlado');
+  await masterOp(page,'pause');const paused=await snapshot();
+  await page.locator('#scene').scrollIntoViewIfNeeded();await page.locator('#scene').hover();await page.mouse.wheel(0,-200);assert.equal(await snapshot(),paused,'olhar com a batalha pausada é somente câmera');
+  // The transmitted player view controls the same framing through validated messages.
+  const popup=page.waitForEvent('popup');await page.evaluate(()=>demo.link.open());const player=await popup;player.on('pageerror',e=>errors.push(e.stack));
+  await player.waitForFunction(()=>window.playersView?.tactical);const beforePlayer=await camera();await player.keyboard.press('ArrowLeft');await page.waitForFunction(x=>demo.state.camera<x-20,beforePlayer);
+  await player.keyboard.press('c');await centered();
+  await player.keyboard.press('ArrowLeft');await page.waitForFunction(()=>demo.tactical.cameraMode==='free');await clickHUD(player,{type:"camera",mode:"follow"});await centered();
+  const original=await camera();await page.evaluate(()=>{const t=demo.tactical,packet={kind:'tacticalCamera',id:'camera-repeat',epoch:t.combat.state.epoch,intent:{mode:'pan',delta:-40}};t.playerInput(packet);t.playerInput(packet);t.playerInput({...packet,id:'old-camera',epoch:packet.epoch-1});});assert.ok(Math.abs(await camera()-(original-40))<1,'camera intents ignore replay and stale turns');
+  await page.evaluate(()=>{for(let i=0;i<20;i++)demo.tactical.panCamera(480);});assert.equal(await camera(),await page.evaluate(()=>demo.tactical.stage.room.x1-480));
+  await page.evaluate(()=>{for(let i=0;i<20;i++)demo.tactical.panCamera(-480);});assert.equal(await camera(),await page.evaluate(()=>demo.tactical.stage.room.x0));
+  assert.deepEqual(errors,[]);console.log('PASS: câmera acompanha turno e movimento, pan livre/pausado, drag, teclas, janela dos jogadores, limites e recursos preservados.');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -322,6 +322,42 @@
           '.KKKKKKKKKKKKKK.',
           '................']}},
     /* A spare part: glass cartridge, brass caps, the wire still whole. */
+    kit_reparo:{label:'Kit de reparo',desc:'Caixa de ferramentas com chaves, fita e uma lata de massa. Dá para tirar o pior de um carro batido — um kit por conserto.',w:2,h:2,stack:2,kind:'part',
+      consumed:'Você gastou o kit de reparo no carro.',
+      palette:{K:'#1a0d07',h:'#7a6a58',m:'#5a2a20',M:'#8a8496',n:'#c0bcc8',r:'#a8342c',R:'#c4483a',t:'#d8b45a',w:'#f0d88c',g:'#4a3018'},
+      grid:[
+        '................................',
+        '................................',
+        '................................',
+        '..........KKKKKKKKKKKK..........',
+        '.........KhhhhhhhhhhhhK.........',
+        '........KhhKKKKKKKKKKhhK........',
+        '........KhhK........KhhK........',
+        '........KhhK........KhhK........',
+        '........KhhK........KhhK........',
+        '........KhhK........KhhK........',
+        '..KKKKKKKKKKKKKKKKKKKKKKKKKKKK..',
+        '..KnnnnnnnnnnnnnnnnnnnnnnnnnnK..',
+        '..KMMMMMMMMMMMMMMMMMMMMMMMMMMK..',
+        '..KMMMMMMMMMMMMMMMMMMMMMMMMMMK..',
+        '..KmmmmmmmmmmmtttttmmmmmmmmmmK..',
+        '..KrrrrrrrrrrrtwwwtrrrrrrrrrrK..',
+        '..KRRRRRRRRRRRtwwwtRRRRRRRRRRK..',
+        '..KRRRRRRRRRRRtttttRRRRRRRRRRK..',
+        '..KrrrrrrrrrrrrrrrrrrrrrrrrrrK..',
+        '..KrrrrKKKKrrrrrrrrrKKKKrrrrrK..',
+        '..KrrrKMMMMKrrrrrrrKMMMMKrrrrK..',
+        '..KrrrKMnnMKrrrrrrrKMnnMKrrrrK..',
+        '..KrrrKMMMMKrrrrrrrKMMMMKrrrrK..',
+        '..KrrrrKKKKrrrrrrrrrKKKKrrrrrK..',
+        '..KrrrrrrrrrrrrrrrrrrrrrrrrrrK..',
+        '..KggrrrrrrrrrrrrrrrrrrrrrggrK..',
+        '..KmmmmmmmmmmmmmmmmmmmmmmmmmmK..',
+        '..KKKKKKKKKKKKKKKKKKKKKKKKKKKK..',
+        '................................',
+        '................................',
+        '................................',
+        '................................']},
     fusivel:{label:'Fusível',desc:'Fusível de reposição para a caixa de força.',w:1,h:1,stack:3,kind:'part',
       palette:{K:'#230521',o:'#5f3410',O:'#9c611c',y:'#cf9434',Y:'#ecc15a',W:'#fdf0b4',g:'#3f6c95',G:'#79acd0',L:'#bfe5f7',E:'#f2fcff',w:'#8a2f3c'},
       grid:[
@@ -649,6 +685,12 @@
       }
       this.revision++;
       return true;
+    }
+    restore(data){
+      if(!data||!Array.isArray(data.entries))return false;
+      const next=new Inventory(data.cols||this.cols,data.rows||this.rows),ids=new Set();
+      for(const e of data.entries){if(!positive(e.id)||ids.has(e.id))return false;const item=next.place(e.def,e.x,e.y,e.rot,e.qty,e.data);if(!item)return false;item.id=e.id;ids.add(e.id);}
+      this.cols=next.cols;this.rows=next.rows;this.entries=next.entries;this.serial=Math.max(0,...ids);this.revision++;return true;
     }
     snapshot(){
       return {cols:this.cols,rows:this.rows,used:this.used,capacity:this.capacity,

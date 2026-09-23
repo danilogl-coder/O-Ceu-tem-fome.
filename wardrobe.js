@@ -982,18 +982,21 @@
 
   /* Ready-made outfits: one item per category, or a list for extras. */
   const PRESETS = [
+    /* Os conjuntos têm nome de TEMA, não de pessoa: o personagem é uma base sem
+       gênero para o jogador montar o dele, e “Exploradora” ou “Heroína” decidiria
+       isso por ele. Os ids ficam como estavam para não perder o que já foi salvo. */
     {id: 'base', label: 'Só a base', items: {}},
     {id: 'original', label: 'Original', items: {torso: 'torso.camiseta', pernas: 'pernas.short', pes: 'pes.botas'}},
-    {id: 'exploradora', label: 'Exploradora', items: {cabeca: 'cabeca.chapeu', torso: 'torso.camisa', pernas: 'pernas.cargo', pes: 'pes.botas', extras: ['extras.cinto', 'extras.mochila']}, dyes: {'torso.camisa': '#d9c7a0'}},
+    {id: 'exploradora', label: 'Expedição', items: {cabeca: 'cabeca.chapeu', torso: 'torso.camisa', pernas: 'pernas.cargo', pes: 'pes.botas', extras: ['extras.cinto', 'extras.mochila']}, dyes: {'torso.camisa': '#d9c7a0'}},
     {id: 'cidade', label: 'Cidade', items: {cabelo: 'cabelo.rabo', cabeca: 'cabeca.bone', torso: 'torso.listrada', pernas: 'pernas.jeans', pes: 'pes.tenis', extras: ['extras.bolsa']}},
     {id: 'inverno', label: 'Inverno', items: {cabeca: 'cabeca.gorro', torso: 'torso.sueter', casaco: 'casaco.sobretudo', pernas: 'pernas.moletom', pes: 'pes.botas', extras: ['extras.cachecol', 'extras.luvas']}},
     {id: 'verao', label: 'Verão', items: {cabelo: 'cabelo.coque', torso: 'torso.regata', pernas: 'pernas.short', pes: 'pes.sandalias', extras: ['extras.colar', 'extras.oculos']}},
     {id: 'noite', label: 'Noite', items: {cabelo: 'cabelo.curto', torso: 'torso.esportivo', casaco: 'casaco.jaqueta', pernas: 'pernas.legging', pes: 'pes.botasaltas'}},
     {id: 'festa', label: 'Festa', items: {cabelo: 'cabelo.tranca', cabeca: 'cabeca.flores', torso: 'torso.vestido', pes: 'pes.sapatos', extras: ['extras.colar']}},
-    {id: 'andarilha', label: 'Andarilha', items: {torso: 'torso.tunica', casaco: 'casaco.manto', pernas: 'pernas.saialonga', pes: 'pes.botas', extras: ['extras.cinto']}},
+    {id: 'andarilha', label: 'Estrada', items: {torso: 'torso.tunica', casaco: 'casaco.manto', pernas: 'pernas.saialonga', pes: 'pes.botas', extras: ['extras.cinto']}},
     {id: 'sobrevivente', label: 'Sobrevivente', items: {cabelo: 'cabelo.pixie', torso: 'torso.armadura', pernas: 'pernas.bermuda', pes: 'pes.sapatos', extras: ['extras.tapaolho', 'extras.faixas', 'extras.ombreiras', 'extras.luvas']}},
     {id: 'campo', label: 'Campo', items: {cabeca: 'cabeca.bandana', torso: 'torso.regata', casaco: 'casaco.poncho', pernas: 'pernas.saia', pes: 'pes.sandalias'}},
-    {id: 'heroina', label: 'Heroína', items: {cabelo: 'cabelo.rabo', torso: 'torso.armadura', casaco: 'casaco.capa', pernas: 'pernas.legging', pes: 'pes.botasaltas', extras: ['extras.cinto', 'extras.ombreiras']}},
+    {id: 'heroina', label: 'Batalha', items: {cabelo: 'cabelo.rabo', torso: 'torso.armadura', casaco: 'casaco.capa', pernas: 'pernas.legging', pes: 'pes.botasaltas', extras: ['extras.cinto', 'extras.ombreiras']}},
     /* The fourteen characters from the reference sheets, each as a set. */
     {id: 'veterano', label: 'Veterano', group: 'personagens', items: {cabelo: 'cabelo.social', barba: 'barba.rala', torso: 'torso.moletom', pernas: 'pernas.cargo', pes: 'pes.botas', extras: ['extras.arnes', 'extras.bracadeira', 'extras.meialuva']}, dyes: {hair: '#9a9aa0', skin: '#cf8e82', 'torso.moletom': '#4a7a3a', 'pernas.cargo': '#4f7a44', 'extras.bracadeira': '#a83232'}},
     {id: 'taco', label: 'Taco rosa', group: 'personagens', items: {cabelo: 'cabelo.original', barba: 'barba.rala', cabeca: 'cabeca.bone', torso: 'torso.camiseta', casaco: 'casaco.aberta', pernas: 'pernas.jeans', pes: 'pes.tenis'}, dyes: {hair: '#e3c27c', skin: '#d9968a', 'cabeca.bone': '#e8609a', 'casaco.aberta': '#e8609a', 'torso.camiseta': '#d9c7a0'}},
@@ -1099,6 +1102,104 @@
     return {slots, tints};
   }
 
-  scope.Wardrobe = {extend, resolve, ramp, Sheet, ITEMS, CATEGORIES, PRESETS, SKINS, HAIR_COLORS, EYE_COLORS};
+  /* ------------------------------------------------------------ o personagem visto de fora
+     O minigame de estrada precisa do MESMO personagem em cima da moto. A moto é
+     desenhada por raio, com geometria própria, então ela não pode reusar as
+     camadas do rig — mas pode reusar as duas coisas que fazem um personagem ser
+     aquele personagem: as CORES com que ele está pintado agora e a FORMA do que
+     ele está vestindo.
+
+     `tonsDoPersonagem` devolve as rampas de verdade (a lista de tons do rig,
+     já tingida pelo jogador), e não uma cor só inventada em rampa. `formaDoPiloto`
+     traduz o guarda-roupa naquilo que se vê de costas: o volume do cabelo, o
+     chapéu, o capuz, a capa, a mochila, as ombreiras, a saia. É por isso que
+     mudar de roupa no guarda-roupa muda quem está na moto. */
+  /* Do jeito que o jogo constrói rampa: a cor que o jogador escolheu (ou a cor
+     com que a peça nasceu) vira cinco tons, sombra mais fria e luz mais quente.
+     É a MESMA conta do guarda-roupa, então a jaqueta na moto sai com a mesma
+     cara que ela tem no personagem. A lista de tons crua do asset não serve:
+     ela mistura tons emprestados de outras peças e, numa rampa de seis, isso
+     vira mancha de cor errada. */
+  const rampaVestida = (hex, fallback) => ramp(hex || fallback);
+
+  /* O volume do cabelo por penteado: é o que muda a silhueta de costas. */
+  const CABELOS = {careca: 'nenhum', raspado: 'nenhum', pixie: 'curto', social: 'curto', curto: 'curto',
+    cacheado: 'volumoso', mullet: 'medio', original: 'longo', tranca: 'tranca', rabo: 'rabo', coque: 'coque'};
+  const CHAPEUS = {chapeu: 'aba', bone: 'bone', gorro: 'gorro', bandana: 'bandana', flores: 'coroa', borboleta: 'coroa', elmo: 'elmo'};
+  const CAPAS = new Set(['manto', 'capa', 'poncho']);
+  /* Quem dá manga ao piloto: o casaco, se ele tiver manga; senão a blusa. Se
+     nenhum dos dois tem, o braço é pele — de regata o piloto não pode aparecer
+     com a manga da camiseta que ele não está usando. */
+  const SEM_MANGA = new Set(['regata', 'esportivo', 'armadura', 'vestido', 'placas']);
+  const CASACO_SEM_MANGA = new Set(['colete', 'capa', 'manto']);
+  function formaDoPiloto({items = {}, dyes = {}} = {}) {
+    const porId = new Map(ITEMS.map(c => [c.id, c]));
+    const escolhido = cat => { const p = items[cat]; return Array.isArray(p) ? p : p ? [p] : []; };
+    const corDe = id => dyes[id] || porId.get(id)?.base || null;
+    const curto = id => String(id || '').split('.')[1] || '';
+    const cabelo = curto(escolhido('cabelo')[0]);
+    const cabeca = escolhido('cabeca')[0];
+    const casaco = escolhido('casaco')[0];
+    const torso = escolhido('torso')[0];
+    const pernas = escolhido('pernas')[0];
+    const extras = escolhido('extras').map(curto);
+    const capaId = casaco && CAPAS.has(curto(casaco)) ? casaco : null;
+    return {
+      cabelo: CABELOS[cabelo] || (cabelo ? 'medio' : 'longo'),
+      corCabelo: dyes.hair || null,
+      chapeu: cabeca ? {tipo: CHAPEUS[curto(cabeca)] || 'bone', cor: corDe(cabeca)} : null,
+      // Capuz: o moletom e o sobretudo têm capuz; a capa e o manto também.
+      capuz: curto(torso) === 'moletom' || curto(casaco) === 'sobretudo' || !!capaId,
+      capa: capaId ? {cor: corDe(capaId)} : null,
+      casaco: casaco ? {cor: corDe(casaco), tipo: curto(casaco)} : null,
+      mochila: extras.includes('mochila') ? {cor: corDe('extras.mochila')} : null,
+      bolsa: extras.includes('bolsa'),
+      ombreiras: extras.includes('ombreiras'),
+      cachecol: extras.includes('cachecol') ? {cor: corDe('extras.cachecol')} : null,
+      // Vestido, saia e batina: as pernas deixam de ser duas e viram uma barra.
+      saia: ['vestido', 'batina', 'mortalha', 'tunica'].includes(curto(torso)) || ['saia', 'saialonga'].includes(curto(pernas)),
+      // De saia e sem calça por baixo, a canela que aparece abaixo da barra é pele.
+      pernasNuas: (['vestido', 'batina', 'mortalha', 'tunica'].includes(curto(torso)) && !pernas)
+        || ['saia', 'saialonga'].includes(curto(pernas)),
+      bracosNus: (!casaco || CASACO_SEM_MANGA.has(curto(casaco)))
+        && (!torso || SEM_MANGA.has(curto(torso))),
+      luvas: extras.includes('luvas') || extras.includes('meialuva'),
+      corLuva: corDe('extras.luvas') || corDe('extras.meialuva') || null
+    };
+  }
+
+  /* As cores do personagem vistas de fora — o que outro desenho precisa saber
+     para vestir o mesmo personagem sem redesenhar nada dele. Quem usa isto é o
+     piloto da moto no minigame de estrada: a moto é um veículo desenhado por
+     raio, com a sua própria paleta, e estas cores viram as rampas do piloto.
+     A ordem é a de sempre: o que foi tingido manda; se não tingiram, vale a cor
+     com que a peça nasceu; se não há peça, vale o padrão. */
+  function coresDoPersonagem({items = {}, dyes = {}} = {}) {
+    const porId = new Map(ITEMS.map(c => [c.id, c]));
+    const daCategoria = cat => {
+      const pick = items[cat];
+      const id = Array.isArray(pick) ? pick[0] : pick;
+      if (!id) return null;
+      return dyes[id] || porId.get(id)?.base || null;
+    };
+    const extras = (Array.isArray(items.extras) ? items.extras : items.extras ? [items.extras] : []);
+    const doExtra = nome => extras.includes('extras.' + nome) ? (dyes['extras.' + nome] || porId.get('extras.' + nome)?.base || null) : null;
+    return {
+      pele: dyes.skin || SKINS[0].hex,
+      cabelo: dyes.hair || '#66296c',
+      // Casaco na frente da camisa: é o que se vê de costas, em cima da moto.
+      torso: daCategoria('casaco') || daCategoria('torso') || '#3a4a66',
+      pernas: daCategoria('pernas') || '#2f3a52',
+      pes: daCategoria('pes') || '#4a3526',
+      cabeca: daCategoria('cabeca') || null,
+      // As peças que a moto desenha à parte: chapéu, capa, mochila e luva.
+      chapeu: daCategoria('cabeca') || '#6b4a34',
+      capa: daCategoria('casaco') || '#3d2e58',
+      mochila: doExtra('mochila') || doExtra('bolsa') || '#4a6b3a',
+      luva: doExtra('luvas') || doExtra('meialuva') || '#3a2a1e'
+    };
+  }
+
+  scope.Wardrobe = {extend, resolve, ramp, Sheet, ITEMS, CATEGORIES, PRESETS, SKINS, HAIR_COLORS, EYE_COLORS, coresDoPersonagem, rampaVestida, formaDoPiloto};
   if (typeof module !== 'undefined') module.exports = scope.Wardrobe;
 })(globalThis);

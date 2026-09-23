@@ -1,0 +1,28 @@
+.tatico-panel{margin:12px 0;border:3px solid #79516f;background:#130d20;color:#f3d9be;box-shadow:4px 4px #09060f;font:13px Consolas,monospace;padding:12px;max-width:100%;box-sizing:border-box}
+.tatico-panel[hidden],.tatico-panel [hidden]{display:none!important}
+.tatico-panel h2{font-size:18px;color:#ffce83;margin:0 0 10px}.tatico-panel p{margin:8px 0;color:#b694bc}
+.tatico-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.tatico-panel button,.tatico-panel select,.tatico-panel input{font:inherit;background:#24152f;color:#f3d9be;border:2px solid #79516f;border-radius:0;padding:6px}
+.tatico-panel button{cursor:pointer}.tatico-panel button:hover,.tatico-panel button:focus-visible{border-color:#ffce83}.tatico-panel button:disabled{opacity:.4;cursor:default}
+.tatico-panel input[type=number]{width:60px}.tatico-panel table{width:100%;border-collapse:collapse}.tatico-panel td,.tatico-panel th{padding:5px;text-align:left;border-bottom:1px solid #3d2948}.tatico-panel .tatico-roster{max-height:230px;overflow:auto}
+#taticoToggle{border:2px solid #ab718f;background:#24152f;color:#ffce83;font:700 13px Consolas,monospace;padding:8px 14px;cursor:pointer}
+.tatico-status{min-height:18px;color:#ffce83!important}.tatico-edit{border-top:1px solid #79516f;padding-top:8px}
+body.tatico-running .health-toggle,body.tatico-running .bag-toggle,body.tatico-running .wardrobe-toggle{display:none}
+body.tatico-running .stage-card>.controls,body.tatico-running .stage-card>.timeline,body.tatico-running .stage-card>.stage-footer,body.tatico-running .stage-card>.touch-controls{display:none}
+body.tatico-running .tatico-panel{margin-top:0}
+body.tatico-running .gm-toggle,body.tatico-running .gm-stage-badge{display:none!important}
+body.master-stage{height:100dvh;overflow:hidden;background:#080b16}
+body.master-stage>header,body.master-stage>footer,body.master-stage main>.intro,body.master-stage .inspector,body.master-stage .details{display:none}
+body.master-stage main,body.master-stage .workspace{margin:0;padding:0;max-width:none;display:block}
+body.master-stage .stage-card{position:fixed;inset:0;border:0;border-radius:0;background:#080b16;overflow:visible}
+body.master-stage .stage-card>.bar,body.master-stage .stage-card>.controls,body.master-stage .stage-card>.timeline,body.master-stage .stage-card>.stage-footer,body.master-stage .stage-card>.touch-controls{display:none}
+body.master-stage .scene-wrap{position:absolute;inset:0;align-items:center;justify-content:center;background:#080b16}
+body.master-stage #scene{flex:none;width:min(100vw,177.777778dvh);height:min(100dvh,56.25vw);max-width:none;image-rendering:pixelated}
+.master-stage-tools{position:fixed;left:8px;top:8px;z-index:24;background:#141626e8;border:2px solid #665067;font:12px Consolas,monospace;max-width:min(460px,95vw);color:#f4dfb6}
+body.tatico-running .master-stage-tools{top:auto;bottom:66px}
+.master-stage-tools summary{padding:7px;cursor:pointer;opacity:.75}.master-stage-tools[open] summary,.master-stage-tools:hover summary{opacity:1}
+.master-stage-buttons{display:flex;flex-wrap:wrap;gap:5px;padding:8px}.master-stage-buttons button{border-radius:0;font:inherit}
+body.master-stage .tatico-panel{position:fixed;right:12px;top:12px;width:min(750px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;z-index:25;margin:0}
+.tatico-formula [data-formula-fields],.tatico-formula [data-regions-fields],.tatico-formula [data-item-costs]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0}
+.tatico-formula label{display:flex;justify-content:space-between;gap:5px;align-items:center}.tatico-formula input{flex:none}
+.tatico-item-controls{border-top:2px solid #665067;margin-top:10px;padding:10px;display:flex;gap:8px;flex-wrap:wrap}.tatico-item-controls strong,.tatico-item-controls p{flex-basis:100%}.tatico-item-controls select{background:#242237;color:#f4dfb6;max-width:170px}

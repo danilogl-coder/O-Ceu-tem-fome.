@@ -22,7 +22,7 @@ const out=path.resolve(__dirname,'../pixel_art/generated/itens');fs.mkdirSync(ou
   await page.waitForFunction(()=>window.demo?.state.time>.1);
   // One bridge: the interactions reach it through the clue system, the tests through demo.
   assert(await P(()=>!!demo.itens&&demo.clues.itens===demo.itens),'clueSystem.itens is demo.itens');
-  assert.deepEqual(await P(()=>Object.keys(demo.itens).sort()),['contar','dar','entradas','gastar','temChave']);
+  assert.deepEqual(await P(()=>Object.keys(demo.itens).sort()),['alterar','contar','dar','entradas','gastar','remover','temChave','trocar']);
 
   // contar: the sum of every stack of that item.
   assert.equal(await P(()=>demo.itens.contar('moedas')),0,'no coins at the start');
@@ -62,7 +62,8 @@ const out=path.resolve(__dirname,'../pixel_art/generated/itens');fs.mkdirSync(ou
   assert.equal(await P(()=>demo.itens.temChave('Sótão')),false,'another lock');
   assert.equal(await P(()=>demo.itens.temChave('')),true,'no name: any key will do');
   const key=(await P(()=>demo.itens.entradas())).find(e=>e.def==='chave');
-  assert.deepEqual(key,{def:'chave',qty:1,data:{nome:'Porão',name:'Porão'}},'entradas() gives def, qty and data');
+  assert.deepEqual({def:key.def,qty:key.qty,data:key.data},{def:'chave',qty:1,data:{nome:'Porão',name:'Porão'}},'entradas() gives def, qty and data');
+  assert(Number.isInteger(key.id),'and the id of the entry, so a bottle can be changed or swapped');
   await P(()=>{demo.itens.entradas().find(e=>e.def==='chave').data.nome='Outra';});
   assert.equal(await P(()=>demo.itens.temChave('porão')),true,'the list is a copy');
   assert.equal(await page.locator('#caseGrid [data-item="chave"] .case-name').textContent(),'Porão','named on its square');

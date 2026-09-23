@@ -83,6 +83,10 @@
     modulo(def) {
       if (!def?.id) throw new Error('Módulo sem id');
       const d = {camada: 'parede', grupo: 'Outros', params: [], w: 20, h: 20, ...def};
+      /* Pegadas físicas no piso: decorações penduradas e passagens ficam livres. */
+      const solidos = new Set(('sofa poltrona rack_tv estante mesa_jantar cama criado_mudo guarda_roupa comoda geladeira fogao pia_cozinha bancada lixeira vaso_planta cabideiro ventilador abajur_pe escrivaninha arquivo_aco estante_pastas bebedouro copiadora cofre balcao_recepcao cadeiras_espera divisoria mesa_chefe armario_metal prateleira_industrial caixas palete tambor empilhadeira bancada_ferramentas pneus compressor elevador_carro carrinho_ferramentas gondola geladeira_bebidas maquina_venda mesa_lanchonete balcao_bar chapa_cozinha vitrine_balcao fliperama jukebox mesa_sinuca freezer_sorvete mesa_pebolim palco_karaoke leito_hospitalar suporte_soro biombo cadeira_rodas armario_remedios balcao_enfermagem carrinho_medicacao lixeira_hospitalar maca vaso_sanitario pia_banheiro banheira cabine_banheiro mictorio carrinho_limpeza lavatorio_cirurgico poste orelhao ponto_onibus banco_praca hidrante lixeira_publica cacamba carro moto bicicleta alambrado muro arvore_canteiro pilar_garagem guarita cancela entulho movel_velho pedra_beira barranco arvore_estrada').split(' '));
+      if(d.tactical===undefined&&solidos.has(d.id))d.tactical={depth:/cama|leito|mesa|carro|sofa|banheira|empilhadeira/.test(d.id)?80:40,kind:'bloqueado'};
+      if(d.tactical===undefined&&['roupas_chao','lixo_chao','entulho_chao','azulejo_quebrado','poca'].includes(d.id))d.tactical={kind:'dificil',floor:true};
       d.params = d.params.map(p => ({tipo: 'select', ...p}));
       d.estados = d.params.filter(p => p.tipo === 'estado');
       modulos.set(d.id, d);
@@ -117,7 +121,7 @@
     const w = Math.max(1, Math.round(val(mod.w, p, obj))), h = Math.max(1, Math.round(val(mod.h, p, obj)));
     return {p, w, h};
   }
-  /* Largura no mundo (px na profundidade da personagem) que um objeto ocupa. */
+  /* Largura no mundo (px na profundidade do personagem) que um objeto ocupa. */
   function larguraMundo(mod, obj, room) {
     const {w} = medir(mod, obj);
     if (mod.camada === 'parede') return w * S / room.wallFactor;
@@ -128,7 +132,7 @@
 
   /* ------------------------------------------------------------ receita */
   const CASCA = {parede: 'liso', corParede: 'reboco', barra: 'rodape', corBarra: 'madeira', sanca: false, piso: 'tabuas', corPiso: 'taco',
-    vista: 'cidade', desgaste: 0, exterior: false, rua: false, teto: true};
+    vista: 'cidade', desgaste: 0, exterior: false, rua: false, teto: true, clima: '', aberto: false};
   let serial = 0;
   const novoId = prefixo => `${prefixo}${Date.now().toString(36).slice(-4)}${(serial++ % 1296).toString(36).padStart(2, '0')}${Math.floor(Math.random() * 36).toString(36)}`;
   Montador.novoId = novoId;
@@ -364,6 +368,12 @@
   /* ------------------------------------------------------------ paredes laterais */
   function pintarLateral(b, side, ctx, R, room, objs) {
     const C = R.casca, cols = b.width, rows = b.height, cell = [0, 0];
+    /* MAPA ABERTO: uma beira de estrada não tem parede nas pontas. Deixando as
+       laterais transparentes, o que aparece no fim do mapa é o próprio céu com
+       as camadas de longe — a estrada some no horizonte em vez de bater num
+       muro. Também não se desenha o vão escuro da saída lateral: a estrada
+       continuar é o convite, não um buraco na parede. */
+    if (C.aberto) return;
     const hBarra = C.barra === 'lambri' ? room.heightOnWall(44) : C.barra === 'azulejo' ? room.heightOnWall(36) : C.barra === 'meia' ? room.heightOnWall(38) : -1;
     for (let x = 0; x < cols; x++) for (let y = 0; y < rows; y++) {
       const d = room.sideNear + x * room.sideStep, h = y * room.sideStep;
@@ -375,7 +385,7 @@
       if (!C.exterior && C.barra !== 'nenhuma' && h < 7) { cell[0] = C.barra === 'lambri' ? C.corBarra : 'madeira'; level = h < 2 ? 2 : h > 5 ? 5 : 3; }
       b.px(x, y, cell[0], level);
     }
-    // Saída lateral: um vão escuro perto da personagem.
+    // Saída lateral: um vão escuro perto do personagem.
     const lat = objs.find(o => o.mod.lateral === side);
     if (lat) {
       const d0 = room.sideNear + 8, d1 = room.sideNear + 120, hTop = 150;
@@ -422,6 +432,30 @@
       if (mood === 'tarde') b.sphere(90 + (R.semente % 160), 38, 6, 6, 'amarelo_vivo', 4, 7, K.EMISSIVE);
       if (mood === 'manha') b.sphere(150 + (R.semente % 120), 22, 4, 4, 'amarelo_vivo', 6, 7, K.EMISSIVE);
     } else if (name === 'far') {
+      /* Estrada: no lugar da silhueta da cidade, a serra em camadas (cristas
+         que vão clareando com a distância) ou o campo aberto (lombadas baixas
+         e uma linha de mata bem no fundo). */
+      if (vista === 'serra' || vista === 'campo' || vista === 'arvores') {
+        const night = mood === 'noite' || mood === 'madrugada';
+        const rampa = night ? 'noite' : mood === 'tarde' ? 'crepusculo' : vista === 'campo' ? 'folha' : 'azul';
+        const camadas = vista === 'serra' ? [[16, 58, 2], [26, 40, 1], [36, 26, 0]] : vista === 'campo' ? [[34, 70, 1], [44, 34, 0]] : [[30, 44, 1], [40, 24, 0]];
+        for (const [base, passo, lv] of camadas) {
+          const fase = random() * 1e3;
+          let topo = [];
+          for (let x = 0; x < W; x++) {
+            const h1 = Math.sin((x + fase) / passo) * .5 + Math.sin((x + fase) / (passo * .37) + 1.7) * .28 + G.valueNoise((x + fase) / (passo * .8), lv * 3, R.semente) * .5;
+            topo.push(Math.round(base - h1 * (vista === 'campo' ? 6 : 13)));
+          }
+          for (let x = 0; x < W; x++) for (let v = topo[x]; v < WALL_ROWS; v++) {
+            // A cara sul da crista (onde a próxima sobe) fica um degrau mais escura.
+            const subindo = x > 0 && topo[x] < topo[x - 1];
+            b.px(x, v, rampa, Math.max(0, (night ? 1 : 2 + lv) + (v === topo[x] && !subindo ? 1 : 0) - (subindo ? 1 : 0)));
+          }
+          // Neve/luz raspando o alto da crista mais distante da serra.
+          if (vista === 'serra' && lv === 2 && !night) for (let x = 0; x < W; x++) if (topo[x] <= base - 9) b.px(x, topo[x], mood === 'tarde' ? 'crepusculo' : 'papel', mood === 'tarde' ? 5 : 4);
+        }
+        return;
+      }
       let u = -4;
       while (u < W) {
         const w = random.int(6, 15), top = random.int(14, 32), tall = random() < .12, t0 = tall ? top - 10 : top;
@@ -439,6 +473,43 @@
       }
     } else if (name === 'near') {
       const night = mood === 'noite' || mood === 'madrugada';
+      if (vista === 'serra' || vista === 'campo') {
+        /* Estrada, camada de perto: o morro logo atrás da pista. Na serra ele
+           sobe fechando a cena e leva pinheiros; no campo é quase reto, com
+           um pasto seco e árvores soltas ao longe. */
+        const serra = vista === 'serra';
+        const mata = night ? 'noite' : serra ? 'arvore' : 'folha';
+        const base = serra ? 30 : 44;
+        const topo = [];
+        for (let x = 0; x < W; x++) {
+          const h1 = Math.sin(x / (serra ? 34 : 60)) * .5 + G.valueNoise(x / (serra ? 18 : 40), 7, R.semente + 5) * .6;
+          topo.push(Math.round(base - h1 * (serra ? 16 : 7)));
+        }
+        for (let x = 0; x < W; x++) for (let v = topo[x]; v < WALL_ROWS; v++) {
+          const t = (v - topo[x]) / Math.max(1, WALL_ROWS - topo[x]);
+          b.px(x, v, night ? 'noite' : serra ? 'arvore' : 'folha', night ? 1 : Math.max(0, 1 + Math.round(t * 2.2) + (v === topo[x] ? 1 : 0)));
+        }
+        // Mata pontuada: bolotas de copa no serrado, arbustos soltos no campo.
+        for (let i = 0; i < W / (serra ? 5 : 14); i++) {
+          const cx = random() * W, rx = (serra ? 3 : 4) + random() * (serra ? 5 : 6);
+          const cy = topo[Math.max(0, Math.min(W - 1, Math.floor(cx)))] + (serra ? 1 + random() * 8 : 2 + random() * 4);
+          if (serra && random() < .4) {                       // pinheiro: cone em vez de bola
+            for (let dy = 0; dy < rx * 2.2; dy++) {
+              const wl = Math.round(rx * .8 * (dy / (rx * 2.2)));
+              for (let x = Math.round(cx - wl); x <= cx + wl; x++) b.px(x, Math.round(cy - rx * 1.4 + dy), mata, night ? 1 : 2 + (x > cx ? 1 : 0));
+            }
+          } else b.sphere(cx, cy, rx, rx * .78, mata, night ? 1 : 1, night ? 2 : mood === 'tarde' ? 3 : 4);
+        }
+        // Pasto seco descendo até a pista, e a cerca de arame que acompanha.
+        if (!serra) for (let x = 0; x < W; x++) {
+          const y0 = Math.max(topo[x] + 6, 50);
+          for (let v = y0; v < WALL_ROWS; v++) b.px(x, v, night ? 'noite' : 'verde', night ? 1 : 2 + (hash2(x, v, 11) < .3 ? 1 : 0));
+          if (x % 17 === 0) b.vline(x, 47, 53, night ? 'noite' : 'madeira', night ? 1 : 2);
+          if (!night && (x % 2 === 0)) { b.px(x, 49, 'aco', 2); b.px(x, 52, 'aco', 2); }
+        }
+        for (let u2 = 0; u2 < W; u2++) for (let v = 56; v < WALL_ROWS; v++) if (!b.rampAt(u2, v)) b.px(u2, v, night ? 'noite' : serra ? 'arvore' : 'verde', 1);
+        return;
+      }
       if (vista === 'arvores' || vista === 'cidade') {
         for (let i = 0; i < W / (vista === 'arvores' ? 4 : 7); i++) {
           const cx = random() * W, cy = (vista === 'arvores' ? 30 : 40) + random() * 18, rx = 5 + random() * 8;
@@ -551,9 +622,10 @@
     let prep = null;
     const def = {
       id: R.id, name: R.nome, subtitle: R.subtitulo || modelo?.nome || '', tags: [...new Set([...(R.tags || []), 'genérica'])],
-      kind: 'room', room: {x0: 0, x1: R.largura, wallFactor: .68, frontFactor: 1.17, outsideMargin: 124}, palette: pal,
+      kind: 'room', room: {x0: 0, x1: R.largura, wallFactor: .68, frontFactor: 1.17, outsideMargin: 124, aberto: !!R.casca.aberto}, palette: pal,
       defaultPreset: padrao, flickerPreset: presets[presets.length - 1].id, presets,
-      weathers: temJanela ? [{id: 'limpo', label: 'Céu limpo'}, {id: 'chuva', label: 'Chuva'}] : [{id: 'limpo', label: 'Normal'}],
+      weathers: temJanela ? (R.casca.clima === 'chuva' ? [{id: 'chuva', label: 'Chuva'}, {id: 'limpo', label: 'Céu limpo'}]
+        : [{id: 'limpo', label: 'Céu limpo'}, {id: 'chuva', label: 'Chuva'}]) : [{id: 'limpo', label: 'Normal'}],
       props, spawns, clues, conclusions: [], front,
       generica: true, receita: R, modelo: R.modelo, objetos: objs,
       paint: {

@@ -191,7 +191,7 @@
     }
 
     /* ---------------------------------------------------------- input */
-    get busy() { return this.stack.length > 0 || !!this.cinematic || !!this.placement; }
+    get busy() { return this.stack.length > 0 || !!this.cinematic || !!this.placement || !!this.dragTool; }
     get top() { return this.stack[this.stack.length - 1] || null; }
     /* Pointer from the master's stage. Returns true when the game must not
        also treat the press (drag the character). */
@@ -204,6 +204,9 @@
     handleDown(x, y, source, characterHit = false) {
       this.mouse = {x, y, down: true, source};
       if (this.cinematic) { this.cinematic.click?.(source); return true; }
+      /* A tool of the master's that takes the stage pointer for a while (moving
+         a parked car): {down, move → cursor, up, draw(ctx, camera), cancel}. */
+      if (this.dragTool) { if (source === 'mestre') this.dragTool.down?.(x, y); return true; }
       if (this.placement) {
         if (source !== 'mestre') return true;
         this.placement.start = [x, y]; this.placement.rect = {x, y, w: 0, h: 0};
@@ -238,6 +241,7 @@
     }
     pointerMove(x, y, {characterHit = false} = {}) {
       this.mouse = {...this.mouse, x, y, source: 'mestre'};
+      if (this.dragTool) { this.hover = null; return this.dragTool.move?.(x, y) || 'crosshair'; }
       if (this.placement?.start) {
         const [sx, sy] = this.placement.start;
         this.placement.rect = {x: Math.min(sx, x), y: Math.min(sy, y), w: Math.abs(x - sx), h: Math.abs(y - sy)};
@@ -256,6 +260,7 @@
     }
     pointerUp(x, y) {
       this.mouse = {...this.mouse, x, y, down: false};
+      if (this.dragTool) { this.dragTool.up?.(x, y); return true; }
       const p = this.placement;
       if (!p?.start) return false;
       let r = p.rect;
@@ -280,12 +285,28 @@
       this.placement = {id, onDone, scene: this.scene()?.id, start: null, rect: null};
       this.emit('placement');
     }
+    beginDragTool(tool) { this.stack = []; this.placement = null; this.dragTool = tool; this.emit('dragTool'); }
+    endDragTool(cancelled = false) {
+      const tool = this.dragTool;
+      if (!tool) return;
+      this.dragTool = null;
+      if (cancelled) tool.cancel?.(); else tool.finish?.();
+      this.emit('dragTool');
+    }
     cancelPlacement() { if (this.placement) { const p = this.placement; this.placement = null; p.onDone?.(null); this.emit('placement'); } }
     keydown(e) {
       const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(e.target?.tagName || '') || e.target?.isContentEditable;
       if (typing) return;
       const stop = () => { e.preventDefault(); e.stopImmediatePropagation(); };
-      if (this.cinematic) { if (e.key === 'Escape') { stop(); this.cinematic.skip?.(); } else if (!e.ctrlKey && !e.metaKey) stop(); return; }
+      /* Uma cinemática que é jogável (o minigame de estrada) recebe as teclas;
+         as outras engolem tudo, e Esc pula. */
+      if (this.cinematic) {
+        if (e.key === 'Escape') { stop(); this.cinematic.skip?.(); return; }
+        if (this.cinematic.key && this.cinematic.key(e)) { stop(); return; }
+        if (!e.ctrlKey && !e.metaKey) stop();
+        return;
+      }
+      if (this.dragTool) { if (e.key === 'Escape' || e.key === 'Enter') { stop(); this.endDragTool(e.key === 'Escape'); } return; }
       if (this.placement) { if (e.key === 'Escape') { stop(); this.cancelPlacement(); } return; }
       const top = this.top;
       if (top) {
@@ -300,12 +321,14 @@
       if (e.code === 'KeyP' && !e.repeat && !e.ctrlKey && !e.altKey && !e.metaKey) { stop(); this.showAreas = !this.showAreas; this.emit('areas'); }
     }
     keyup(e) {
+      if (this.cinematic) { this.cinematic.keyup?.(e); return; }
       const top = this.top;
-      if (!top?.type.keyup || this.cinematic) return;
+      if (!top?.type.keyup) return;
       if (top.type.keyup(e, top.state, top.clue, this)) { e.preventDefault?.(); e.stopImmediatePropagation?.(); }
     }
     /* Input forwarded by the players' window. */
     playerInput(msg) {
+      if(this.stage.tacticalTable?.active)return;
       if (!this.allowPlayers || !msg) return;
       if (msg.kind === 'move') { if (!this.placement) this.mouse = {x: msg.x, y: msg.y, down: !!msg.down, source: 'jogadores'}; return; }
       if (msg.kind === 'down') { this.handleDown(msg.x, msg.y, 'jogadores'); return; }
@@ -313,13 +336,16 @@
       if (msg.kind === 'wheel') { const top = this.top; if (top?.audience === 'todos') this.wheel(msg.delta); return; }
       if (msg.kind === 'keyup') {
         const top = this.top;
-        if (this.cinematic || !top || top.audience !== 'todos' || !top.type.keyup) return;
+        if (this.cinematic) { this.cinematic.keyup?.({key: msg.key, code: msg.code}); return; }
+        if (!top || top.audience !== 'todos' || !top.type.keyup) return;
         top.type.keyup({key: msg.key, code: msg.code, preventDefault() {}, stopImmediatePropagation() {}}, top.state, top.clue, this);
         return;
       }
       if (msg.kind === 'key') {
         const top = this.top;
-        if (this.cinematic || !top || top.audience !== 'todos') return;
+        // No minigame de estrada os jogadores também podem guiar, se o mestre deixou.
+        if (this.cinematic) { this.cinematic.key?.({key: msg.key, code: msg.code, preventDefault() {}, stopImmediatePropagation() {}}); return; }
+        if (!top || top.audience !== 'todos') return;
         const e = {key: msg.key, code: msg.code, shiftKey: !!msg.shift, ctrlKey: false, altKey: false, metaKey: false, repeat: false, target: null, preventDefault() {}, stopImmediatePropagation() {}};
         if (top.type.key?.(e, top.state, top.clue, this)) return;
         if (msg.key === 'Escape') this.close();
@@ -426,8 +452,15 @@
     }
     /* Master only: hover, clue areas, placement, private interfaces. */
     drawPrivate(ctx, camera) {
+      if (this.dragTool) { try { this.dragTool.draw?.(ctx, camera); } catch (e) { console.error(e); } return; }
       if (this.cinematic) {
-        if (this.cinematic.time < 4) { U.rect(ctx, 6, SH - 18, 118, 12, '#140619e6'); K.drawText(ctx, 'Esc pula a cinemática', 10, SH - 16, {color: '#ffd18c'}); }
+        /* Filme segurado (a pane na estrada): a dica deixa de ser “Esc pula” e
+           passa a ser o que o mestre tem de fazer — e fica na tela o tempo
+           todo, porque é ele que destrava a história. */
+        if (this.cinematic.esperandoMestre) {
+          U.rect(ctx, 6, SH - 18, 236, 12, '#140619e6');
+          K.drawText(ctx, 'Escolha onde eles pararam · Exploração', 10, SH - 16, {color: '#ffd18c'});
+        } else if (this.cinematic.time < 4) { U.rect(ctx, 6, SH - 18, 118, 12, '#140619e6'); K.drawText(ctx, 'Esc pula a cinemática', 10, SH - 16, {color: '#ffd18c'}); }
         return;
       }
       const t = this.time;

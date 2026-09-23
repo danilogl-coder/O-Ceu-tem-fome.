@@ -495,9 +495,13 @@
       {id: 'cor', label: 'Madeira', tipo: 'cor', opcoes: 'madeira', padrao: 'madeira'},
       {id: 'conteudo', label: 'Conteúdo', opcoes: [['livros', 'Livros'], ['enfeites', 'Enfeites'], ['bagunca', 'Bagunça'], ['vazia', 'Vazia']], padrao: 'livros'}
     ],
-    interacao: {tipo: 'recipiente', marca: 'discreta', dados: o => ({titulo: 'Estante', estilo: 'armario', compartimentos: [
-      `Prateleiras | ${TXT_ESTANTE[o.p.conteudo] || TXT_ESTANTE.livros}`,
-      'Portas de baixo | Álbuns de fotografia, fitas sem etiqueta e uma caixa de ferramentas enferrujada. | fusivel'].join('\n')})},
+    interacao: {marca: 'discreta', tipo: () => (root.ClueTypes?.get?.('estante_movel') ? 'estante_movel' : 'recipiente'),
+      dados: o => ({titulo: 'Estante', estilo: root.ClueTypes?.get('estante_movel') ? 'livros' : 'armario',
+        prateleiras: [`Prateleira de cima | ${TXT_ESTANTE[o.p.conteudo] || TXT_ESTANTE.livros}`,
+          'Prateleira do meio | Álbuns de fotografia e fitas sem etiqueta, todas com a mesma letra no adesivo.',
+          'Prateleira de baixo | Uma caixa de ferramentas enferrujada empurrada para o fundo. | fusivel'].join('\n'),
+        compartimentos: [`Prateleiras | ${TXT_ESTANTE[o.p.conteudo] || TXT_ESTANTE.livros}`,
+          'Portas de baixo | Álbuns de fotografia, fitas sem etiqueta e uma caixa de ferramentas enferrujada. | fusivel'].join('\n')})},
     pinta(b, o, c) {
       const L = loc(b, o.u, o.v), r = o.p.cor, n = base(r), rnd = M.rngDe(o, 6), W = 30, q = o.p.conteudo;
       madeira(L, 0, 2, W, 36, r, n, o.seed);
@@ -915,8 +919,14 @@
       {id: 'cor', label: 'Modelo', tipo: 'cor', opcoes: [['branco', 'Branca'], ['aluminio', 'Inox'], ['vermelho', 'Vermelha retrô'], ['amarelo_vivo', 'Amarela retrô']], padrao: 'branco'},
       {id: 'aberta', label: 'Porta aberta', tipo: 'estado', padrao: false}
     ],
-    interacao: {tipo: 'recipiente', marca: 'discreta', dados: () => ({titulo: 'Geladeira', estilo: 'geladeira', compartimentos:
-      'Congelador | Uma forma de gelo rachada e um saco de ervilhas de três anos atrás.\nPrateleiras | Meia pizza, um pote sem etiqueta e um refrigerante aberto. | refrigerante\nPorta | Garrafas d\'água geladas, ketchup e um ovo sozinho. | agua*2'})},
+    interacao: {tipo: 'recipiente', marca: 'discreta', dados: o => {
+      const r = M.rngDe(o, 21), meia = r() < .5;
+      return {titulo: 'Geladeira', estilo: 'geladeira', compartimentos:
+        'Congelador | Uma forma de gelo rachada e um saco de ervilhas de três anos atrás. Atrás dele, uma marmita com fita crepe: NÃO MEXER. | marmita\n' +
+        `Prateleiras | ${meia ? 'Meia pizza dormida' : 'Uma panela com resto de arroz'}, um pote sem etiqueta e um refrigerante aberto. | refrigerante, queijo, presunto\n` +
+        'Gaveta | Duas goiabas e uma banana passando do ponto. | goiaba, banana\n' +
+        'Porta | Garrafas d\'água geladas, uma caixa de leite e ovos na portinha. | agua*2, leite, ovo*3'};
+    }},
     area: () => ({u: 0, v: 0, w: 18, h: 40}),
     pinta(b, o, c) {
       const L = loc(b, o.u, o.v), r = o.p.cor, retro = r === 'vermelho' || r === 'amarelo_vivo', n = retro ? 4 : r === 'aluminio' ? 5 : 5;
@@ -997,8 +1007,13 @@
       {id: 'cor', label: 'Acabamento', tipo: 'cor', opcoes: [['branco', 'Branco'], ['aco', 'Inox']], padrao: 'branco'},
       {id: 'aceso', label: 'Boca acesa', tipo: 'estado', padrao: false}
     ],
-    interacao: {tipo: 'exame', marca: 'discreta', dados: () => ({texto: 'Um fogão de quatro bocas com a tampa de vidro levantada. Cheiro fraco de gás.',
-      detalhe: 'Dentro do forno, uma assadeira com restos de bolo queimado — e, embaixo dela, um envelope pardo dobrado.'})},
+    /* Cozinhar de verdade quando `interacoes-comida.js` está carregado; sem ele,
+       continua sendo um fogão para examinar. */
+    interacao: () => (root.ClueTypes?.get('cozinha')
+      ? {tipo: 'cozinha', marca: 'discreta', dados: {estacao: 'fogao', receitas: '', tranquilo: 'nao',
+        mensagem: 'Quatro bocas, gás de botijão. Dentro do forno, uma assadeira com restos de bolo queimado.'}}
+      : {tipo: 'exame', marca: 'discreta', dados: {texto: 'Um fogão de quatro bocas com a tampa de vidro levantada. Cheiro fraco de gás.',
+        detalhe: 'Dentro do forno, uma assadeira com restos de bolo queimado — e, embaixo dela, um envelope pardo dobrado.'}}),
     pinta(b, o, c) {
       const L = loc(b, o.u, o.v), r = o.p.cor, inox = r === 'aco', n = inox ? 4 : 5, rnd = M.rngDe(o, 14), aceso = c.estado(o, 'aceso');
       vaoSob(L, 1, 24, 14, 2);
@@ -1055,8 +1070,13 @@
       {id: 'tampo', label: 'Tampo', opcoes: [['granito', 'Granito'], ['inox', 'Inox']], padrao: 'granito'},
       {id: 'louca', label: 'Louça suja', tipo: 'bool', padrao: true}
     ],
-    interacao: {tipo: 'recipiente', marca: 'discreta', dados: () => ({titulo: 'Pia', estilo: 'armario', compartimentos:
-      'Gaveta dos talheres | Talheres desparelhados, um abridor de lata e velinhas de aniversário.\nEmbaixo da pia | Produtos de limpeza, um balde, um pano de chão duro e uma ratoeira desarmada.'})},
+    /* Torneira potável + o armário embaixo, na mesma interface. */
+    interacao: () => (root.ClueTypes?.get('fonte_agua')
+      ? {tipo: 'fonte_agua', marca: 'discreta', dados: {estilo: 'pia', qualidade: 'potavel', altura: 'media', movel: 'cozinha',
+        armario: 'Produtos de limpeza, um balde, um pano de chão duro e uma ratoeira desarmada. | sal',
+        armarioNome: 'Abrir o armário', mensagem: 'A torneira range ao abrir; a água sai limpa.'}}
+      : {tipo: 'recipiente', marca: 'discreta', dados: {titulo: 'Pia', estilo: 'armario', compartimentos:
+        'Gaveta dos talheres | Talheres desparelhados, um abridor de lata e velinhas de aniversário.\nEmbaixo da pia | Produtos de limpeza, um balde, um pano de chão duro e uma ratoeira desarmada.'}}),
     pinta(b, o, c) {
       const L = loc(b, o.u, o.v), r = o.p.cor, n = base(r), rnd = M.rngDe(o, 15), metal = r === 'mdf' ? 'cromado' : 'latao';
       // Torneira.
@@ -1108,7 +1128,9 @@
     id: 'armario_aereo', nome: 'Armário aéreo', grupo: 'Cozinha', camada: 'parede', w: 32, h: 14, v: 12, livreV: true, semSombra: true,
     params: [{id: 'cor', label: 'Madeira', tipo: 'cor', opcoes: 'madeira', padrao: 'mdf'}],
     interacao: {tipo: 'recipiente', marca: 'discreta', dados: () => ({titulo: 'Armário', estilo: 'armario', compartimentos:
-      'Porta da esquerda | Pratos, copos de requeijão e um pote de açúcar empedrado.\nPorta do meio | Latas de conserva, macarrão e um pacote de bolacha aberto. | salgadinho\nPorta de vidro | Taças de festa que ninguém usa e um bule de porcelana com uma chave dentro. | chave=Despensa'})},
+      'Porta da esquerda | Pratos, copos de requeijão, um pote de açúcar empedrado e o sal. | acucar, sal\n' +
+      'Porta do meio | Latas de conserva, macarrão instantâneo, óleo e um pacote de bolacha aberto. | miojo*2, oleo, bolacha\n' +
+      'Porta de vidro | Taças de festa que ninguém usa, o pó de café e um bule de porcelana com uma chave dentro. | po_cafe, chave=Despensa'})},
     pinta(b, o, c) {
       const L = loc(b, o.u, o.v), r = o.p.cor, n = base(r), metal = r === 'mdf' ? 'cromado' : 'latao', rnd = M.rngDe(o, 16);
       L.shade(-1, 14, 33, 2, -1, .7); L.shade(-1, 1, 1, 13, -1, .5);
@@ -1144,6 +1166,13 @@
       {id: 'cor', label: 'Armário', tipo: 'cor', opcoes: 'madeira', padrao: 'madeira_clara'},
       {id: 'itens', label: 'Em cima', opcoes: [['microondas', 'Micro-ondas'], ['liquidificador', 'Liquidificador'], ['cafeteira', 'Cafeteira'], ['vazia', 'Tábua e pão']], padrao: 'microondas'}
     ],
+    /* O que está em cima decide o que dá para fazer aqui. */
+    interacao: o => {
+      const estacao = o?.p?.itens === 'cafeteira' ? 'cafeteira' : o?.p?.itens === 'microondas' ? 'micro_ondas' : 'bancada';
+      if (root.ClueTypes?.get('cozinha')) return {tipo: 'cozinha', marca: 'discreta', dados: {estacao, receitas: '', tranquilo: 'nao',
+        mensagem: estacao === 'micro_ondas' ? 'O prato gira torto e o relógio pisca 00:00.' : estacao === 'cafeteira' ? 'Cafeteira manchada por dentro; ninguém lava.' : 'Bancada de granito, tábua e faca.'}};
+      return {tipo: 'exame', marca: 'discreta', dados: {texto: 'A bancada da cozinha, com o que sobrou do café da manhã.', detalhe: ''}};
+    },
     area: () => ({u: 0, v: 0, w: 26, h: 32}),
     pinta(b, o, c) {
       const L = loc(b, o.u, o.v), r = o.p.cor, n = base(r), rnd = M.rngDe(o, 17), metal = r === 'mdf' ? 'cromado' : 'latao', en = c.energia;
@@ -1505,6 +1534,20 @@
   M.modulo({
     id: 'prateleira', nome: 'Prateleira', grupo: 'Decoração', camada: 'parede', w: 28, h: 14, v: 16, livreV: true, semSombra: true,
     params: [{id: 'conteudo', label: 'Conteúdo', opcoes: [['livros', 'Livros'], ['plantas', 'Plantas'], ['potes', 'Potes de cozinha'], ['fotos', 'Porta-retratos']], padrao: 'livros'}],
+    interacao: {marca: 'discreta', tipo: () => (root.ClueTypes?.get?.('estante_movel') ? 'estante_movel' : 'exame'),
+      dados: o => {
+        const T = {
+          livros: 'Uns poucos livros de pé, segurados por um aparador de metal, e um porta-retrato virado para a parede.',
+          plantas: 'Duas suculentas num vaso de tijolo e uma trepadeira que já passou da beirada.',
+          potes: 'Potes de vidro com arroz, feijão e açúcar, todos com a etiqueta escrita na mesma letra.',
+          fotos: 'Porta-retratos de gente que ninguém apresenta: um casamento, uma formatura e uma foto 3x4 solta.'
+        };
+        const achado = {livros: 'moedas*2', plantas: '', potes: '', fotos: ''}[o.p.conteudo] || '';
+        if (!root.ClueTypes?.get?.('estante_movel')) return {texto: T[o.p.conteudo] || T.livros, item: achado};
+        return {titulo: 'Prateleira', estilo: 'parede',
+          prateleiras: `A prateleira | ${T[o.p.conteudo] || T.livros}${achado ? ' | ' + achado : ''}`,
+          vazio: 'Só o retângulo limpo de onde alguma coisa ficou muito tempo.'};
+      }},
     pinta(b, o, c) {
       const L = loc(b, o.u, o.v), rnd = M.rngDe(o, 21), q = o.p.conteudo;
       L.shade(0, 10, 28, 2, -1, .7); L.shade(0, 12, 28, 1, -1, .35);

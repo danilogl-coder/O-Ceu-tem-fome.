@@ -45,7 +45,7 @@ fs.mkdirSync(output,{recursive:true});
     await split(band.id,1);bands=await entries('bandage');
     let small=bands.find(e=>e.id!==band.id);
     await start(small);await to(band.x,band.y);
-    assert.equal(await page.locator('.case-ghost').getAttribute('data-merge'),'true');
+    assert.equal(await page.locator('#caseGrid > .case-ghost').getAttribute('data-merge'),'true');
     await page.mouse.up();assert.equal((await entries('bandage')).length,1);
     assert.equal((await entries('bandage'))[0].qty,3);
 
@@ -70,13 +70,13 @@ fs.mkdirSync(output,{recursive:true});
       if(event==='pointercancel')await page.evaluate(()=>document.querySelector('#caseGrid').dispatchEvent(new PointerEvent('pointercancel',{pointerId:window.testPointerId,bubbles:true})));
       else await page.evaluate(()=>document.querySelector('#caseGrid').releasePointerCapture(window.testPointerId));
       await page.mouse.up();assert.deepEqual(await bag(),before,event);
-      assert(await page.locator('.case-ghost').isHidden());assert.equal(await page.locator('.held').count(),0);
+      assert(await page.locator('#caseGrid > .case-ghost').isHidden());assert.equal(await page.locator('.held').count(),0);
     }
     // Closing mid-drag does not commit on the later pointerup.
     let before=await bag();await start(band);await to(7,3);await page.keyboard.press('i');await page.mouse.up();
     assert.deepEqual(await bag(),before);await page.keyboard.press('i');
     await start(band);await to(9,5);
-    assert.equal(await page.locator('.case-ghost').getAttribute('data-ok'),'false');
+    assert.equal(await page.locator('#caseGrid > .case-ghost').getAttribute('data-ok'),'false');
     await page.mouse.up();assert.deepEqual(await bag(),before);
 
     // Timed treatment reserves the dragged stack and removes it on completion.
@@ -84,13 +84,13 @@ fs.mkdirSync(output,{recursive:true});
     const cut=async part=>{await page.selectOption('#healthPart',part);await page.locator('[data-injury="cut"]').click();};
     await split(band.id,1);small=(await entries('bandage')).find(e=>e.id!==band.id);
     await cut('forearm_near');await dragTreatment(page,'bandage','forearm_near',{entryId:small.id});
-    assert(!(await bag()).entries.some(e=>e.id===small.id));assert(await page.locator('.case-ghost').isHidden());
+    assert(!(await bag()).entries.some(e=>e.id===small.id));assert(await page.locator('#caseGrid > .case-ghost').isHidden());
     assert.equal(await page.locator('#caseItemName').textContent(),'Selecione um item');
     await split(band.id,1);band=(await entries('bandage')).find(e=>e.id===band.id);
     await cut('thigh_near');await dragTreatment(page,'bandage','thigh_near',{entryId:band.id});
     assert(!(await bag()).entries.some(e=>e.id===band.id));
     assert.equal((await entries('bandage')).reduce((n,e)=>n+e.qty,0),1);
-    assert(await page.locator('.case-ghost').isHidden());
+    assert(await page.locator('#caseGrid > .case-ghost').isHidden());
     await page.locator('#healthClose').click();
 
     // Partial and full target merge feedback; split without room is unchanged.

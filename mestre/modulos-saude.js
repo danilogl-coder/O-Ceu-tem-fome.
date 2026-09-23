@@ -143,9 +143,15 @@
       {id: 'velho', label: 'Modelo antigo, de ferro', tipo: 'bool', padrao: false},
       {id: 'ocupado', label: 'Alguém deitado', tipo: 'estado', padrao: false}
     ],
-    interacao: {tipo: 'exame', marca: 'discreta', dados: () => ({
-      texto: 'Um leito de hospital com o lençol puxado até em cima. Debaixo do pano, é difícil dizer se há alguém ou só o formato de um corpo afundado no colchão.',
-      detalhe: 'Presa na grade, uma pulseira de identificação. O nome foi riscado a caneta; sobrou só a data de internação, de muitos anos atrás.'})},
+    interacao: {marca: 'discreta', tipo: () => (root.ClueTypes?.get?.('leito_hospitalar') ? 'leito_hospitalar' : 'exame'),
+      dados: o => (root.ClueTypes?.get?.('leito_hospitalar') ? {
+        titulo: 'Leito', paciente: '', grade: o.p.grades === false ? 'baixada' : 'levantada', cabeceira: '0',
+        prontuario: 'A folha de evolução vai até as 02:40 e para. A última linha é de outra letra: “paciente saiu acompanhado — anexo”. O nome do paciente foi riscado a caneta; sobrou a data de internação, de muitos anos atrás.',
+        colchao: 'O lençol está puxado até em cima e, por baixo, é difícil dizer se há alguém ou só o formato de um corpo afundado no colchão. Está frio. | bandage',
+        embaixo: 'Poeira levantada por um pé que arrastou alguma coisa para fora. Ficou um chinelo sozinho e uma pulseira de identificação partida. | moedas*2'
+      } : {
+        texto: 'Um leito de hospital com o lençol puxado até em cima. Debaixo do pano, é difícil dizer se há alguém ou só o formato de um corpo afundado no colchão.',
+        detalhe: 'Presa na grade, uma pulseira de identificação. O nome foi riscado a caneta; sobrou só a data de internação, de muitos anos atrás.'})},
     area: o => ({u: 0, v: 3, w: o.w, h: o.h - 3}),
     pinta(b, o, c) {
       const {u, w} = o, p = o.p, D = c.desgaste, seed = o.seed, random = M.rngDe(o, 1);
@@ -328,9 +334,13 @@
   M.modulo({
     id: 'monitor_cardiaco', nome: 'Monitor cardíaco', grupo: 'Hospital', camada: 'parede', w: 28, h: 16, v: 14, livreV: true, semSombra: true, z: 1,
     params: [{id: 'ligado', label: 'Ligado', tipo: 'estado', padrao: true}],
-    interacao: {tipo: 'exame', marca: 'discreta', dados: () => ({
-      texto: 'Um monitor cardíaco. Os cabos dos eletrodos pendem soltos, sem ninguém na ponta — e mesmo assim a linha verde continua batendo.',
-      detalhe: 'No canto da tela, o horário do último alarme: 03:17.'})},
+    interacao: {marca: 'discreta', tipo: () => (root.ClueTypes?.get?.('monitor_cardiaco') ? 'monitor_cardiaco' : 'exame'),
+      dados: o => (root.ClueTypes?.get?.('monitor_cardiaco') ? {
+        titulo: 'Monitor cardíaco', paciente: 'SEM NOME', ritmo: o.p.ligado === false ? 'desligado' : 'normal',
+        bpm: '', spo2: '97', pressao: '12/8', alarme: 'nao', nota: 'ULT. ALARME 03:17'
+      } : {
+        texto: 'Um monitor cardíaco. Os cabos dos eletrodos pendem soltos, sem ninguém na ponta — e mesmo assim a linha verde continua batendo.',
+        detalhe: 'No canto da tela, o horário do último alarme: 03:17.'})},
     area: () => ({u: 0, v: 0, w: 28, h: 16}),
     pinta(b, o, c) {
       const {u, v} = o, on = c.tela(o, 'ligado') > 0, D = c.desgaste, casco = 'plastico_bege';
@@ -586,7 +596,7 @@
       {id: 'aberto', label: 'Portas abertas', tipo: 'estado', padrao: false}
     ],
     interacao: {tipo: 'recipiente', marca: 'discreta', dados: () => ({
-      titulo: 'Armário de remédios', estilo: 'armario', tranca: 'nenhuma',
+      titulo: 'Armário de remédios', estilo: 'armario_metal', tranca: 'nenhuma',
       compartimentos: 'Prateleira de cima | Rolos de atadura ainda lacrados, empoeirados. | bandage*2\nPrateleira do meio | Uma caixa de antibiótico pela metade, com a bula dobrada lá dentro. | antibiotic\nPrateleira de baixo | Frascos de vidro sem rótulo, com um líquido turvo. Melhor não.\nPortas de baixo | Luvas, seringas vencidas e um caderno de controle com as últimas páginas arrancadas.'})},
     pinta(b, o, c) {
       const {u, v} = o, cor = o.p.cor, D = c.desgaste, seed = o.seed, aberto = c.estado(o, 'aberto');
@@ -823,9 +833,20 @@
   M.modulo({
     id: 'negatoscopio', nome: 'Negatoscópio', grupo: 'Hospital', camada: 'parede', w: 26, h: 17, v: 14, livreV: true, semSombra: true,
     params: [{id: 'ligado', label: 'Ligado', tipo: 'estado', padrao: false}],
-    interacao: {tipo: 'exame', marca: 'discreta', dados: o => (o.desgaste || 0) >= 2
-      ? {texto: 'Dois raios-x presos no negatoscópio: um tórax e uma mão. No estômago do tórax, um objeto pequeno e muito branco.', detalhe: 'Contra a luz, o objeto tem o formato inconfundível de uma chave. Na etiqueta do filme, alguém escreveu a lápis: “não é dele”.'}
-      : {texto: 'Dois raios-x presos no negatoscópio: um tórax e uma mão. Na etiqueta, o nome do paciente foi raspado com a unha.', detalhe: 'A data do exame é de amanhã.'}},
+    interacao: {marca: 'discreta', tipo: () => (root.ClueTypes?.get?.('negatoscopio') ? 'negatoscopio' : 'exame'),
+      dados: o => {
+        const feio = (o.desgaste || 0) >= 2;
+        if (!root.ClueTypes?.get?.('negatoscopio')) return feio
+          ? {texto: 'Dois raios-x presos no negatoscópio: um tórax e uma mão. No estômago do tórax, um objeto pequeno e muito branco.', detalhe: 'Contra a luz, o objeto tem o formato inconfundível de uma chave. Na etiqueta do filme, alguém escreveu a lápis: “não é dele”.'}
+          : {texto: 'Dois raios-x presos no negatoscópio: um tórax e uma mão. Na etiqueta, o nome do paciente foi raspado com a unha.', detalhe: 'A data do exame é de amanhã.'};
+        return {titulo: 'Negatoscópio', aceso: o.p.ligado === false ? 'nao' : 'sim',
+          chapas: ['TÓRAX — SEM NOME | torax | ' + (feio
+            ? 'No estômago, um objeto pequeno e muito branco. Contra a luz, tem o formato inconfundível de uma chave.'
+            : 'O nome do paciente foi raspado da etiqueta com a unha. A data do exame é de amanhã.'),
+            'MÃO D. — 12/03 | mao | Falta a falange do anelar. A amputação é antiga e foi bem feita.',
+            'PERNA E. — S/DATA | perna | A fratura já tem calo ósseo. Quem trouxe este filme hoje trouxe um filme velho.'].join('\n'),
+          laudo: 'LAUDO PROVISÓRIO — aguardando assinatura do plantonista. Campo do nome em branco.'};
+      }},
     pinta(b, o, c) {
       const {u, v} = o, on = c.tela(o, 'ligado') > 0, D = c.desgaste, F = on ? EMISSIVE : 0;
       b.rect(u + 1, v + 1, 26, 17, 'carvao', 1);
@@ -982,9 +1003,14 @@
   M.modulo({
     id: 'vaso_sanitario', nome: 'Vaso sanitário', grupo: 'Banheiro', camada: 'parede', w: 16, h: 22,
     params: [{id: 'tampa_aberta', label: 'Tampa aberta', tipo: 'estado', padrao: false}],
-    interacao: {tipo: 'recipiente', marca: 'discreta', dados: () => ({
-      titulo: 'Caixa acoplada', estilo: 'caixa', tranca: 'nenhuma',
-      compartimentos: 'Dentro da caixa | Boiando na água parada, um saco plástico amarrado com fita isolante. Dentro dele, algo duro e frio. | chave=Porta dos fundos'})},
+    /* Privada: dá para beber (com nojo e risco) e a caixa acoplada abre na
+       mesma interface. Sem `interacoes-comida.js`, volta a ser só a caixa. */
+    interacao: () => (root.ClueTypes?.get('fonte_agua')
+      ? {tipo: 'fonte_agua', marca: 'discreta', dados: {estilo: 'privada', qualidade: 'contaminada', altura: 'chao',
+        armario: 'Boiando na água parada, um saco plástico amarrado com fita isolante. Dentro dele, algo duro e frio. | chave=Porta dos fundos',
+        armarioNome: 'Abrir a caixa acoplada', mensagem: 'A água da caixa é a menos pior. Ainda assim é a privada.'}}
+      : {tipo: 'recipiente', marca: 'discreta', dados: {titulo: 'Caixa acoplada', estilo: 'caixa', tranca: 'nenhuma',
+        compartimentos: 'Dentro da caixa | Boiando na água parada, um saco plástico amarrado com fita isolante. Dentro dele, algo duro e frio. | chave=Porta dos fundos'}}),
     area: () => ({u: 0, v: 0, w: 16, h: 22}),
     pinta(b, o, c) {
       P.contato(b, o.u + 3, 10, {alto: 1});
@@ -1023,9 +1049,17 @@
       {id: 'espelho', label: 'Espelho', tipo: 'bool', padrao: true},
       {id: 'armario', label: 'Armário de espelho', tipo: 'bool', padrao: false}
     ],
-    interacao: {tipo: 'recipiente', marca: 'discreta', dados: o => o.p.armario
-      ? {titulo: 'Armário do espelho', estilo: 'armario', compartimentos: 'Prateleiras | Pasta de dente seca, um barbeador enferrujado, um vidro de remédio vazio e uma atadura ainda na embalagem. | bandage'}
-      : {titulo: 'Embaixo da pia', estilo: 'caixa', compartimentos: 'Atrás do sifão | Enfiado entre o cano e a parede, um rolo de atadura esquecido. | bandage'}},
+    /* Pia de banheiro: torneira potável, com o armarinho do espelho (ou o vão
+       atrás do sifão) na mesma interface. */
+    interacao: o => (root.ClueTypes?.get('fonte_agua')
+      ? {tipo: 'fonte_agua', marca: 'discreta', dados: {estilo: 'pia', qualidade: 'potavel', altura: 'media', movel: 'banheiro',
+        armario: o?.p?.armario
+          ? 'Pasta de dente seca, um barbeador enferrujado, um vidro de remédio vazio e uma atadura ainda na embalagem. | bandage'
+          : 'Enfiado entre o cano e a parede, um rolo de atadura esquecido. | bandage',
+        armarioNome: o?.p?.armario ? 'Abrir o armarinho' : 'Olhar atrás do sifão', mensagem: 'Água da caixa do prédio. A torneira pinga.'}}
+      : {tipo: 'recipiente', marca: 'discreta', dados: o?.p?.armario
+        ? {titulo: 'Armário do espelho', estilo: 'armario', compartimentos: 'Prateleiras | Pasta de dente seca, um barbeador enferrujado, um vidro de remédio vazio e uma atadura ainda na embalagem. | bandage'}
+        : {titulo: 'Embaixo da pia', estilo: 'caixa', compartimentos: 'Atrás do sifão | Enfiado entre o cano e a parede, um rolo de atadura esquecido. | bandage'}}),
     area: o => o.p.armario ? {u: 0, v: 0, w: 18, h: 22} : {u: 0, v: o.h - 22, w: 18, h: 16},
     pinta(b, o, c) {
       const {u} = o, p = o.p, D = c.desgaste, seed = o.seed, L = 'loica', R = u + 17;
@@ -1082,6 +1116,11 @@
       {id: 'box', label: 'Box', opcoes: [['vidro', 'Box de vidro'], ['cortina', 'Cortina'], ['nenhum', 'Sem box']], padrao: 'vidro'},
       {id: 'ligado', label: 'Água ligada', tipo: 'estado', padrao: false}
     ],
+    /* Dá para beber (com gosto de cano) e para molhar a cabeça. */
+    interacao: () => (root.ClueTypes?.get('fonte_agua')
+      ? {tipo: 'fonte_agua', marca: 'discreta', dados: {estilo: 'chuveiro', qualidade: 'duvidosa', altura: 'alta',
+        mensagem: 'Chuveiro elétrico velho. A água sai morna e com gosto de cano.'}}
+      : null),
     pinta(b, o, c) {
       const {u, v} = o, box = o.p.box, D = c.desgaste, seed = o.seed, R = u + 27;
       const cx = box === 'cortina' ? u + 8 : u + 13;
@@ -1681,8 +1720,10 @@
   M.modulo({
     id: 'caixa_perfurocortante', nome: 'Caixa de perfurocortantes', grupo: 'Hospital', camada: 'parede', w: 9, h: 11, v: 30, livreV: true, semSombra: true,
     params: [],
-    interacao: {tipo: 'recipiente', marca: 'discreta', dados: () => ({titulo: 'Caixa amarela', estilo: 'caixa',
-      compartimentos: 'Descarte | Agulhas usadas até a boca. No meio delas, a ponta de uma chave pequena brilha. Enfiar a mão aqui vai doer. | chave=Cadeado pequeno'})},
+    interacao: {tipo: 'exame', marca: 'discreta', dados: () => ({
+      texto: 'A caixa amarela de perfurocortantes, cheia até a boca de agulhas usadas. O lacre já foi rompido uma vez e refeito com fita.',
+      detalhe: 'No meio das agulhas, a ponta de uma chave pequena brilha. Enfiar a mão aqui vai doer — e dói.',
+      item: 'chave=Cadeado pequeno', fundo: 'escuro'})},
     pinta(b, o, c) {
       const {u, v} = o, D = c.desgaste;
       b.rect(u + 1, v + 1, 9, 11, 'carvao', 1);

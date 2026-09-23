@@ -1156,6 +1156,11 @@
       {id: 'reage', label: 'Alguma coisa reage à investigação'}
     ],
     clues: [
+      /* A porta aberta ao lado da estante dá no corredor do prédio. */
+      {id: 'saida_corredor', name: 'Porta do corredor', type: 'passagem', marker: 'discreta', conclusions: [],
+        anchor: {layer: 'wall', u: WALL.door.u, v: WALL.door.v, w: WALL.door.w, h: 62 - WALL.door.v},
+        note: 'O corredor de ladrilho xadrez: depósito, sala das caixas, cópias, copa, banheiro e a escada para a porta da frente.',
+        data: {tipo: 'porta', destino: 'jorge_corredor', chegada: 'porta_escritorio', tranca: 'aberta'}},
       {id: 'estante', name: 'Edições do livro', type: 'edicoes', marker: 'brilho', conclusions: ['nao_escreveu', 'mesmo_mes'],
         anchor: {layer: 'wall', u: 152, v: 12, w: 38, h: 50},
         note: 'Compare a Primeira edição com a Nova impressão: p. 113 (a frase muda) e p. 214 (parágrafo novo com O CÉU TEM FOME). A folha de rosto da nova diz março de 2026.',

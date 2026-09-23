@@ -1,0 +1,11 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path');
+const root=path.resolve(__dirname,'../..');
+const {FICHA_PERICIAS}=require(path.join(root,'ficha.js'));
+const A=require(path.join(root,'mestre/ficha-icones.js'));
+const out=path.join(root,'pixel_art/generated/skill-tree');
+fs.mkdirSync(path.join(out,'pericias-svg'),{recursive:true});
+for(const [id,,regiao] of FICHA_PERICIAS)fs.writeFileSync(path.join(out,'pericias-svg',id+'.svg'),A.svg({id:'pericia:'+id,pericia:id,regiao}));
+const grid=size=>`<section id="prancha${size}"><header><span>O CÉU TEM FOME · ACERVO DE PERÍCIAS</span><h1>28 ilustrações · ${size} × ${size}</h1><p>${size===64?'Resolução nativa — leitura das silhuetas e dos materiais.':'Ampliação inteira de 2× — inspeção dos pixels e do acabamento.'}</p></header><div class="grid">${FICHA_PERICIAS.map(([id,nome,regiao],i)=>`<figure><span style="color:${A.cores[regiao][3]}">${String(i+1).padStart(2,'0')} / ${regiao.toUpperCase()}</span><img width="${size}" height="${size}" src="${A.icon({id:'pericia:'+id,pericia:id,regiao})}" alt="${nome}"><figcaption>${nome}</figcaption></figure>`).join('')}</div><footer>Arte original desenhada por código · 64 × 64 pixels · Luz superior esquerda · Sombras duras</footer></section>`;
+fs.writeFileSync(path.join(out,'pericias.html'),`<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Prancha das 28 perícias</title><style>*{box-sizing:border-box}body{margin:0;background:#08060f;color:#e4cee5;font:13px 'Courier New',monospace}section{width:1240px;padding:24px;margin:28px;border:2px solid #754571;background:#100c1a}header{padding:6px 4px 20px}header span,footer{color:#a282a9;font-size:11px;letter-spacing:1px}h1{font-size:24px;font-weight:normal;margin:10px 0}p{color:#a798b6;margin:0}.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:14px}figure{margin:0;display:flex;align-items:center;flex-direction:column;padding:12px 6px;background:#08060f;border:1px solid #302338;gap:10px}figure>span{font-size:9px;align-self:flex-start;margin-left:5px}img{image-rendering:pixelated;image-rendering:crisp-edges}figcaption{font-size:12px;white-space:nowrap}footer{padding-top:24px;text-align:center}</style>${grid(64)}${grid(128)}</html>`);
+console.log('Prancha gerada: '+path.join(out,'pericias.html'));

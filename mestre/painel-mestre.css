@@ -15,6 +15,9 @@
 .gm-window button{cursor:pointer;min-height:30px;padding:5px 9px}
 .gm-window button:hover:not(:disabled){background:#48163f;border-color:#df67c3}
 .gm-window button:disabled{opacity:.45;cursor:default}
+/* Campo travado por uma escolha de cima (o percurso, por exemplo): ainda
+   dá para ler o número, mas fica claro que ele não é seu para digitar. */
+.gm-window input:disabled,.gm-window select:disabled{opacity:.5;cursor:not-allowed}
 .gm-window button:focus-visible,.gm-window select:focus-visible,.gm-window input:focus-visible,.gm-window textarea:focus-visible,.gm-window summary:focus-visible,.gm-heading:focus-visible{outline:2px solid #ffd2a0;outline-offset:2px}
 .gm-window button[aria-pressed=true]{background:#5a1e50;border-color:#f187d7;color:#ffe0f5;box-shadow:inset 0 -3px #bb48a4,0 2px #09020d}
 .gm-window select,.gm-window input[type=text],.gm-window input[type=time]{width:100%;padding:5px 6px;min-height:30px}
@@ -185,3 +188,16 @@
 .gm-clue[hidden]{display:none!important}
 .gm-clue-note{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
 .gm-clue-note[data-open=true]{display:block;-webkit-line-clamp:unset}
+
+/* Fome e sede */
+.gm-nec-barra{position:relative;height:16px;background:#1b0b20;border:2px solid #743064;box-shadow:inset 2px 2px #3e163b;margin:2px 0 8px}
+.gm-nec-barra>span{display:block;height:100%;background:#9fe0b0;transition:width .2s linear}
+.gm-nec-barra>i{position:absolute;top:-3px;bottom:-3px;width:2px;background:#b581b3}
+.gm-nec-barra>i[data-marca="30"]{left:30%}.gm-nec-barra>i[data-marca="60"]{left:60%}.gm-nec-barra>i[data-marca="85"]{left:85%}
+.gm-nec-estagios{gap:4px}.gm-nec-estagios button{flex:1;font-size:10px;padding:6px 2px}
+.gm-nec-efeitos{display:flex;flex-direction:column;gap:4px}
+.gm-nec-efeito{display:flex;align-items:center;gap:8px;padding:5px 7px;background:#200b25;border-left:3px solid #ff9a5c}
+.gm-nec-efeito strong{color:#ffd1f1}.gm-nec-efeito small{color:#b581b3}.gm-nec-efeito span{margin-left:auto;color:#ffd18c}
+.gm-nec-log{display:flex;flex-direction:column;gap:3px;font-size:11px}
+.gm-nec-linha{display:flex;gap:8px;align-items:baseline;border-bottom:1px solid #3a173a;padding-bottom:2px}
+.gm-nec-linha span{color:#ffd18c}.gm-nec-linha small{color:#a978a8;margin-left:auto}

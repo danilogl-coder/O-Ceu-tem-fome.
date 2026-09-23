@@ -253,6 +253,11 @@
       this.listeners = new Set();
       this.frameHooks = new Set();     // after the program picture is final (broadcast)
       this.overlayHooks = new Set();   // drawn into the program picture, seen by the players
+      /* Things standing in the room that are not painted into its layers (a
+         parked car): providers (scene, state, stage) → [{d, draw(ctx, info)}].
+         Whatever is farther than the player (d ≥ focal) is drawn right after
+         the floor, the rest just before the front pieces; far to near. */
+      this.worldObjects = new Set();
       this.camera = 0;
       this.dust = [];
       this.clock = null;
@@ -332,6 +337,7 @@
 
     /* Put a scene live right now, no transition. */
     load(sceneId, state = {}, {spawn = null} = {}) {
+      if(this.tacticalTable?.active&&sceneId!==this.live?.scene.id){this.tacticalTable.status('Encerre a batalha antes de trocar de cena.');return false;}
       const scene = SceneLibrary.get(sceneId);
       if (!scene) throw new Error(`Cena desconhecida: ${sceneId}`);
       const s = this.normalizeState(scene, state);
@@ -396,6 +402,7 @@
 
     /* Send a scene live through a transition. */
     goLive({scene: sceneId, state = {}, spawn = null, transition = 'fade', duration = 1, title = '', subtitle = ''} = {}) {
+      if(this.tacticalTable?.active&&sceneId!==this.live?.scene.id){this.tacticalTable.status('Encerre a batalha antes de trocar de cena.');return false;}
       const apply = () => { this.load(sceneId, state, {spawn}); };
       if (!this.live || transition === 'corte') { apply(); return; }
       this.transition = {type: transition, t: 0, duration: Math.max(.2, duration), apply, applied: false, title, subtitle,
@@ -423,6 +430,8 @@
        wall  {u, v, w, h}              wall art pixels
        front {piece, x, y, w, h}       art pixels of a front piece
        floor {X, dNear, dFar, w}       world x, depth range, width in world px
+       objeto {X, d, w, h, dw}         a box on the floor: centre x, near face
+                                       depth, width, height and depth extent
        flat  {X, y, w, h}              world x and screen y (flat scenes) */
     anchorWorldX(a) {
       const room = this.room;
@@ -448,6 +457,14 @@
         if (!piece) return null;
         const ff = piece.factor || room.frontFactor, dx = Math.round(SW / 2 + (piece.X - cc) * ff);
         return {x: dx + a.x * S, y: (piece.top + a.y) * S, w: a.w * S, h: a.h * S, depth: ff};
+      }
+      if (a.layer === 'objeto') {
+        const d0 = Math.max(1, a.d ?? room.focal), d1 = d0 + Math.max(0, a.dw || 0), fN = room.focal / d0, fF = room.focal / d1;
+        const w = a.w || 40, h = a.h || 60;
+        const xs = [a.X - w / 2, a.X + w / 2].flatMap(X => [SW / 2 + (X - cc) * fN, SW / 2 + (X - cc) * fF]);
+        const top = room.H + (room.eye - h) * Math.min(fN, fF), top2 = room.H + (room.eye - h) * fN, bottom = room.H + room.eye * fN;
+        const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(top, top2);
+        return {x: x0, y: y0, w: x1 - x0, h: bottom - y0, depth: fN};
       }
       if (a.layer === 'floor') {
         const fNear = room.focal / a.dNear, fFar = room.focal / a.dFar, f = room.focal / ((a.dNear + a.dFar) / 2);
@@ -590,13 +607,48 @@
       // Side walls.
       this.paintSides(ctx, room, layers, cc);
       // Floor rows.
+      /* MAPA ABERTO: numa linha de chão distante, a borda do mapa cai DENTRO da
+         tela (a perspectiva encolhe a sala), e o que sobra nas pontas não é
+         pintado por ninguém — numa sala isso é a parede lateral que cobre, num
+         mapa aberto não há parede, e aquele pedaço ficava com o quadro
+         anterior: entrando na beira de estrada vindo do escritório, aparecia
+         uma tira do assoalho de madeira do escritório no canto. Num mapa
+         aberto o chão CONTINUA: a linha é repetida para os lados até encher a
+         tela, que é o que o campo faz de verdade além do fim do mapa. */
       for (let k = 0; k < room.floorRows; k++) {
         const f = room.rowF[k], dx = Math.round(SW / 2 + (room.x0 - cc) * f);
         const u0 = Math.max(0, Math.floor(-dx / S)), u1 = Math.min(room.rowW[k], Math.ceil((SW - dx) / S));
         if (u1 > u0) ctx.drawImage(layers.floor, u0, k, u1 - u0, 1, dx + u0 * S, room.floorTop + k * S, (u1 - u0) * S, S);
+        if (!room.aberto) continue;
+        const largura = room.rowW[k] * S, y = room.floorTop + k * S;
+        for (let x = dx - largura; x > -largura && x < SW; x -= largura)
+          ctx.drawImage(layers.floor, 0, k, room.rowW[k], 1, x, y, largura, S);
+        for (let x = dx + largura; x < SW; x += largura)
+          ctx.drawImage(layers.floor, 0, k, room.rowW[k], 1, x, y, largura, S);
       }
       if (animated) this.paintDust(ctx, scene, layers, cc, t);
       if (animated && scene.animate?.floor) scene.animate.floor(this.painter(ctx, 0, 0, scene, layers), t, state, this, cc);
+      this.paintObjects(ctx, scene, state, layers, camera, 'back', animated);
+    }
+    /* World objects of one pass ('back': behind the player, 'front': between
+       the player and the front pieces). */
+    objectsOf(scene, state) {
+      const list = [];
+      for (const provider of [...SceneStage.worldObjects, ...this.worldObjects]) {
+        try { const items = provider(scene, state, this); if (items) for (const it of items) if (it && Number.isFinite(it.d)) list.push(it); }
+        catch (error) { console.error(error); }
+      }
+      return list;
+    }
+    paintObjects(ctx, scene, state, layers, camera, pass, animated = true) {
+      if(this.deferWorldObjects&&animated&&scene===this.scene)return;
+      if ((!this.worldObjects.size && !SceneStage.worldObjects.size) || scene.kind !== 'room') return;
+      const room = scene.room, list = this.objectsOf(scene, state).filter(o => (o.d >= room.focal) === (pass === 'back'));
+      if (!list.length) return;
+      list.sort((a, b) => b.d - a.d);
+      const info = {scene, state, layers, camera, cc: camera + SW / 2, room, time: this.time, animated, stage: this, pass};
+      ctx.imageSmoothingEnabled = false;
+      for (const o of list) { try { o.draw(ctx, info); } catch (error) { console.error(error); } }
     }
     paintSides(ctx, room, layers, cc) {
       const leftEdge = SW / 2 + (room.x0 - cc) * room.wallFactor;
@@ -656,11 +708,13 @@
     paintFront(ctx, scene, state, layers, camera, animated) {
       const room = scene.room, cc = camera + SW / 2;
       ctx.imageSmoothingEnabled = false;
+      this.paintObjects(ctx, scene, state, layers, camera, 'front', animated);
       for (const item of layers.front) {
         const p = item.piece, dx = Math.round(SW / 2 + (p.X - cc) * item.factor);
         if (dx >= SW || dx + p.w * S <= 0) continue;
-        drawSlice(ctx, item.canvas, dx, p.top * S, p.h);
-        if (animated && p.animate) p.animate(this.painter(ctx, dx, p.top * S, scene, layers), this.time, state, this);
+        const paint=()=>{drawSlice(ctx,item.canvas,dx,p.top*S,p.h);if(animated&&p.animate)p.animate(this.painter(ctx,dx,p.top*S,scene,layers),this.time,state,this);};
+        const cut=animated?this.tacticalTable?.occlusion():null;
+        if(cut){ctx.save();ctx.beginPath();ctx.rect(0,0,SW,SH);ctx.rect(cut.x,cut.y,cut.w,cut.h);ctx.clip('evenodd');paint();ctx.restore();ctx.save();ctx.beginPath();ctx.rect(cut.x,cut.y,cut.w,cut.h);ctx.clip();ctx.globalAlpha=.25;paint();ctx.restore();}else paint();
       }
     }
     painter(ctx, ox, oy, scene, layers) {
@@ -844,13 +898,15 @@
       g.restore();
     }
   }
+  /* Providers shared by every stage (the live one, previews, thumbnails). */
+  SceneStage.worldObjects = new Set();
   function drawSlice(ctx, image, dx, dy, rows) {
     const u0 = Math.max(0, Math.floor(-dx / S)), u1 = Math.min(image.width, Math.ceil((SW - dx) / S));
     if (u1 <= u0) return;
     ctx.drawImage(image, u0, 0, u1 - u0, rows, dx + u0 * S, dy, (u1 - u0) * S, rows * S);
   }
 
-  const api = {SceneLibrary, SceneStage, makeRoom, buildRoomLayers, buildRoomLayerSteps, SCREEN: {width: SW, height: SH, scale: S}};
+  const api = {SceneLibrary, SceneStage, makeRoom, buildRoomLayers, buildRoomLayerSteps, lightFunction, SCREEN: {width: SW, height: SH, scale: S}};
   Object.assign(root, api);
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

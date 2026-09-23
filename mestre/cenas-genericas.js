@@ -9,7 +9,7 @@
 
    As passagens recebem um `papel` (entrada, quarto, banheiro, elevador…):
    é por ele que os conjuntos ligam as cenas e que o improviso escolhe por
-   onde a personagem chega. */
+   onde o personagem chega. */
 (function (root) {
   'use strict';
   const M = root.Montador;

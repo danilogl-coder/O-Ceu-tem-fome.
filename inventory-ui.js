@@ -101,7 +101,10 @@
       const def=ITEM_DEFS[entry.def],a=this.actions||{},out=[];
       if(def.kind==='clue'&&a.examine)out.push({id:'examine',label:'Examinar'});
       if(def.kind==='key')out.push({id:'examine',label:'Examinar'});
-      if(def.kind==='food')out.push({id:'consume',label:'Consumir'});
+      // “Comer”, “Beber” ou “Tomar”, conforme o item (comidas.js); ingredientes só viram comida no fogão.
+      if(def.kind==='food')out.push({id:'consume',label:(globalThis.Comida?.verbo?.(entry.def))||'Consumir'});
+      // O kit de reparo só serve perto de um carro; o jogo decide se dá.
+      if(entry.def==='kit_reparo'&&a.repararCarro)out.push({id:'reparar',label:'Consertar o carro'});
       if(def.kind==='outfit'&&a.wear)out.push(entry.data?.worn?{id:'unwear',label:'Tirar a roupa'}:{id:'wear',label:'Vestir'});
       if(def.kind==='weapon'&&a.wield)out.push(a.isWielded?.(entry)?{id:'unwield',label:'Guardar'}:{id:'wield',label:'Empunhar'});
       if(entry.qty>1)out.push({id:'split1',label:'Separar 1'});
@@ -133,6 +136,7 @@
       else if(opt==='unwield')this.changed(a.unwield(entry)?'Arma guardada.':'');
       else if(opt==='split1'){const next=this.inv.split(entry.id,1);this.changed(next?'Um separado da pilha.':'Sem espaço para separar.',!!next);}
       else if(opt==='drop'){const ok=a.drop(entry,null);this.changed(ok?'Item largado no chão.':'Não dá para largar agora.',ok);}
+      else if(opt==='reparar'){const r=a.repararCarro(entry);this.changed(r===true?'':typeof r==='string'?r:'');}
       else if(opt==='trash')this.discard(id);
     }
     /* A key is read in the bag itself: selected, its name and lock in the
@@ -147,6 +151,14 @@
       const entry=this.inv.get(id),def=entry&&ITEM_DEFS[entry.def];
       if(def?.kind!=='food')return false;
       if(this.isUsing(id)){this.flash('Esse item está em uso.');return false;}
+      /* Com o jogo aberto, comer e beber é uma ação com animação: o personagem
+         leva à boca e só então o item sai da bolsa (`consumir` devolve true, ou
+         o motivo de não dar). Sem isso (prévias e testes), some na hora. */
+      if(this.actions?.consumir){
+        const r=this.actions.consumir(entry);
+        if(r===true){this.changed('');return true;}
+        if(typeof r==='string'&&r){this.flash(r);return false;}
+      }
       const eaten={...entry,data:entry.data?JSON.parse(JSON.stringify(entry.data)):undefined,qty:1};
       if(!this.inv.consumeEntry(id,1))return false;
       this.actions?.consumed?.(eaten);

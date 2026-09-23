@@ -1,0 +1,94 @@
+/* O ELENCO — o menu do botão direito na cena e a lista do mapa do mestre.
+
+   O menu é DOM por decisão, não por preguiça: ele não pode entrar no quadro
+   que vai para a tela dos jogadores. Usa a mesma moldura do menu da bolsa,
+   porque menu de botão direito deste jogo já tem cara, e cara é convenção. */
+.cena-menu{position:fixed;z-index:70;min-width:186px;padding:4px;background:#210b26;border:2px solid #a44590;
+  box-shadow:3px 3px #100414;display:grid;gap:2px;font:12px/1.2 Consolas,'Courier New',monospace;color:#f3b4e8}
+.cena-menu[hidden]{display:none}
+.cena-menu h4{margin:0;padding:3px 6px 5px;font:600 10px/1 Consolas,'Courier New',monospace;letter-spacing:1px;
+  color:#ffd2a0;border-bottom:1px solid #803570;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cena-menu p{margin:0;padding:3px 6px 2px;font-size:9px;letter-spacing:.5px;color:#a77da4}
+.cena-menu button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;
+  padding:6px 8px;margin:0;background:transparent;border:1px solid transparent;box-shadow:none;color:#f3b4e8;
+  font:12px/1.2 Consolas,'Courier New',monospace;cursor:pointer}
+.cena-menu button:first-of-type{color:#ffe6bb}
+.cena-menu button:hover,.cena-menu button:focus-visible{background:#3a1440;border-color:#e574cc;outline:none}
+.cena-menu button[data-danger]{color:#ff9a9a}
+.cena-menu kbd{font:9px/1 Consolas,monospace;color:#c08fc0;border:1px solid #6d2d62;padding:1px 3px;letter-spacing:.5px}
+
+/* ---------------------------------------------------------------- a lista
+   Uma linha por pessoa da mesa: o retrato (o mesmo desenho que está na
+   cena), o nome, onde ela está, e os três botões que importam — assumir,
+   pôr/tirar de cena e excluir. */
+.gm-elenco{display:flex;flex-direction:column;gap:6px}
+.gm-cast{display:grid;grid-template-columns:38px minmax(0,1fr);grid-template-areas:'face text' 'face actions';
+  gap:4px 9px;align-items:center;border:1px solid #5c244f;background:#1a071d;padding:6px 7px;box-shadow:2px 2px #09020d}
+.gm-cast[data-controlado=true]{border-color:#e2bd72;background:#241028;box-shadow:inset 0 0 0 1px #6b4e21,2px 2px #09020d}
+.gm-cast[data-palco=true]:not([data-controlado=true]){border-color:#8a5ea8}
+.gm-cast-face{grid-area:face;position:relative;width:38px;height:48px;background:#2a0d30;border:1px solid #6d2d62;
+  display:flex;align-items:center;justify-content:center;overflow:hidden}
+.gm-cast-face canvas{image-rendering:pixelated;image-rendering:crisp-edges;width:34px;height:44px}
+.gm-cast[data-controlado=true] .gm-cast-face{border-color:#e2bd72}
+.gm-cast-text{grid-area:text;display:flex;flex-direction:column;min-width:0}
+.gm-cast-text strong{font-size:12px;color:#ffd9f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-cast-text small{font-size:9px;color:#a77da4;line-height:1.35}
+.gm-cast-text small b{color:#e2bd72;font-weight:normal}
+.gm-cast-text small i{color:#ff9fbf;font-style:normal}
+.gm-cast-actions{grid-area:actions;display:flex;flex-wrap:wrap;gap:4px}
+.gm-cast-actions button{font-size:10px;min-height:26px!important;padding:2px 9px!important}
+.gm-cast-state{min-height:1.5em;margin-top:6px;text-align:center}
+.gm-cast-state[data-ok=true]{color:#bff0b4}
+.gm-cast-state[data-ok=false]{color:#ffbf86}
+.gm-cast-new{display:flex;gap:6px;align-items:center;margin:8px 0 2px}
+.gm-cast-new input{flex:1 1 auto;min-width:0;min-height:30px;font:inherit;color:#f3b4e8;background:#230c28;
+  border:1px solid #743064;border-radius:0;padding:3px 6px}
+.gm-cast-new input:focus-visible{border-color:#ffd18c;outline:none}
+
+/* ------------------------------------------------ o estado de cada pessoa
+   Três selos por linha (saúde, fome, física) e as marcas do que o mestre
+   fez com ela — travada, escondida, congelada, caída. São letras e não
+   ícones de propósito: o mestre lê a lista de relance, e letra em caixa
+   alta a 8 px se lê melhor do que qualquer desenho neste tamanho. */
+.gm-cast-chips{grid-area:chips;display:flex;flex-wrap:wrap;gap:3px;align-items:center}
+.gm-cast{grid-template-areas:'face text' 'face chips' 'face actions'}
+.gm-cast[data-selecionado=true]{border-color:#7de0c8;box-shadow:inset 0 0 0 1px #2f6e61,2px 2px #09020d}
+.gm-cast[data-morto=true] .gm-cast-face{filter:grayscale(.8) brightness(.7)}
+.gm-chip{font:8px/1 Consolas,'Courier New',monospace;letter-spacing:.5px;padding:2px 4px;border:1px solid #5c244f;
+  color:#a77da4;background:#150518;white-space:nowrap}
+.gm-chip[data-on=true]{color:#bff0b4;border-color:#3f7a45}
+.gm-chip[data-on=false]{color:#8a6d8a;border-color:#3a1c36;text-decoration:line-through}
+.gm-chip[data-marca]{color:#ffd18c;border-color:#7a5a24}
+.gm-chip[data-marca=morto]{color:#ff9fbf;border-color:#7a2440}
+.gm-cast-sis{display:flex;gap:3px}
+.gm-cast-sis button{font:8px/1 Consolas,'Courier New',monospace!important;min-height:18px!important;
+  padding:2px 5px!important;letter-spacing:.5px}
+.gm-cast-sis button[aria-pressed=true]{color:#bff0b4;border-color:#3f7a45}
+.gm-cast-sis button[aria-pressed=false]{color:#8a6d8a;text-decoration:line-through}
+
+/* -------------------------------------------------------- as ferramentas */
+.gm-tool-switches{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}
+.gm-tool-switch{display:flex;align-items:center;gap:5px;border:1px solid #5c244f;background:#1a071d;
+  padding:4px 8px;font:10px/1 Consolas,'Courier New',monospace;color:#f3b4e8;cursor:pointer}
+.gm-tool-switch:has(input:checked){border-color:#3f7a45;color:#bff0b4}
+.gm-tool-switch input{margin:0;accent-color:#7de0c8}
+.gm-tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:4px;margin:6px 0}
+.gm-tool-grid button{font-size:10px;min-height:28px!important;padding:2px 6px!important}
+.gm-tool-row{flex-wrap:wrap;gap:4px;margin-top:4px}
+.gm-tool-row button{font-size:10px;min-height:28px!important;padding:2px 8px!important}
+.gm-tool-help{margin:2px 0 0;padding-left:16px;font:10px/1.5 Consolas,'Courier New',monospace;color:#a77da4}
+.gm-tool-help li{margin:2px 0}
+.gm-tool-help b{color:#ffd9f2;font-weight:normal}
+.gm-tool-help kbd{font:9px/1 Consolas,monospace;color:#c08fc0;border:1px solid #6d2d62;padding:1px 3px}
+
+/* ------------------------------------------------------------ as teclas
+   A lista fica ABERTA e no alto da seção, e não dobrada num bloco: atalho
+   que o mestre tem de ir procurar não é atalho. Duas colunas de tecla e
+   verbo, na mesma fonte do jogo. */
+.gm-teclas{border:1px solid #5c244f;background:#160518;padding:7px 9px;margin:8px 0 2px;box-shadow:2px 2px #09020d}
+.gm-teclas h4{margin:0 0 6px;font:600 10px/1 Consolas,'Courier New',monospace;letter-spacing:1px;color:#ffd18c}
+.gm-teclas h4 small{display:block;margin-top:3px;font:9px/1.3 Consolas,monospace;letter-spacing:.5px;color:#a77da4}
+.gm-teclas ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:3px 10px;margin:0;padding:0;list-style:none}
+.gm-teclas li{display:flex;align-items:center;gap:5px;font:10px/1.5 Consolas,'Courier New',monospace;color:#f3b4e8}
+.gm-teclas kbd{font:9px/1 Consolas,monospace;color:#ffd18c;background:#2a0d30;border:1px solid #7a5a24;
+  padding:2px 4px;letter-spacing:.5px;white-space:nowrap}

@@ -6,10 +6,14 @@
   <title>O Céu tem Fome · RPG de mesa</title>
   <link rel="stylesheet" href="styles.css?v=pain3">
   <link rel="stylesheet" href="hud.css?v=treatment1">
-  <link rel="stylesheet" href="bag.css?v=explora1">
-  <link rel="stylesheet" href="mestre/painel-mestre.css?v=explora2">
+  <link rel="stylesheet" href="bag.css?v=carga1">
+  <link rel="stylesheet" href="mestre/painel-mestre.css?v=percurso1">
   <link rel="stylesheet" href="mestre/painel-exploracao.css?v=explora2">
   <link rel="stylesheet" href="wardrobe.css?v=roupas2">
+  <link rel="stylesheet" href="ficha.css?v=ficha3">
+  <link rel="stylesheet" href="mestre/ficha-arvore-dom.css?v=pericias1">
+  <link rel="stylesheet" href="mestre/elenco.css?v=elenco1">
+  <link rel="stylesheet" href="mestre/tatico.css?v=1">
   <script defer src="assets.js"></script>
   <script defer src="skeleton.js?v=roupas3"></script>
   <script defer src="motion.js?v=roupas3"></script>
@@ -19,30 +23,61 @@
   <script defer src="inventory.js?v=explora1"></script>
   <script defer src="itens-cena.js?v=itens1"></script>
   <script defer src="armas.js?v=itens1"></script>
-  <script defer src="inventory-ui.js?v=explora1"></script>
+  <script defer src="comidas.js?v=fase2"></script>
+  <script defer src="inventory-ui.js?v=fase2"></script>
   <script defer src="treatment.js?v=treatment1"></script>
   <script defer src="treatment-motion.js?v=tratamento2"></script>
-  <script defer src="health-ui.js?v=treatment1"></script>
-  <script defer src="mestre/pixel-kit.js?v=pistas1"></script>
+  <script defer src="health-ui.js?v=fase2"></script>
+  <script defer src="mestre/tatico-terreno.js"></script>
+  <script defer src="mestre/tatico-regras.js"></script>
+  <script defer src="mestre/tatico-motion.js"></script>
+  <script defer src="mestre/tatico-ia.js"></script>
+  <script defer src="mestre/tatico-icons.js"></script>
+  <script defer src="mestre/tatico-hud.js"></script>
+  <script defer src="mestre/tatico-inventory.js"></script>
+  <script defer src="mestre/tatico.js"></script>
+  <script defer src="necessidades.js?v=fase2"></script>
+  <script defer src="ficha-arvore-dados.js?v=pericias1"></script>
+  <script defer src="ficha-grafo.js?v=pericias1"></script>
+  <script defer src="ficha-planta.js?v=pericias1"></script>
+  <script defer src="ficha.js?v=pericias1"></script>
+  <script defer src="consumo.js?v=fase2"></script>
+  <script defer src="mestre/pixel-kit.js?v=frota1"></script>
   <script defer src="mestre/scene-engine.js?v=explora1"></script>
   <script defer src="mestre/sobreposicoes.js?v=pistas1"></script>
-  <script defer src="mestre/cena-escritorio.js?v=itens2"></script>
-  <script defer src="mestre/cena-campo.js?v=pistas1"></script>
-  <script defer src="mestre/cena-jorge.js?v=jorge1"></script>
+  <script defer src="mestre/cena-escritorio.js?v=fase2"></script>
+  <script defer src="mestre/cena-campo.js?v=fase2"></script>
+  <script defer src="mestre/cena-jorge.js?v=fase2"></script>
+  <script defer src="mestre/cenas-prefeitura.js?v=fase2"></script>
+  <script defer src="mestre/cenas-prefeitura-salas.js?v=fase2"></script>
+  <script defer src="mestre/cenas-jorge-predio.js?v=fase2"></script>
+  <script defer src="mestre/cenas-ruas.js?v=fase2"></script>
+  <script defer src="mestre/cena-estrada.js?v=fase2"></script>
   <script defer src="mestre/montador-paleta.js?v=explora2"></script>
-  <script defer src="mestre/montador.js?v=explora2"></script>
+  <script defer src="mestre/montador.js?v=frota1"></script>
   <script defer src="mestre/modulos-estrutura.js?v=explora2"></script>
   <script defer src="mestre/modulos-casa.js?v=explora2"></script>
   <script defer src="mestre/modulos-trabalho.js?v=explora1"></script>
   <script defer src="mestre/modulos-comercio.js?v=explora1"></script>
   <script defer src="mestre/modulos-saude.js?v=explora1"></script>
   <script defer src="mestre/modulos-rua.js?v=explora2"></script>
+  <script defer src="mestre/modulos-estrada.js?v=pane1"></script>
   <script defer src="mestre/cenas-genericas.js?v=explora2"></script>
+  <script defer src="mestre/cenas-estrada.js?v=frota1"></script>
   <script defer src="mestre/link.js?v=explora1"></script>
   <script defer src="mestre/som-ambiente.js?v=explora2"></script>
   <script defer src="mestre/pistas-ui.js?v=pistas1"></script>
   <script defer src="mestre/pistas.js?v=explora1"></script>
   <script defer src="mestre/pistas-tipos.js?v=pistas1"></script>
+  <script defer src="mestre/ficha-arte.js?v=ficha3"></script>
+  <script defer src="mestre/ficha-dado.js?v=ficha3"></script>
+  <script defer src="mestre/ficha-arvore.js?v=ficha3"></script>
+  <script defer src="mestre/ficha-pericias-kit.js?v=pericias1"></script>
+  <script defer src="mestre/ficha-pericias-arte.js?v=pericias1"></script>
+  <script defer src="mestre/ficha-icones.js?v=pericias1"></script>
+  <script defer src="mestre/ficha-arvore-dom.js?v=pericias1"></script>
+  <script defer src="mestre/ficha-ui.js?v=pericias1"></script>
+  <script defer src="mestre/elenco.js?v=elenco1"></script>
   <script defer src="mestre/pista-foto.js?v=pistas1"></script>
   <script defer src="mestre/pista-mesa.js?v=itens2"></script>
   <script defer src="mestre/pista-computador.js?v=pistas1"></script>
@@ -55,28 +90,40 @@
   <script defer src="mestre/pista-provas.js?v=jorge1"></script>
   <script defer src="mestre/interacoes-basicas.js?v=explora1"></script>
   <script defer src="mestre/interacoes-jogos.js?v=explora1"></script>
-  <script defer src="mestre/exploracao.js?v=explora2"></script>
+  <script defer src="mestre/interacoes-comida.js?v=fase2"></script>
+  <script defer src="mestre/interacoes-moveis.js?v=fase2"></script>
+  <script defer src="mestre/exploracao.js?v=percurso1"></script>
+  <script defer src="mestre/veiculos.js?v=frota1"></script>
   <script defer src="mestre/cinematica-foguete.js?v=pistas1"></script>
-  <script defer src="mestre/painel-mestre.js?v=explora2"></script>
-  <script defer src="mestre/painel-exploracao.js?v=explora2"></script>
-  <script defer src="wardrobe.js?v=roupas3"></script>
+  <script defer src="mestre/som-estrada.js?v=frota1"></script>
+  <script defer src="mestre/transito-estrada.js?v=transito5"></script>
+  <script defer src="mestre/minigame-estrada.js?v=transito5"></script>
+  <script defer src="mestre/viagem-carro.js?v=frota1"></script>
+  <script defer src="porta-malas.js?v=carga1"></script>
+  <script defer src="mestre/painel-mestre.js?v=frota1"></script>
+  <script defer src="mestre/painel-exploracao.js?v=frota1"></script>
+  <script defer src="mestre/painel-necessidades.js?v=fase2"></script>
+  <script defer src="mestre/elenco-painel.js?v=elenco1"></script>
+  <script defer src="mestre/elenco-ferramentas.js?v=ferramentas1"></script>
+  <script defer src="wardrobe.js?v=frota1"></script>
   <script defer src="wardrobe-ui.js?v=roupas2"></script>
-  <script defer src="app.js?v=explora1"></script>
+  <script defer src="app.js?v=frota1"></script>
 </head>
 <body>
   <header><a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path d="M6 2h1v1h-1zM4 3h2v1h-2zM13 3h1v1h-1zM3 4h3v1h-3zM2 5h3v1h-3zM1 6h4v1h-4zM1 7h4v1h-4zM12 7h1v1h-1zM1 8h5v1h-5zM1 9h5v1h-5zM1 10h6v1h-6zM2 11h7v1h-7zM11 11h1v1h-1zM3 12h9v1h-9zM4 13h7v1h-7z"/></svg></span> O CÉU TEM FOME <span class="muted">/ RPG DE MESA</span></a><span class="status"><i></i> Mesa digital · <kbd>M</kbd> abre o mapa do mestre</span></header>
   <main>
-    <div class="intro"><div><p class="eyebrow">RPG DE MESA · MESTRE AO VIVO</p><h1>O Céu tem Fome</h1><p>Um RPG de mesa com mesa digital. O mestre monta os cenários com luz, clima e som, esconde pistas na própria cena e cuida da personagem — ferimentos, bolsa e roupas —, enquanto os jogadores acompanham tudo numa tela só deles.</p></div><button type="button" class="download" id="introMaster">Abrir o mapa do mestre <kbd>M</kbd></button></div>
+    <div class="intro"><div><p class="eyebrow">RPG DE MESA · MESTRE AO VIVO</p><h1>O Céu tem Fome</h1><p>Um RPG de mesa com mesa digital. O mestre monta os cenários com luz, clima e som, esconde pistas na própria cena e cuida do personagem — ferimentos, bolsa e roupas —, enquanto os jogadores acompanham tudo numa tela só deles.</p></div><button type="button" class="download" id="introMaster">Abrir o mapa do mestre <kbd>M</kbd></button></div>
     <div class="workspace">
       <section class="stage-card" aria-label="Cena da mesa">
         <div class="bar"><span><i class="live-dot"></i> EM CENA · <span id="sceneLabel">ESCRITÓRIO</span></span><span><span id="lifeReadout" class="muted">fôlego</span><span hidden> · <span id="hairReadout" class="muted">cabelo 0.0 px</span></span> · <span id="stateLabel">Base sem roupas</span></span></div>
-        <div class="scene-wrap"><canvas id="scene" width="480" height="270" tabindex="0" aria-label="Cena jogável. A e D para andar; espaço para pular. Segure o botão esquerdo no personagem para arrastar com ragdoll. H abre a saúde, I abre a bolsa, G abre o guarda-roupa."></canvas><div id="visionLoss" aria-hidden="true" hidden></div><button id="healthToggle" class="health-toggle" aria-controls="healthPanel" aria-expanded="false" aria-label="Abrir saúde do personagem" title="Saúde · H"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4H9V6H15V4H22V13H20V15H18V17H16V19H14V21H10V19H8V17H6V15H4V13H2Z"/><path class="pulse" d="M4 12h4l2-4 3 8 2-4h5"/></svg><span id="healthBadge">100%</span></button><button id="bagToggle" class="bag-toggle" aria-controls="casePanel" aria-expanded="false" aria-label="Abrir bolsa de suprimentos" title="Bolsa · I"><img src="pixel_art/hud/bag-closed.svg" alt="" width="32" height="36"><span id="bagBadge">0</span></button><button id="gmToggle" class="gm-toggle" type="button" aria-controls="gmPanel" aria-expanded="false" aria-label="Abrir mapa do mestre" title="Mapa do mestre · M"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3 5 1.5 11 3.5 15 2V13L11 14.5 5 12.5 1 14Z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 1.5V12.5M11 3.5V14.5" stroke="currentColor" stroke-width="1.5"/></svg><span>MESTRE</span></button><div id="gmStageBadge" class="gm-stage-badge" hidden></div><button id="wardrobeToggle" class="wardrobe-toggle" type="button" aria-controls="wardrobePanel" aria-expanded="false" aria-label="Abrir guarda-roupa" title="Guarda-roupa · G"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1v2M8 3 2 7v1h12V7L8 3Z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4 9v5h8V9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>ROUPAS</span></button></div>
-        <section id="wardrobePanel" class="wardrobe-window" hidden aria-label="Guarda-roupa da personagem"><canvas id="wardrobeCanvas" width="320" height="248" aria-label="Guarda-roupa: escolha cabelo, roupas, cores e conjuntos"></canvas><input id="wardrobeColor" type="color" aria-label="Cor personalizada"></section>
+        <div class="scene-wrap"><canvas id="scene" width="480" height="270" tabindex="0" aria-label="Cena jogável. WASD ou setas para andar no chão; E para interagir; espaço para pular. Segure o botão esquerdo no personagem para arrastar com ragdoll. H abre a saúde, I abre a bolsa, G abre o guarda-roupa, C abre as fichas. Clique com o botão direito num personagem para assumir o controle dele."></canvas><div id="visionLoss" aria-hidden="true" hidden></div><button id="healthToggle" class="health-toggle" aria-controls="healthPanel" aria-expanded="false" aria-label="Abrir saúde do personagem" title="Saúde · H"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4H9V6H15V4H22V13H20V15H18V17H16V19H14V21H10V19H8V17H6V15H4V13H2Z"/><path class="pulse" d="M4 12h4l2-4 3 8 2-4h5"/></svg><span id="healthBadge">100%</span></button><button id="bagToggle" class="bag-toggle" aria-controls="casePanel" aria-expanded="false" aria-label="Abrir bolsa de suprimentos" title="Bolsa · I"><img src="pixel_art/hud/bag-closed.svg" alt="" width="32" height="36"><span id="bagBadge">0</span></button><button id="gmToggle" class="gm-toggle" type="button" aria-controls="gmPanel" aria-expanded="false" aria-label="Abrir mapa do mestre" title="Mapa do mestre · M"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3 5 1.5 11 3.5 15 2V13L11 14.5 5 12.5 1 14Z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 1.5V12.5M11 3.5V14.5" stroke="currentColor" stroke-width="1.5"/></svg><span>MESTRE</span></button><div id="gmStageBadge" class="gm-stage-badge" hidden></div><button id="wardrobeToggle" class="wardrobe-toggle" type="button" aria-controls="wardrobePanel" aria-expanded="false" aria-label="Abrir guarda-roupa" title="Guarda-roupa · G"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1v2M8 3 2 7v1h12V7L8 3Z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4 9v5h8V9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>ROUPAS</span></button></div>
+        <section id="wardrobePanel" class="wardrobe-window" hidden aria-label="Guarda-roupa do personagem"><canvas id="wardrobeCanvas" width="320" height="248" aria-label="Guarda-roupa: escolha cabelo, roupas, cores e conjuntos"></canvas><input id="wardrobeColor" type="color" aria-label="Cor personalizada"></section>
         <div class="health-clock"><div><span id="healthClockState">SAÚDE PAUSADA</span><output id="healthClockTime">00:00:00</output></div><button id="healthClockToggle" aria-pressed="false">▶ Iniciar saúde</button><p id="healthGlobalAlert" role="status"></p></div>
         <div class="controls"><div class="modes" aria-label="Animação"><button class="active" data-mode="rest">Base</button><button data-mode="idle">Repouso</button><button data-mode="walk">Andar</button><button data-mode="run">Correr</button><button data-mode="fall">Cair</button><button data-mode="jump">Pular</button><button data-mode="play">Jogar</button></div><button id="pause" title="Pausar animação" aria-label="Pausar animação">Ⅱ</button></div>
         <div class="timeline"><input id="timeline" type="range" min="0" max="1000" value="0" aria-label="Posição no ciclo de animação"><output id="frameLabel">00 / 48</output></div>
-        <div class="stage-footer"><span><kbd>A</kbd> <kbd>D</kbd> mover <kbd>Espaço</kbd> segurar para saltar mais alto</span><label hidden><input id="showBones" type="checkbox"> Esqueleto</label><label hidden><input id="showGrid" type="checkbox"> Grade</label><button id="facing">Virar ←</button></div>
-        <div class="stage-footer"><span>Clique nas pistas da cena · <kbd>Botão esquerdo</kbd> segure a personagem para arrastar e solte para arremessar</span></div>
+        <div class="stage-footer"><span><kbd>WASD</kbd> mover no chão · <kbd>E</kbd> interagir · <kbd>Espaço</kbd> saltar</span><label hidden><input id="showBones" type="checkbox"> Esqueleto</label><label hidden><input id="showGrid" type="checkbox"> Grade</label><button id="facing">Virar ←</button></div>
+        <div class="stage-footer"><span>Clique nas pistas da cena · <kbd>Botão esquerdo</kbd> segure o personagem para arrastar e solte para arremessar</span></div>
+        <div class="stage-footer"><span><kbd>Botão direito</kbd> num personagem da mesa: assumir o controle, abrir a ficha ou tirar de cena · arraste-o para posicionar</span></div>
         <div class="stage-footer hair-row" hidden><label><input id="lifeToggle" type="checkbox" checked> Vida</label><label><input id="hairPhysics" type="checkbox" checked> Física do cabelo</label><label class="wind">Brisa <output id="windValue">100%</output><input id="windLevel" type="range" min="0" max="200" value="100" aria-label="Intensidade da brisa"></label></div>
         <div class="touch-controls"><button data-key="ArrowLeft" aria-label="Mover para esquerda">←</button><button data-key="ArrowRight" aria-label="Mover para direita">→</button><button data-key="Space">Pular ↑</button><button data-key="ShiftLeft" aria-label="Correr">Correr</button><button data-key="KeyF" aria-label="Cair">Cair</button></div>
       </section>
@@ -84,11 +131,34 @@
         <div class="hud-crown" aria-hidden="true"></div><div class="health-heading" id="healthHandle" tabindex="0" aria-label="Arrastar HUD de saúde; use as setas para mover pelo teclado"><div><p class="eyebrow">PERSONAGEM · <kbd>H</kbd> · ARRASTE AQUI</p><h2 id="healthTitle">Saúde</h2></div><p class="hud-motto">CARNE É TRÂNSITO<br>VONTADE É PERMANÊNCIA</p><button id="healthClose" aria-label="Fechar saúde">×</button></div>
         <div class="health-overview"><strong id="healthStatus">Saudável</strong><p id="healthPrognosis" hidden></p><div><label for="healthVitality">Condição geral</label><output id="healthVitalityText">100%</output><progress id="healthVitality" value="100" max="100"></progress></div><div><label for="healthBlood">Sangue</label><output id="healthBloodText">100%</output><progress id="healthBlood" value="100" max="100"></progress></div><p id="healthBleeding">Sem sangramento ativo</p></div>
         <div class="health-views"><button data-health-view="skin" aria-pressed="true">CORPO</button><button data-health-view="bones" aria-pressed="false">OSSOS / RAIO-X</button><button data-health-view="organs" aria-pressed="false">ÓRGÃOS</button></div><p id="healthVision">VISÃO D 100% · E 100%</p><div class="health-body"><div class="anatomy"><svg id="healthMap" viewBox="0 0 64 132" shape-rendering="crispEdges" aria-label="Mapa dos ferimentos por região do corpo"></svg><span>VISTA FRONTAL</span></div><div class="health-region"><label for="healthPart">Região do corpo</label><select id="healthPart"></select><div class="part-vitals"><span>VIDA DA REGIÃO</span><output id="healthPartLifeText">100 / 100</output><progress id="healthPartLife" max="100" value="100"></progress><span id="healthBoneLife">Osso: 100 / 100</span></div><div id="healthInfectionWrap" class="infection-vitals" hidden><label for="healthInfection">INFECÇÃO</label><output id="healthInfectionText">0%</output><progress id="healthInfection" max="100" value="0"></progress><span id="healthNecrosisText"></span></div><p id="healthWounds" class="treatment-target" tabindex="0" aria-label="Ferimento da região selecionada; solte um suprimento aqui">Sem ferimentos nesta região.</p></div><section class="organ-panel" hidden aria-label="Órgãos vitais"><h3>ÓRGÃOS VITAIS</h3><div id="organBars"></div><label for="organSelect">Órgão selecionado</label><select id="organSelect"></select><p id="organStatus"></p></section></div>
+        <div class="hud-divider" aria-hidden="true"></div>
+        <section id="healthNeeds" class="health-needs" aria-label="Nutrição e hidratação"><h3>NUTRIÇÃO E HIDRATAÇÃO <small id="healthNeedsClock"></small></h3>
+          <div class="needs-row" data-need="fome"><svg class="needs-icon" viewBox="0 0 11 13" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 1h3v1h2v1h1v1h1v6h-1v1h-2v1H4v-1H2v-1H1V4h1V3h2V2h0z"/><path d="M5 4h1v6H5z" opacity=".55"/></svg><label for="healthHunger">Fome</label><output id="healthHungerName">Satisfeita</output><progress id="healthHunger" max="100" value="0"></progress><small id="healthHungerNext"></small></div>
+          <div class="needs-row" data-need="sede"><svg class="needs-icon" viewBox="0 0 11 13" shape-rendering="crispEdges" aria-hidden="true"><path d="M5 0h1v2h1v2h1v2h1v3h-1v2H8v1H3v-1H2v-2H1V6h1V4h1V2h1V0z"/><path d="M4 8h1v2H4z" opacity=".55"/></svg><label for="healthThirst">Sede</label><output id="healthThirstName">Hidratada</output><progress id="healthThirst" max="100" value="0"></progress><small id="healthThirstNext"></small></div>
+          <ul id="healthNeedsBody" class="needs-body"></ul>
+          <p id="healthNeedsEffects" class="needs-effects"></p>
+          <p class="needs-help">Fome e sede são o metabolismo do corpo: mandam na cicatrização, na defesa contra infecção e na reposição de sangue. Ajuste tudo na seção <b>Fome e sede</b> do mapa do mestre (<kbd>M</kbd>).</p>
+        </section>
         
         <div id="treatmentStatus" class="treatment-status" hidden><div><strong id="treatmentLabel"></strong><output id="treatmentTime"></output></div><progress id="treatmentProgress" max="1" value="0" aria-label="Progresso do uso do item"></progress><button id="treatmentCancel">Cancelar uso · Esc</button></div><p id="treatmentMessage" class="treatment-message" role="status" aria-live="polite"></p>
         <div class="hud-divider" aria-hidden="true"></div>
         <details class="injury-tools"><summary>Ferramentas do mestre</summary><label class="suspend-control"><input id="healthSuspend" type="checkbox"> Suspender piora — intervenção do mestre</label><p>O relógio continua para os demais personagens. Novos danos ainda podem ser registrados.</p><h3>LESIONAR REGIÃO SELECIONADA</h3><div><button data-injury="bruise">Hematoma</button><button data-injury="cut">Corte</button><button data-injury="fracture">Quebrar osso</button><button data-injury="eye">Lesionar olho</button><button data-injury="sever" class="danger">Desmembrar</button></div><h3>LESIONAR ÓRGÃO SELECIONADO</h3><div class="organ-actions"><button id="organDamage">Ferir órgão</button><button id="organTrauma">Trauma profundo</button></div><p>Selecione o órgão na aba Órgãos. Trauma profundo rompe a proteção; um órgão muito lesionado pode se desprender.</p></details>
         <details class="master-rules"><summary>Regras do mestre</summary><p>Prazos em segundos do relógio de saúde. Valores de jogo; alterações valem para novos episódios.</p><div id="survivalRules"></div><button id="resetSurvivalRules">Restaurar padrões</button><p id="rulesNotice" role="status">Contagens em andamento são preservadas.</p></details>
+      </section>
+      <!-- O porta-malas do carro: a segunda grade, que abre encostada na bolsa
+           para o item ir de uma para a outra arrastando. -->
+      <section id="trunkPanel" class="case-window trunk-window" hidden aria-labelledby="trunkTitle">
+        <div class="hud-crown" aria-hidden="true"></div>
+        <div class="case-heading" id="trunkHandle" tabindex="0" aria-label="Arrastar o porta-malas">
+          <div><p class="eyebrow">NO CARRO · <span id="trunkCar">Carro</span></p><h2 id="trunkTitle">Porta-malas</h2></div>
+          <button id="trunkClose" aria-label="Fechar o porta-malas">×</button>
+        </div>
+        <div class="case-capacity"><span>Espaço do carro</span><output id="trunkUsage">0 / 0</output><progress id="trunkCapacity" max="40" value="0" aria-label="Espaços ocupados no porta-malas"></progress></div>
+        <div class="trunk-shell">
+          <div id="trunkGrid" class="case-grid" role="group" aria-label="Interior do porta-malas" aria-describedby="trunkHint"></div>
+        </div>
+        <div class="hud-divider" aria-hidden="true"></div>
+        <p id="trunkHint" class="case-hint" role="status" aria-live="polite">Arraste entre a bolsa e o porta-malas · duplo clique manda para o outro lado · R gira · Esc fecha</p>
       </section>
       <section id="casePanel" class="case-window" hidden aria-labelledby="caseTitle">
         <div class="hud-crown" aria-hidden="true"></div>
@@ -124,21 +194,29 @@
           <div><span>Saúde e ferimentos</span><strong><kbd>H</kbd></strong></div>
           <div><span>Bolsa</span><strong><kbd>I</kbd></strong></div>
           <div><span>Guarda-roupa</span><strong><kbd>G</kbd></strong></div>
+          <div><span>Fichas da mesa</span><strong><kbd>C</kbd></strong></div>
           <div><span>Golpe com o taco na mão</span><strong><kbd>E</kbd></strong></div>
           <p class="spec-title">MESTRE</p>
           <div><span>Mapa do mestre</span><strong><kbd>M</kbd></strong></div>
+          <div><span>Assumir um personagem</span><strong><kbd>Botão direito</kbd></strong></div>
           <div><span>Escolher cena · enviar na hora</span><strong><kbd>1</kbd>–<kbd>9</kbd> <kbd>Shift</kbd></strong></div>
           <div><span>Cortina</span><strong><kbd>B</kbd></strong></div>
           <div><span>Tremor · relâmpago</span><strong><kbd>T</kbd><kbd>L</kbd></strong></div>
           <div><span>Áreas das pistas</span><strong><kbd>P</kbd></strong></div>
         </div>
-        <div class="table-actions"><button id="wardrobeOpen" type="button">Abrir guarda-roupa</button><button id="resetPose">Restaurar aparência</button></div>
+        <div class="table-actions"><button id="fichaOpen" type="button">Abrir as fichas</button><button id="fichaJogadores" type="button">Ficha para os jogadores</button><button id="wardrobeOpen" type="button">Abrir guarda-roupa</button><button id="resetPose">Restaurar aparência</button></div>
       </aside>
     </div>
-    <!-- Ferramentas do protótipo da personagem: fora da vista, mas o jogo ainda as usa. -->
+    <!-- Ferramentas do protótipo do personagem: fora da vista, mas o jogo ainda as usa. -->
     <div class="rig-tools" hidden><select id="boneSelect"></select><output id="angleValue">0°</output><input id="boneAngle" type="range" min="-90" max="90" value="0"><input type="checkbox" id="hideBone"><input type="checkbox" id="isolateBone"><p id="jointInfo"></p></div>
     <p id="error" role="alert" hidden></p>
   </main>
+  <div id="fichaOverlay" hidden aria-label="Ficha de personagem">
+    <canvas id="fichaCanvas" width="960" height="540" aria-label="Ficha de personagem: clique nos campos para escrever e nas cartas para rolar o dado."></canvas>
+  </div>
+  <!-- O menu do botão direito na cena: fora do canvas de propósito, para
+       não entrar no quadro que vai para a tela dos jogadores. -->
+  <div id="cenaMenu" class="cena-menu" role="menu" hidden></div>
   <div id="healthTooltip" class="health-tooltip" role="tooltip" hidden></div>
   <footer>O Céu tem Fome <span>RPG de mesa · mapa do mestre, tela dos jogadores e personagem em pixel art</span></footer>
   <script>document.querySelector('#introMaster')?.addEventListener('click', () => document.querySelector('#gmToggle')?.click());</script>

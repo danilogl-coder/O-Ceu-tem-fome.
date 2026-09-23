@@ -52,7 +52,11 @@ const out=path.resolve(__dirname,'../pixel_art/generated/itens');fs.mkdirSync(ou
   await scene.focus();await page.keyboard.press('m');await page.waitForSelector('#gmPanel:not([hidden])');
   await page.locator('[data-gm-tab="itens"]').click();
   const offered=await page.locator('#gmItems [data-item]').evaluateAll(els=>els.map(e=>e.dataset.item));
-  assert.deepEqual([...offered].sort(),['agua','antibiotic','bandage','cafe','chave','chocolate','fusivel','moedas','refrigerante','salgadinho','splint','taco'],'the desk offers supplies, the bat, money, keys, the fuse and food — clothes come from the wardrobe, clues from the scene');
+  const antigos=['agua','antibiotic','bandage','cafe','chave','chocolate','fusivel','moedas','refrigerante','salgadinho','splint','taco'];
+  for(const id of antigos)assert(offered.includes(id),`the desk still offers ${id}`);
+  // Comidas, ingredientes e vasilhas (comidas.js) entram na mesma mesa; roupas vêm do guarda-roupa e pistas da cena.
+  for(const id of ['pao_queijo','miojo','garrafa_vazia','po_cafe'])assert(offered.includes(id),`the desk offers ${id}`);
+  assert(!offered.includes('roupa')&&!offered.includes('pista'),'clothes come from the wardrobe, clues from the scene');
   assert.equal(await page.locator('#gmItems [data-item="taco"] [data-give="hand"]').count(),1,'a weapon can go straight into her hand');
   assert.equal(await page.locator('#gmItems [data-item="bandage"] [data-give="hand"]').count(),0,'a bandage cannot');
   await page.locator('#gmItems [data-item="taco"] [data-give="bag"]').click();
@@ -89,10 +93,18 @@ const out=path.resolve(__dirname,'../pixel_art/generated/itens');fs.mkdirSync(ou
   assert.equal(await page.locator('#caseItemName').textContent(),'Chave · Porão','examining shows which key it is');
   assert.equal(await page.evaluate(()=>demo.clues.stack.length),0,'no clue interface opens for a key');
   await page.locator('#caseGrid [data-item="refrigerante"]').click({button:'right'});await page.waitForSelector('#caseMenu:not([hidden])');
-  assert.deepEqual(await page.locator('#caseMenu button').allTextContents(),['Consumir','Largar no chão','Descartar']);
+  // Beber é uma ação com animação: o menu diz o verbo do item e a lata só sai da
+  // bolsa quando ele leva à boca (consumo.js); a sede cai junto (necessidades.js).
+  assert.deepEqual(await page.locator('#caseMenu button').allTextContents(),['Beber','Largar no chão','Descartar']);
+  await page.evaluate(()=>{demo.necessidades.definir('sede',60);});
   await page.locator('#caseMenu [data-option="consume"]').click();
-  assert.equal(await page.locator('#caseHint').textContent(),'Você bebeu o refrigerante.','a short line in the bag\'s footer');
+  await page.waitForFunction(()=>!!demo.consumo?.active,null,{timeout:4000});
+  assert.equal(await page.evaluate(()=>demo.consumo.snapshot().estilo),'lata','a lata é bebida como lata');
+  await page.waitForFunction(()=>!demo.bag.entries.some(e=>e.def==='refrigerante'),null,{timeout:8000});
+  await page.waitForFunction(()=>demo.necessidades.sede<60,null,{timeout:8000});
   s=await state();assert(!s.inventory.entries.some(e=>e.def==='refrigerante'),'the can was drunk');
+  assert.equal(await page.evaluate(()=>demo.necessidades.log[0].origem),'Refrigerante','e fica no histórico do mestre');
+  await page.evaluate(()=>{demo.consumo.cancel('');});
   await page.locator('#casePanel').screenshot({path:path.join(out,'09-bolsa-exploracao.png')});
   // The bat: wielded, on the shoulder; E swings and knocks a dropped bandage away.
   await page.locator('#caseGrid [data-item="taco"]').click({button:'right'});await page.waitForSelector('#caseMenu:not([hidden])');

@@ -74,6 +74,10 @@
 .bag-toggle img{width:32px;height:32px;image-rendering:pixelated;display:block}
 .bag-toggle:hover,.bag-toggle:focus-visible{background:#341336;border-color:#ffd18c}
 .bag-toggle[data-open=true]{background:#3a1440;border-color:#ef9bdc}
+/* Cinemática rodando: a cena é o filme inteiro, e os cantos de baixo pertencem
+   a ela (no minigame da estrada são o velocímetro e a dica de comando). O botão
+   sai de cena e volta sozinho — o atalho de teclado continua valendo. */
+.scene-wrap[data-cinema] .bag-toggle,.scene-wrap[data-cinema] .wardrobe-toggle{visibility:hidden;pointer-events:none}
 #bagBadge{font:bold 12px Consolas,monospace;color:#ffe6b0;line-height:1}
 #bagBadge[data-empty=true]{color:#b98ab4}
 @media(max-width:540px){.case-window{left:12px;bottom:12px;width:calc(100vw - 24px);padding:12px}.case-heading h2{font-size:17px}.case-heading .eyebrow{font-size:8px}.case-inspect{padding:10px;gap:8px}.case-actions{gap:6px}.case-actions>button{flex:1}.case-split{flex:1;justify-content:flex-end}.case-hint{font-size:9px}.case-window button{padding:6px 8px}.case-qty{font-size:9px}.case-supplies{gap:10px}}
@@ -105,3 +109,25 @@
 .case-menu button:hover,.case-menu button:focus-visible{background:#3a1440;border-color:#e574cc;outline:none}
 .case-menu button[data-danger]{color:#ff9a9a}
 .case-window .case-item[data-wielded=true]{outline:2px solid #e2bd72;outline-offset:-1px;background:#e2bd7214}
+
+/* ---------------------------------------------------------------- porta-malas
+   A segunda grade. É a mesma janela da bolsa (mesma moldura, mesmos itens,
+   mesmo arrasto), só que mais estreita e sem a arte de couro: o que está
+   dentro de um carro é chapa, não bolsa. Abre encostada na bolsa de propósito
+   — as duas visíveis ao mesmo tempo é o que torna o arrasto óbvio. */
+.trunk-window{--lit:#e5a774;width:352px;left:auto;right:20px;bottom:auto;top:90px;z-index:20}
+.trunk-window .case-heading h2{color:#f0c090}
+.trunk-window .case-heading .eyebrow{color:#c08f62}
+.trunk-window #trunkClose{flex-shrink:0;width:32px;height:32px;min-height:32px;padding:0;font:22px/1 monospace;color:#ffd0a0;background:#2c1a0f;border:1px solid #80603a;box-shadow:inset 0 1px #3e2a16,0 2px #09020d}
+.trunk-window #trunkUsage{font:11px Consolas,monospace;color:#e6c49a}
+.trunk-window #trunkCapacity{grid-column:1/-1;appearance:none;width:100%;height:5px;border:0;background:#2d2013}
+.trunk-window #trunkCapacity::-webkit-progress-bar{background:#2d2013}
+.trunk-window #trunkCapacity::-webkit-progress-value{background:#dc9a4e}
+.trunk-window #trunkCapacity::-moz-progress-bar{background:#dc9a4e}
+/* O fundo do porta-malas: carpete escuro com um brilho de chapa no alto. */
+.trunk-shell{position:relative;width:100%;margin:10px auto 8px;padding:10px;background:#191014;border:1px solid #6b4a30;box-shadow:inset 2px 2px #0d0709,inset 0 12px 18px -14px #c99a6a}
+.trunk-shell .case-grid{position:relative;left:auto;top:auto;width:100%;height:auto;aspect-ratio:calc(var(--cols)) / calc(var(--rows));background-image:linear-gradient(to right,#a9835b2e 1px,transparent 1px),linear-gradient(to bottom,#a9835b2e 1px,transparent 1px)}
+.trunk-window .case-item:hover:not(:disabled){background:#d39c6517;border-color:#bd8f6a}
+/* Alvo de largada: a janela inteira acende enquanto o item paira sobre ela. */
+.case-window[data-alvo=true]{box-shadow:inset 0 0 0 4px #200923,inset 0 0 0 6px #7f9e55,6px 6px 0 #09020d}
+.case-window[data-alvo=false]{box-shadow:inset 0 0 0 4px #200923,inset 0 0 0 6px #b05445,6px 6px 0 #09020d}

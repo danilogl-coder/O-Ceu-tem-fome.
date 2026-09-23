@@ -1201,6 +1201,16 @@
       {id: '1987', label: 'Tudo começou na inauguração de 1987'}
     ],
     clues: [
+      /* Saídas: o corredor do 2º andar pela porta de vidro e, quando o cadeado
+         do arquivo já foi aberto, a sala do arquivo. */
+      {id: 'saida_corredor', name: 'Porta do corredor', type: 'passagem', marker: 'discreta', conclusions: [],
+        anchor: {layer: 'wall', u: WALL.door.u, v: WALL.door.v, w: WALL.door.w, h: 62 - WALL.door.v},
+        note: 'Dá no corredor do 2º andar: escada, copa, banheiro e o gabinete trancado.',
+        data: {tipo: 'porta', destino: 'pref_corredor', chegada: 'porta_escritorio', tranca: 'aberta'}},
+      {id: 'porta_arquivo', name: 'Porta do arquivo', type: 'passagem', marker: 'discreta', conclusions: [], requires: 'porta_aberta',
+        anchor: {layer: 'wall', u: WALL.archive.u, v: WALL.archive.v, w: WALL.archive.w, h: 62 - WALL.archive.v},
+        note: 'Só aparece com o objeto “Arquivo entreaberto” — o cadeado 0317 abre a porta e liga esse objeto.',
+        data: {tipo: 'porta', destino: 'pref_arquivo', chegada: 'porta_escritorio', tranca: 'aberta'}},
       {id: 'mapa', name: 'Mapa com três X', type: 'mapa', marker: 'brilho', conclusions: ['triangulo', 'porao'],
         anchor: {layer: 'wall', u: 255, v: 10, w: 26, h: 27},
         note: 'Os três X cercam a Prefeitura: ligue-os com o barbante. Com a lupa: 03:17 no relógio da estação e PORÃO a lápis sob a Prefeitura.',

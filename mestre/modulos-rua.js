@@ -1163,10 +1163,16 @@
       {id: 'estado_carro', label: 'Estado', opcoes: [['bom', 'Inteiro'], ['batido', 'Batido'], ['depenado', 'Depenado']], padrao: 'bom'},
       {id: 'farois', label: 'Faróis acesos', tipo: 'estado', padrao: false}
     ],
-    interacao: {tipo: 'recipiente', marca: 'discreta', dados: o => ({
-      titulo: o.p.modelo === 'policia' ? 'Viatura' : o.p.modelo === 'taxi' ? 'Táxi' : 'Carro', estilo: 'bolsa',
-      compartimentos: o.p.estado_carro === 'depenado' ? 'Porta-luvas | Arrombado. Sobrou um recibo de estacionamento de 1998 e uma bala derretida.'
-        : 'Porta-luvas | Documento do carro, um mapa da cidade dobrado errado e balas de menta. | moedas*3\nBanco de trás | Uma jaqueta úmida e um guarda-chuva quebrado.'
+    // Examinar mostra o próprio carro pintado, ampliado — não a bolsa de outra coisa.
+    interacao: {tipo: 'exame', marca: 'discreta', dados: o => (o.p.estado_carro === 'depenado' ? {
+      texto: 'O carro foi depenado: rodas sobre tijolos, vidro do passageiro estourado e o porta-luvas aberto de par em par.',
+      detalhe: 'No porta-luvas sobrou um recibo de estacionamento de 1998 e uma bala de menta derretida no fundo.', fundo: 'escuro'
+    } : {
+      texto: o.p.modelo === 'policia' ? 'Uma viatura estacionada, fria, com a antena torta e a porta do motorista encostada.'
+        : o.p.modelo === 'taxi' ? 'Um táxi parado com a bandeirinha abaixada e o para-brisa cheio de poeira seca.'
+        : 'Um carro estacionado há tempo demais: folhas presas no limpador e uma marca clara onde a chuva não chegou.',
+      detalhe: 'Pelo vidro dá para ver o porta-luvas entreaberto: documento, um mapa da cidade dobrado errado e moedas soltas no console.',
+      item: 'moedas*3', fundo: 'escuro'
     })},
     area: o => ({u: 0, v: (carroDe(o.p).dy || 0), w: o.w, h: o.h - (carroDe(o.p).dy || 0)}),
     pinta(b, o, c) {
@@ -1471,7 +1477,7 @@
     id: 'guarita', nome: 'Guarita', grupo: 'Estacionamento', camada: 'parede', w: 42, h: 56, v: 6, semInterruptor: true,
     params: [{id: 'luz', label: 'Luz acesa', tipo: 'estado', padrao: true}],
     interacao: {tipo: 'telefone', marca: 'discreta', dados: () => ({
-      estilo: 'mesa', numero: 'Portaria',
+      estilo: 'parede', numero: 'Portaria',
       contatos: '101 | — Portaria? Eu não pedi nada. Não deixa ninguém subir, ouviu? Ninguém.\n204 | Ninguém fala. Só se ouve uma TV fora do ar, bem alto.\n0 | — Síndico. Se é sobre a garagem, a vaga 12 continua interditada. Não pergunte por quê.',
       semResposta: 'O interfone chama, chama… ninguém atende.'
     })},
@@ -1621,12 +1627,17 @@
     id: 'movel_velho', nome: 'Móvel velho', grupo: 'Abandonado', camada: 'parede',
     w: p => movelDe(p)[0], h: p => movelDe(p)[1],
     params: [{id: 'tipo', label: 'Tipo', opcoes: MOVEIS, padrao: 'sofa_rasgado'}],
-    interacao: {tipo: 'recipiente', marca: 'discreta', dados: o => ({
-      colchao: {titulo: 'Colchão velho', estilo: 'cama', compartimentos: 'Dentro do rasgo | Um maço de cartas amarradas com elástico, todas sem remetente.'},
-      sofa_rasgado: {titulo: 'Sofá rasgado', estilo: 'sofa', compartimentos: 'Entre as almofadas | Uma tampinha, um isqueiro sem gás e uma chave pequena. | chave=Cadeado do porão'},
-      cadeira_quebrada: {titulo: 'Cadeira quebrada', estilo: 'caixa', compartimentos: 'Embaixo do assento | Um chiclete velho grudado e um bilhete dobrado: “não volte aqui”.'},
-      geladeira_velha: {titulo: 'Geladeira velha', estilo: 'geladeira', compartimentos: 'Prateleiras | Um cheiro azedo. Um pote de margarina cheio de parafusos. | fusivel\nCongelador | Gelo encardido e uma foto 3x4 congelada.'}
-    }[o.p.tipo] || {titulo: 'Móvel velho', estilo: 'caixa', compartimentos: 'Dentro | Poeira.'})},
+    interacao: {marca: 'discreta',
+      // Cada móvel abre como ele mesmo: colchão de cama, sofá de sofá, geladeira
+      // de geladeira. A cadeira quebrada não tem o que revistar: examina-se.
+      tipo: o => (o.p.tipo === 'cadeira_quebrada' ? 'exame' : 'recipiente'),
+      dados: o => ({
+        colchao: {titulo: 'Colchão velho', estilo: 'cama', compartimentos: 'Dentro do rasgo | Um maço de cartas amarradas com elástico, todas sem remetente.'},
+        sofa_rasgado: {titulo: 'Sofá rasgado', estilo: 'sofa', compartimentos: 'Entre as almofadas | Uma tampinha, um isqueiro sem gás e uma chave pequena. | chave=Cadeado do porão'},
+        cadeira_quebrada: {texto: 'Uma cadeira de cozinha com o pé arrebentado, encostada na parede como se ainda servisse para alguma coisa.',
+          detalhe: 'Embaixo do assento, um chiclete velho grudado e um bilhete dobrado: “não volte aqui”.', fundo: 'madeira'},
+        geladeira_velha: {titulo: 'Geladeira velha', estilo: 'geladeira', compartimentos: 'Prateleiras | Um cheiro azedo. Um pote de margarina cheio de parafusos. | fusivel\nCongelador | Gelo encardido e uma foto 3x4 congelada.'}
+      }[o.p.tipo] || {titulo: 'Móvel velho', estilo: 'armario', compartimentos: 'Dentro | Poeira, e a marca de onde a gaveta era.'})},
     pinta(b, o, c) {
       const {u, v, w, h} = o, tipo = o.p.tipo, random = M.rngDe(o, 20), seed = o.seed;
       P.contato(b, u + 1, w - 2, {alto: 3});
@@ -1760,7 +1771,7 @@
   });
 
   /* ============================================================ camada frente
-     Peças entre a câmera e a personagem: w×h em pixels de arte, pintadas a
+     Peças entre a câmera e o personagem: w×h em pixels de arte, pintadas a
      partir de (0,0); a base pode ser cortada pela borda da tela. */
   /* Altura no mundo de uma linha de uma peça da frente (para as luzes). */
   const alturaFrente = (c, o, y) => c.room.eye - ((o.top + y) * 2 + 1 - c.room.H) / o.fator;
@@ -1802,7 +1813,10 @@
   M.modulo({
     id: 'carro_frente', nome: 'Carro (perto da câmera)', grupo: 'Rua', camada: 'frente', w: 176, h: 50, topo: 85,
     params: [{id: 'cor', label: 'Cor', tipo: 'cor', opcoes: 'viva', padrao: 'azul_vivo'}],
-    interacao: {tipo: 'recipiente', marca: 'discreta', dados: () => ({titulo: 'Carro', estilo: 'bolsa', compartimentos: 'Porta-luvas | Uma multa dobrada, um terço de plástico e um mapa com um bairro circulado a caneta. | moedas*2'})},
+    interacao: {tipo: 'exame', marca: 'discreta', dados: () => ({
+      texto: 'O carro parado bem na frente da câmera: dá para ver o teto, o painel pela janela e o que ficou no banco do carona.',
+      detalhe: 'No porta-luvas entreaberto: uma multa dobrada, um terço de plástico e um mapa com um bairro circulado a caneta.',
+      item: 'moedas*2', fundo: 'escuro'})},
     area: () => ({x: 10, y: 0, w: 156, h: 50}),
     pinta(b, o, c) {
       const cor = o.p.cor || 'azul_vivo', random = M.rngDe(o, 31);
@@ -1943,7 +1957,7 @@
 
   /* ============================================================ camada chão
      Decalques pintados texel a texel no mundo (X ao longo da sala, d =
-     profundidade). A personagem fica em d=530; a parede em d≈779. */
+     profundidade). O personagem fica em d=530; a parede em d≈779. */
   const centro = o => (o.d0 + o.d1) / 2;
   /* Forma de mancha: < 1 dentro, com borda irregular. */
   function forma(o, X, d, rug = .55) {

@@ -22,6 +22,7 @@
      voice has a wave, a loudness, an envelope and its notes as [beat, pitch,
      length in beats]; `every` repeats a voice's pattern every so many beats. */
   const arp = (beats, chords, pattern) => { const out = []; chords.forEach((chord, c) => pattern.forEach((k, i) => out.push([c * beats + i * beats / pattern.length, chord[k % chord.length], beats / pattern.length * .9]))); return out; };
+  const EXTRA = new Map();
   const SFX = [['porta_abrir', 'Porta abrindo'], ['porta_fechar', 'Porta batendo'], ['porta_trancada', 'Porta trancada'], ['porta_metal', 'Porta de metal'],
     ['passos_escada', 'Passos na escada'], ['passos_cima', 'Passos no andar de cima'], ['campainha', 'Campainha'], ['telefone_tocando', 'Telefone tocando'],
     ['elevador', 'Elevador chegando'], ['elevador_motor', 'Motor do elevador'], ['vidro_quebrando', 'Vidro quebrando'], ['objeto', 'Coisa caindo'],
@@ -29,7 +30,8 @@
     ['buzina', 'Buzina'], ['sirene', 'Sirene'], ['alarme', 'Alarme'], ['vento', 'Vento'], ['assobio', 'Assobio'], ['grave', 'Estrondo grave'], ['explosao', 'Explosão'],
     ['estatica', 'Estática'], ['glitch', 'Falha eletrônica'], ['beep', 'Bipe'], ['maquina', 'Máquina'], ['disjuntor', 'Disjuntor'], ['faisca', 'Faísca'], ['energia', 'Energia voltando'],
     ['tv_liga', 'TV ligando'], ['tv_canal', 'Troca de canal'], ['discagem', 'Discagem'], ['ocupado', 'Linha ocupada'], ['arcade', 'Fliperama'], ['moeda', 'Moeda'],
-    ['queda_produto', 'Produto caindo'], ['tranca', 'Trancando'], ['destranca', 'Destrancando'], ['interruptor', 'Interruptor'], ['papel', 'Papel'], ['clique', 'Clique']];
+    ['queda_produto', 'Produto caindo'], ['tranca', 'Trancando'], ['destranca', 'Destrancando'], ['interruptor', 'Interruptor'], ['papel', 'Papel'], ['clique', 'Clique'],
+    ['carro_passa', 'Carro passando'], ['passaro', 'Pássaro'], ['cascalho', 'Passos no cascalho']];
   const MUSIC = {
     investigacao: {label: 'Investigação', bpm: 84, length: 32, tone: 'noir',
       voices: [
@@ -74,6 +76,16 @@
     static get MUSIC() { return MUSIC; }
     /* Os efeitos com nome, para os eventos das cenas escolherem. */
     static get SFX() { return SFX; }
+    /* Sounds added by other scripts (eating, drinking, cooking, cars):
+       MapAmbience.registrar('mastigar', 'Mastigando', ({click, noise, tone, hold, ctx, fx, when}) => {…}).
+       The helpers are the same ones the built-in effects use, already routed to the effects bus. */
+    static registrar(nome, rotulo, tocar) {
+      if (!nome || typeof tocar !== 'function') return false;
+      EXTRA.set(nome, tocar);
+      if (rotulo && !SFX.some(([id]) => id === nome)) SFX.push([nome, rotulo]);
+      return true;
+    }
+    static temSom(nome) { return EXTRA.has(nome) || SFX.some(([id]) => id === nome); }
     ensure() {
       if (this.ctx) return this.ctx;
       const AC = root.AudioContext || root.webkitAudioContext;
@@ -141,19 +153,26 @@
       setTimeout(() => { try { old.disconnect(); } catch {} }, 400);
     }
     setFx(on) { this.fxOn = !!on; if (!on) this.stopFx(); }
-    /* Effects for clues and cinematics. */
-    sfx(name) {
-      if (!this.ensureFx()) return;
-      const fx = this.fx, c = (f, d, g, w = 0, type) => this.click(f, d, g, w, type, fx), n = o => this.noise({dest: fx, ...o});
-      const tone = (f, d, g, w = 0, type = 'sine', to = null) => this.tone(f, d, g, w, type, fx, to);
+    /* Effects for clues and cinematics. `escala` deixa quem chama tocar o mesmo
+       efeito mais baixo ou mais alto sem mexer no volume dos outros — é o que o
+       mixer do minigame de estrada usa para o seu controle de efeitos. */
+    sfx(name, escala = 1) {
+      if (!this.ensureFx() || !(escala > 0)) return;
+      const fx = this.fx, c = (f, d, g, w = 0, type) => this.click(f, d, g * escala, w, type, fx), n = o => this.noise({dest: fx, ...o, gain: (o.gain === undefined ? .2 : o.gain) * escala});
+      const tone = (f, d, g, w = 0, type = 'sine', to = null) => this.tone(f, d, g * escala, w, type, fx, to);
       /* A held tone - a line tone, a hum - that stays level instead of dying away; `low` puts a lowpass on it. */
-      const hold = (f, d, g, w = 0, type = 'sine', low = 0) => {
+      const hold = (f, d, gBruto, w = 0, type = 'sine', low = 0) => {
+        const g = gBruto * escala;
         const ctx = this.ctx, t = ctx.currentTime + w, o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t);
         const env = ctx.createGain(); env.gain.setValueAtTime(.0001, t); env.gain.exponentialRampToValueAtTime(g, t + .015); env.gain.setValueAtTime(g, t + Math.max(.02, d - .04)); env.gain.exponentialRampToValueAtTime(.0001, t + d);
         let head = o;
         if (low) { const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = low; head = o.connect(lp); }
         head.connect(env).connect(fx); o.start(t); o.stop(t + d + .05);
       };
+      if (EXTRA.has(name)) {
+        try { EXTRA.get(name)({click: c, noise: n, tone, hold, ctx: this.ctx, fx, when: this.ctx.currentTime, white: this.white}); } catch (error) { console.error(error); }
+        return;
+      }
       switch (name) {
         case 'clique': c(2600, .025, .1); break;
         case 'papel': n({freq: 3200, q: .7, duration: .16, gain: .16}); n({freq: 2200, q: .9, duration: .12, gain: .1, when: .07}); break;
@@ -319,6 +338,23 @@
           n({buffer: this.brown, type: 'lowpass', freq: 520, to: 180, duration: 2.2, gain: .34, attack: .35, when: .12});
           for (let i = 0; i < 6; i++) tone(260 + Math.random() * 260, .09, .02, .7 + i * .22, 'sine', 140);
           break;
+        case 'cascalho': // someone walking on the gravel shoulder: four gritty steps
+          for (let i = 0; i < 4; i++) {
+            const w = i * .42 + Math.random() * .05;
+            n({type: 'highpass', freq: 1800, q: .6, duration: .09, gain: .16, attack: .002, when: w});
+            n({buffer: this.brown, type: 'lowpass', freq: 220, duration: .1, gain: .3, attack: .003, when: w});
+            c(3200 + Math.random() * 900, .015, .05, w + .015, 'highpass');
+          }
+          break;
+        case 'carro_passa': // a car goes by: the wind builds, sweeps past and falls away (Doppler)
+          n({buffer: this.brown, type: 'bandpass', freq: 380, to: 1500, q: .8, duration: .75, gain: .3, attack: .55});
+          n({buffer: this.brown, type: 'bandpass', freq: 1500, to: 240, q: .8, duration: 1.1, gain: .34, attack: .06, when: .72});
+          hold(128, .8, .035, 0, 'sawtooth', 700); hold(104, 1, .03, .78, 'sawtooth', 500);
+          n({type: 'highpass', freq: 2600, q: .5, duration: .5, gain: .07, attack: .2, when: .55});
+          break;
+        case 'passaro': // two or three notes of a bird, from somewhere up the road
+          for (const [w, f] of [[0, 2380], [.16, 2960], [.34, 2640]]) { tone(f, .09, .05, w, 'sine', 5200); tone(f * 1.5, .06, .015, w + .01); }
+          break;
         case 'buzina': for (const [w, d] of [[0, .45], [.58, .22]]) { hold(349, d, .03, w, 'sawtooth', 900); hold(440, d, .025, w, 'sawtooth', 900); } break;   // a car horn down the street
         case 'passos_cima': // someone walking upstairs: dull thumps through the ceiling
           for (let i = 0; i < 5; i++) { const w = i * .48 + Math.random() * .04; n({buffer: this.brown, type: 'lowpass', freq: 110, duration: .2, gain: .6, attack: .012, when: w}); tone(52, .14, .07, w); }
@@ -356,13 +392,19 @@
       if (this.ctx && this.on) this.master.gain.setTargetAtTime(v * .9, this.ctx.currentTime, .15);
       if (this.ctx && this.fx) this.fx.gain.setTargetAtTime(Math.max(.05, v) * .9, this.ctx.currentTime, .15);
     }
-    setScene(desc) { this.desc = desc; this.surface = desc?.scene === 'campo' ? 'grama' : 'madeira'; this.apply(); }
+    setScene(desc) {
+      this.desc = desc;
+      const cena = desc?.scene ? root.SceneLibrary?.get?.(desc.scene) : null;
+      this.fora = !!cena?.tags?.includes('exterior') || desc?.scene === 'campo';
+      this.surface = this.fora ? 'grama' : 'madeira';
+      this.apply();
+    }
     /* Mute or unmute one ambient sound. */
     setChannel(id, on) { if (id in this.channels) { this.channels[id] = !!on; this.apply(); } }
     setChannels(map) { for (const [id, on] of Object.entries(map || {})) if (id in this.channels) this.channels[id] = !!on; this.apply(); }
     apply() {
       if (!this.ctx || !this.desc) return;
-      const d = this.desc, now = this.ctx.currentTime, interior = d.scene !== 'campo', ch = this.channels;
+      const d = this.desc, now = this.ctx.currentTime, interior = !this.fora, ch = this.channels;
       const set = (bed, value) => bed.gain.gain.setTargetAtTime(this.on ? value : 0, now, .8);
       set(this.room, ch.sala ? (interior ? .5 : .08) : 0);
       set(this.rain, ch.chuva && d.weather === 'chuva' ? .16 : 0);

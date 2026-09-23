@@ -28,7 +28,11 @@
   const semAcento = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '');
   const normal = s => semAcento(s).trim().toLowerCase().replace(/\s+/g, ' ');
   /* Itens que as cenas genéricas conhecem (alguns ainda não existem na bolsa). */
-  const ITENS_CONHECIDOS = ['moedas', 'refrigerante', 'salgadinho', 'chocolate', 'agua', 'cafe', 'fusivel', 'chave', 'bandage', 'splint', 'antibiotic'];
+  const ITENS_CONHECIDOS = ['moedas', 'refrigerante', 'salgadinho', 'chocolate', 'agua', 'cafe', 'fusivel', 'chave', 'bandage', 'splint', 'antibiotic',
+    'pao_frances', 'pao_forma', 'pao_queijo', 'coxinha', 'bolacha', 'biscoito', 'pacoca', 'banana', 'laranja', 'goiaba', 'manga', 'ovo',
+    'manteiga', 'queijo', 'presunto', 'leite', 'miojo', 'marmita', 'milho_pipoca', 'po_cafe', 'acucar', 'sal', 'oleo', 'boldo', 'suco',
+    'agua_coco', 'garrafa_vazia', 'garrafa_agua', 'cafe_coado', 'cafe_leite', 'ovo_frito', 'misto_quente', 'pao_chapa', 'miojo_pronto',
+    'marmita_quente', 'pipoca', 'cha_boldo', 'soro', 'gororoba'];
   /* O mestre escreve como fala: plural, acento, nome em português. */
   const APELIDOS = {
     moeda: 'moedas', dinheiro_trocado: 'moedas', trocado: 'moedas',
@@ -38,10 +42,37 @@
     fusiveis: 'fusivel', chaves: 'chave',
     bandagem: 'bandage', bandagens: 'bandage', bandages: 'bandage', atadura: 'bandage', ataduras: 'bandage', curativo: 'bandage', curativos: 'bandage',
     tala: 'splint', talas: 'splint', splints: 'splint',
-    antibiotico: 'antibiotic', antibioticos: 'antibiotic', antibiotics: 'antibiotic'
+    antibiotico: 'antibiotic', antibioticos: 'antibiotic', antibiotics: 'antibiotic',
+    /* comida e bebida: o mestre escreve como fala */
+    pao: 'pao_frances', paes: 'pao_frances', pao_frances: 'pao_frances', paezinhos: 'pao_frances', paozinho: 'pao_frances',
+    pao_de_forma: 'pao_forma', pao_de_queijo: 'pao_queijo', paes_de_queijo: 'pao_queijo', paozinho_de_queijo: 'pao_queijo',
+    coxinhas: 'coxinha', salgado: 'coxinha', salgados: 'coxinha',
+    bolachas: 'bolacha', bolacha_agua_e_sal: 'bolacha', biscoitos: 'biscoito', biscoito_recheado: 'biscoito', bolacha_recheada: 'biscoito',
+    pacocas: 'pacoca', paçoca: 'pacoca', bananas: 'banana', laranjas: 'laranja', goiabas: 'goiaba', mangas: 'manga', ovos: 'ovo',
+    manteigas: 'manteiga', queijos: 'queijo', presuntos: 'presunto', mortadela: 'presunto',
+    leite_de_caixinha: 'leite', caixa_de_leite: 'leite', leites: 'leite',
+    macarrao_instantaneo: 'miojo', macarrao: 'miojo', lamen: 'miojo', miojos: 'miojo',
+    marmitas: 'marmita', quentinha: 'marmita', marmitex: 'marmita',
+    milho: 'milho_pipoca', milho_de_pipoca: 'milho_pipoca', pipocas: 'pipoca',
+    cafe_em_po: 'po_cafe', po_de_cafe: 'po_cafe', pacote_de_cafe: 'po_cafe',
+    acucares: 'acucar', assucar: 'acucar', sais: 'sal', oleos: 'oleo', oleo_de_soja: 'oleo', folhas_de_boldo: 'boldo', boldos: 'boldo',
+    sucos: 'suco', suco_de_caixinha: 'suco', agua_de_coco: 'agua_coco', coco: 'agua_coco',
+    garrafa_pet: 'garrafa_vazia', garrafa_vazia: 'garrafa_vazia', pet_vazia: 'garrafa_vazia',
+    garrafa_com_agua: 'garrafa_agua', garrafinha: 'agua', cafezinho: 'cafe_coado', cafe_coado: 'cafe_coado', cafe_com_leite: 'cafe_leite',
+    ovo_frito: 'ovo_frito', misto: 'misto_quente', misto_quente: 'misto_quente', pao_na_chapa: 'pao_chapa',
+    miojo_pronto: 'miojo_pronto', macarrao_pronto: 'miojo_pronto', marmita_quente: 'marmita_quente',
+    cha: 'cha_boldo', cha_de_boldo: 'cha_boldo', soro_caseiro: 'soro', soros: 'soro', gororobas: 'gororoba'
   };
   const NOMES_ITENS = {moedas: 'Moedas', refrigerante: 'Refrigerante', salgadinho: 'Salgadinho', chocolate: 'Chocolate', agua: 'Água', cafe: 'Café',
-    fusivel: 'Fusível', chave: 'Chave', bandage: 'Bandagem', splint: 'Tala', antibiotic: 'Antibiótico'};
+    fusivel: 'Fusível', chave: 'Chave', bandage: 'Bandagem', splint: 'Tala', antibiotic: 'Antibiótico',
+    pao_frances: 'Pão francês', pao_forma: 'Pão de forma', pao_queijo: 'Pão de queijo', coxinha: 'Coxinha', bolacha: 'Bolacha água e sal',
+    biscoito: 'Biscoito recheado', pacoca: 'Paçoca', banana: 'Banana', laranja: 'Laranja', goiaba: 'Goiaba', manga: 'Manga', ovo: 'Ovo',
+    manteiga: 'Manteiga', queijo: 'Queijo', presunto: 'Presunto', leite: 'Leite de caixinha', miojo: 'Macarrão instantâneo', marmita: 'Marmita',
+    milho_pipoca: 'Milho de pipoca', po_cafe: 'Pó de café', acucar: 'Açúcar', sal: 'Sal', oleo: 'Óleo', boldo: 'Folhas de boldo',
+    suco: 'Suco de caixinha', agua_coco: 'Água de coco', garrafa_vazia: 'Garrafa PET vazia', garrafa_agua: 'Garrafa com água',
+    cafe_coado: 'Café coado', cafe_leite: 'Café com leite', ovo_frito: 'Ovo frito', misto_quente: 'Misto quente', pao_chapa: 'Pão na chapa',
+    miojo_pronto: 'Macarrão pronto', marmita_quente: 'Marmita quente', pipoca: 'Pipoca', cha_boldo: 'Chá de boldo', soro: 'Soro caseiro',
+    gororoba: 'Gororoba'};
 
   /* "Garrafa de Água" → "agua" (apelidos) · "lanterna" → "lanterna". */
   function idItem(nome) {

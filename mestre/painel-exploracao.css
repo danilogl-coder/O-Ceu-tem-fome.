@@ -100,3 +100,13 @@
 .gm-mapa canvas{max-width:none!important}
 /* Nove seções no trilho: em telas baixas os botões encolhem para caberem todos. */
 @media(max-height:780px){.gm-window .gm-rail button{min-height:39px;padding:3px 2px 2px;gap:1px;font-size:8px}.gm-rail svg{width:20px;height:20px}.gm-rail{gap:3px}}
+
+/* Carros da cena (mestre/veiculos.js) */
+.gm-carros{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.gm-carro{border:1px solid #5c244f;background:#1a071d;padding:6px 7px;box-shadow:2px 2px #09020d}
+.gm-carro[data-enabled=false],.gm-carro[data-fora=true]{opacity:.62}
+.gm-carro .gm-clue-head canvas[data-mini-carro]{width:96px;height:54px;flex-shrink:0;border:1px solid #521f4a;background:#12050f;image-rendering:pixelated}
+.gm-carro .gm-grid{margin-top:6px}
+.gm-carro .gm-clue-actions{margin-top:6px}
+.gm-window .gm-carro input[data-carro-campo=placa]{min-height:28px;padding:2px 6px;font-size:12px;color:#ffd9f2;letter-spacing:1px;text-transform:uppercase}
+@media(max-width:600px){.gm-carro .gm-clue-head canvas[data-mini-carro]{width:72px;height:40px}}

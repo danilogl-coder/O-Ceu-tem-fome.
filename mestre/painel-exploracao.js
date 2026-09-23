@@ -7,7 +7,7 @@
    (paredes, piso, luz, tamanho, desgaste, variações).
 
    Exploração: os pedidos de improviso (alguém tentou uma porta sem destino:
-   um clique cria a cena do outro lado, liga nos dois sentidos e leva a
+   um clique cria a cena do outro lado, liga nos dois sentidos e leva o
    personagem), as passagens de qualquer cena (destino, chegada, tranca,
    chave, código, transição, andares do elevador), o mapa de conexões, os
    eventos de cada cena e as preferências.
@@ -138,6 +138,28 @@
             <div id="gmPassagens" class="gm-clues"></div>
           </div>
         </details>
+        <details class="gm-block" data-block="explorar-carros" open>
+          <summary><h3>CARROS NESTA CENA <small>estacionados em perspectiva · você põe um carro em qualquer cena</small></h3></summary>
+          <div class="gm-block-body">
+            <div class="gm-row"><label class="gm-inline gm-grow">Modelo<select id="gmCarroModelo" aria-label="Modelo do carro novo"></select></label><button type="button" id="gmCarroNovo" class="gm-accent">+ Pôr um carro</button></div>
+            <p class="gm-hint gm-left">Entrar no carro abre o painel dele; ligar o motor tira o carro da cena e então <b>você</b> escolhe o destino.</p>
+            <div id="gmCarros" class="gm-carros"></div>
+            <h4 class="gm-sub">CARROS DAS OUTRAS CENAS</h4>
+            <div id="gmCarrosTodas" class="gm-soltas"></div>
+          </div>
+        </details>
+        <details class="gm-block" data-block="explorar-viagem" open>
+          <summary><h3>VIAGEM DE CARRO <small>a interface do carro, a saída do mapa e o minigame de estrada</small></h3></summary>
+          <div class="gm-block-body">
+            <p class="gm-hint gm-left">Ligou o carro, ele sai da cena e aparece <b>só para você</b> a lista de destinos. O minigame é opcional e o <b>percurso</b> também: você decide os dois ali, a cada viagem. Isto aqui é só o que já vem marcado.</p>
+            <div class="gm-row"><label class="gm-inline gm-grow">Minigame<select id="gmViagemModo" aria-label="Quando rodar o minigame de estrada"><option value="perguntar">Escolho a cada viagem</option><option value="sempre">Sempre rodar</option><option value="nunca">Nunca · ir direto</option></select></label><label class="gm-inline gm-grow">Trecho<select id="gmViagemVariacao" aria-label="Trecho do minigame"></select></label></div>
+            <div class="gm-row"><label class="gm-inline gm-grow">Percurso padrão<select id="gmViagemPercurso" aria-label="Tamanho padrão do percurso"></select></label></div>
+            <div class="gm-row"><label class="gm-inline">Dura<input id="gmViagemDuracao" type="number" min="8" max="120" step="1"> s</label><label class="gm-inline">Custa<input id="gmViagemMinutos" type="number" min="0" max="600" step="1"> min do relógio</label></div>
+            <label class="gm-check"><input type="checkbox" id="gmViagemConseq"> Batida na estrada deixa hematoma no personagem</label>
+            <div class="gm-row"><select id="gmViagemCarroTeste" aria-label="Carro do teste"></select><button type="button" id="gmViagemTeste">Ver o minigame agora</button></div>
+            <p class="gm-hint gm-left" id="gmViagemDica"></p>
+          </div>
+        </details>
         <details class="gm-block" data-block="explorar-mapa" open>
           <summary><h3>MAPA DE CONEXÕES <small>clique: passagens da cena · dois cliques: envia</small></h3></summary>
           <div class="gm-block-body">
@@ -159,7 +181,7 @@
           <div class="gm-block-body">
             <div id="gmExplPrefs" class="gm-checks gm-checks1"></div>
             <ul class="gm-tips">
-              <li><b>Atravessar:</b> perto de uma porta aparece a dica <kbd>↑</kbd>; <kbd>↑</kbd> ou <kbd>W</kbd> entra. Clicar na porta leva a personagem até ela.</li>
+              <li><b>Atravessar:</b> perto de uma porta aparece a dica <kbd>↑</kbd>; <kbd>↑</kbd> ou <kbd>W</kbd> entra. Clicar na porta leva o personagem até ela.</li>
               <li><b>Sem destino:</b> a porta “não abre” para os jogadores e vira um pedido aqui, com sugestões. Um clique cria a cena, liga nos dois sentidos e atravessa.</li>
               <li><b>Trancas:</b> chave (o item Chave com o mesmo nome, na bolsa), código (teclado na tela) ou só com a sua liberação.</li>
               <li><b>Elevador:</b> uma lista de andares; cada andar é uma cena. Andar sem cena também vira pedido.</li>
@@ -242,6 +264,8 @@
       if (!this.expl) return;
       this.renderPedidos();
       this.renderPassagens();
+      this.renderCarros();
+      this.renderViagem();
       this.renderMapa();
       this.renderEventos();
       this.renderExplPrefs();
@@ -268,12 +292,33 @@
           <p class="gm-muted gm-pedido-dica">Esta passagem só abre com a sua liberação.</p>
           <div class="gm-clue-actions"><button type="button" class="gm-accent" data-ped="liberar">Deixar passar</button><button type="button" data-ped="sempre" title="Tira a tranca desta passagem">Destrancar de vez</button><button type="button" data-ped="negar">Continua trancada</button></div></article>`;
         const semente = sementeDe(p.id), desgaste = ex.desgasteVizinho(p.cena);
-        return `<article class="gm-pedido" data-pedido="${esc(p.id)}" data-tipo="improviso" data-semente="${semente}">${cabeca('porta', 'sem destino')}
-          <p class="gm-muted gm-pedido-dica">O que tem do outro lado? A cena é criada, ligada nos dois sentidos e a personagem atravessa.</p>
+        /* Viagem de carro: o mesmo pedido de sempre, com as mesmas sugestões e
+           a mesma lista de cenas — só que quem leva o personagem é o carro, e
+           aqui o mestre também decide se roda o minigame de estrada. */
+        const viagem = p.tipo === 'viagem';
+        /* Pane: o carro morreu no caminho. Aqui não há destino a escolher —
+           só ONDE eles ficaram parados. As sugestões já vêm com a beira do
+           trecho que estava rodando na frente (ver cenas-estrada.js). */
+        const pane = p.tipo === 'pane';
+        const VC = root.ViagemDeCarro, pv = VC ? VC.prefs() : {minigame: 'perguntar', variacao: '', percurso: 'medio'};
+        const MG = root.MinigameEstrada;
+        /* O percurso é por viagem: um lugar logo ali não é a mesma pista — nem o
+           mesmo relógio — que outra cidade. Cada opção já diz quanto custa. */
+        const rotas = VC ? VC.PERCURSOS.map(r => {
+          const c = VC.resolverPercurso(r.id);
+          return `<option value="${esc(r.id)}"${pv.percurso === r.id ? ' selected' : ''}>${esc(r.nome)} · ${c.km} km · ${c.minutos} min</option>`;
+        }).join('') : '';
+        const trechoNome = pane && MG && MG.VARIACOES[p.trecho] ? MG.VARIACOES[p.trecho].nome : '';
+        const linhaPane = !pane ? '' : `<div class="gm-row gm-viagem-row"><span class="gm-muted gm-grow">${esc(trechoNome ? 'Quebrou em ' + trechoNome.toLowerCase() : 'Quebrou no meio da estrada')}${p.andou !== null && p.andou !== undefined ? ' · venceram ' + Math.round(p.andou * 100) + '% do percurso' : ''}.</span></div>`;
+        const linhaViagem = !viagem ? '' : `<div class="gm-row gm-viagem-row"><label class="gm-inline gm-grow">Percurso<select class="gm-grow" data-ped-campo="percurso" aria-label="Tamanho do percurso até o destino">${rotas}</select></label></div>
+          <div class="gm-row gm-viagem-row"><label class="gm-check gm-grow"><input type="checkbox" data-ped-campo="minigame" ${pv.minigame === 'nunca' ? '' : 'checked'}> Rodar o minigame de estrada até lá</label><select data-ped-campo="trecho" aria-label="Trecho do minigame"><option value="">Sortear o trecho</option>${MG ? MG.opcoes().map(([id, nome]) => `<option value="${esc(id)}"${pv.variacao === id ? ' selected' : ''}>${esc(nome)}</option>`).join('') : ''}</select></div>`;
+        return `<article class="gm-pedido" data-pedido="${esc(p.id)}" data-tipo="${pane ? 'pane' : viagem ? 'viagem' : 'improviso'}" data-semente="${semente}">${cabeca(pane || viagem ? 'carro' : 'porta', pane ? 'quebrou' : viagem ? 'na estrada' : 'sem destino')}
+          <p class="gm-muted gm-pedido-dica">${pane ? 'Onde eles ficaram parados? Escolha a beira da estrada que combina com o trecho — o carro quebrado estaciona lá com o personagem ao lado.' : viagem ? 'Para onde o carro leva o personagem? Escolha uma cena que já existe ou crie uma na hora — o carro vai junto e estaciona lá.' : 'O que tem do outro lado? A cena é criada, ligada nos dois sentidos e o personagem atravessa.'}</p>
+          ${linhaPane}${linhaViagem}
           <div class="gm-sugestoes">${p.sugestoes.map(id => { const m = M()?.modeloDef(id); return m ? `<button type="button" class="gm-card gm-sugestao" data-ped="modelo" data-modelo="${esc(id)}" title="${esc(m.descricao || m.nome)}"><canvas width="240" height="135" data-mini-modelo="${esc(id)}" data-semente="${semente}" data-desgaste="${desgaste}" aria-hidden="true"></canvas><span>${esc(m.nome)}</span></button>` : ''; }).join('')}</div>
           <div class="gm-row"><select data-ped-campo="modelo" aria-label="Outro modelo de cena"><option value="">Outro modelo…</option>${opts(modelos.map(m => [m.id, `${m.grupo} · ${m.nome}`]), '')}</select><button type="button" data-ped="criar">Criar</button></div>
-          <div class="gm-row"><select data-ped-campo="cena" aria-label="Cena que já existe"><option value="">Ou ligar a uma cena que já existe…</option>${opts(cenas.filter(s => s.id !== p.cena).map(s => [s.id, s.name]), '')}</select><select data-ped-campo="chegada" aria-label="Por onde a personagem chega" hidden></select><button type="button" data-ped="ligar" disabled>Ligar</button></div>
-          <div class="gm-row"><label class="gm-check gm-grow"><input type="checkbox" data-ped-campo="levar" checked> Levar a personagem na hora</label><button type="button" class="gm-danger" data-ped="negar" title="Nada acontece: a passagem continua sem destino">Não abre</button></div>
+          <div class="gm-row"><select data-ped-campo="cena" aria-label="Cena que já existe"><option value="">Ou ligar a uma cena que já existe…</option>${opts(cenas.filter(s => s.id !== p.cena).map(s => [s.id, s.name]), '')}</select><select data-ped-campo="chegada" aria-label="Por onde o personagem chega" hidden></select><button type="button" data-ped="ligar" disabled>Ligar</button></div>
+          <div class="gm-row">${pane ? '<span class="gm-muted gm-grow">O carro parou. Eles estão nele.</span>' : viagem ? '<span class="gm-muted gm-grow">O carro já saiu com ele.</span>' : '<label class="gm-check gm-grow"><input type="checkbox" data-ped-campo="levar" checked> Levar o personagem na hora</label>'}${pane ? '' : `<button type="button" class="gm-danger" data-ped="negar" title="${viagem ? 'O carro dá meia-volta e estaciona onde estava' : 'Nada acontece: a passagem continua sem destino'}">${viagem ? 'Desistir da viagem' : 'Não abre'}</button>`}</div>
         </article>`;
       }).join('');
       this.pedirMiniaturas(box);
@@ -284,17 +329,30 @@
       const id = art.dataset.pedido, acao = botao.dataset.ped;
       const levar = art.querySelector('[data-ped-campo="levar"]')?.checked !== false;
       const semente = Number(art.dataset.semente) || undefined;
+      // Na viagem de carro, o mestre decide aqui se o minigame roda e qual trecho.
+      const viagem = art.dataset.tipo === 'viagem', pane = art.dataset.tipo === 'pane';
+      if (viagem && root.ViagemDeCarro) {
+        const trecho = art.querySelector('[data-ped-campo="trecho"]');
+        if (trecho) root.ViagemDeCarro.definirPref('viagemVariacao', trecho.value);
+        // O percurso escolhido aqui também vira o padrão da próxima viagem.
+        const rota = art.querySelector('[data-ped-campo="percurso"]');
+        if (rota && rota.value) root.ViagemDeCarro.definirPref('viagemPercurso', rota.value);
+      }
+      void pane;
+      const daViagem = extra => viagem ? {...extra,
+        minigame: art.querySelector('[data-ped-campo="minigame"]')?.checked !== false,
+        percurso: art.querySelector('[data-ped-campo="percurso"]')?.value || undefined} : extra;
       if (acao === 'liberar') ex.liberarPedido(id, {levar: true});
       else if (acao === 'sempre') ex.liberarPedido(id, {levar: true, sempre: true});
-      else if (acao === 'negar') ex.dispensarPedido(id);
+      else if (acao === 'negar') { ex.dispensarPedido(id); if (viagem && root.ViagemDeCarro) root.ViagemDeCarro.desistir(); }
       else if (acao === 'modelo' || acao === 'criar') {
         const modelo = acao === 'modelo' ? botao.dataset.modelo : art.querySelector('[data-ped-campo="modelo"]').value;
         if (!modelo) { art.querySelector('[data-ped-campo="modelo"]').focus(); return; }
-        const destino = ex.resolverPedido(id, {modelo, levar, opcoes: acao === 'modelo' ? {semente} : {}});
+        const destino = ex.resolverPedido(id, {modelo, levar, opcoes: daViagem(acao === 'modelo' ? {semente} : {})});
         if (destino && this.mont) this.mont.cena = destino;
       } else if (acao === 'ligar') {
         const cena = art.querySelector('[data-ped-campo="cena"]').value, chegada = art.querySelector('[data-ped-campo="chegada"]').value;
-        if (cena) ex.resolverPedido(id, {cena, chegada, levar});
+        if (cena) ex.resolverPedido(id, {cena, chegada, levar, opcoes: daViagem({})});
       }
       this.save();
     },
@@ -311,7 +369,7 @@
       peca.hidden = !generica;
       nova.disabled = !generica && !live;
       this.$('#gmPasAreas').setAttribute('aria-pressed', String(!!this.clues?.showAreas));
-      this.$('#gmPasDica').textContent = generica ? 'A peça entra perto da personagem (ou no meio da cena); arraste-a na prancheta da aba Montar.'
+      this.$('#gmPasDica').textContent = generica ? 'A peça entra perto do personagem (ou no meio da cena); arraste-a na prancheta da aba Montar.'
         : live ? 'Numa cena pintada, você marca a área da passagem arrastando sobre a cena.' : 'Para marcar a área de uma passagem nova nesta cena, envie a cena aos jogadores.';
       const lista = ex.passagens(cenaId), tipos = nomes(root.TIPOS_PASSAGEM), trancas = nomes(root.TRANCAS);
       box.innerHTML = lista.length ? lista.map(p => {
@@ -324,7 +382,7 @@
             <span class="gm-clue-state" data-ok="${!!dest || andares.length > 0}">${esc(destino)}</span></div>
           <div class="gm-clue-actions">
             <button type="button" data-pas-acao="editar">Editar</button>
-            ${live ? `<button type="button" data-pas-acao="atravessar" ${dest ? '' : 'disabled'} title="A personagem atravessa agora">Atravessar</button><button type="button" data-pas-acao="olhar" title="A câmera vai até a passagem e volta">Olhar</button>` : ''}
+            ${live ? `<button type="button" data-pas-acao="atravessar" ${dest ? '' : 'disabled'} title="O personagem atravessa agora">Atravessar</button><button type="button" data-pas-acao="olhar" title="A câmera vai até a passagem e volta">Olhar</button>` : ''}
             ${dest ? '<button type="button" data-pas-acao="outro" title="Mostra as passagens da cena do outro lado">Outro lado</button>' : ''}
             <button type="button" data-pas-acao="ativa" aria-pressed="${p.enabled !== false}" title="Desativada: some da cena sem ser apagada">${p.enabled !== false ? 'Ativa' : 'Desativada'}</button>
             <button type="button" data-pas-acao="excluir" class="gm-danger">Excluir</button>
@@ -479,6 +537,145 @@
       M().editar(cenaId, r => { r.objetos.push(novo); });
       this.save();
       this.abrirPassagem(cenaId, novo.id);
+    },
+
+    /* ---------------------------------------------------------- carros
+       Os carros da cena ao vivo (pista `veiculo`, mestre/veiculos.js): miniatura,
+       estado, mover no palco com a ferramenta de arrastar, e a lista das outras cenas. */
+    /* As preferências da viagem de carro: quando roda o minigame, qual trecho,
+       quanto tempo de jogo custa e se a batida machuca. Ficam em
+       exploracao.prefs, então vão junto na sessão salva. */
+    renderViagem() {
+      const VC = root.ViagemDeCarro, M = root.MinigameEstrada, V = root.Veiculos;
+      const modo = this.$('#gmViagemModo');
+      if (!modo || !VC) return;
+      const p = VC.prefs();
+      modo.value = p.minigame;
+      const vari = this.$('#gmViagemVariacao');
+      if (M && vari.options.length !== M.LISTA.length + 1) {
+        vari.innerHTML = `<option value="">Sortear (sem repetir o último)</option>` +
+          M.opcoes().map(([id, nome]) => `<option value="${esc(id)}">${esc(nome)}</option>`).join('');
+      }
+      vari.value = p.variacao || '';
+      /* Percurso: os atalhos já trazem km, pista e relógio amarrados. Só no
+         “Personalizado” os dois campos de número valem — nos outros eles ficam
+         travados mostrando o que o atalho escolheu, para ninguém digitar um
+         número que o jogo vai ignorar. */
+      const rota = this.$('#gmViagemPercurso');
+      if (rota && rota.options.length !== VC.PERCURSOS.length) {
+        rota.innerHTML = VC.PERCURSOS.map(r => `<option value="${esc(r.id)}">${esc(r.nome)}</option>`).join('');
+      }
+      if (rota) rota.value = p.percurso;
+      const livre = p.percurso === 'livre';
+      const dur = this.$('#gmViagemDuracao'), min = this.$('#gmViagemMinutos');
+      dur.value = livre ? p.duracao : p.rota.segundos;
+      min.value = livre ? p.minutos : p.rota.minutos;
+      dur.disabled = min.disabled = !livre;
+      this.$('#gmViagemConseq').checked = p.consequencias !== false;
+      const carroSel = this.$('#gmViagemCarroTeste');
+      if (V && carroSel && !carroSel.options.length) carroSel.innerHTML = Object.values(V.MODELOS).map(m => `<option value="${esc(m.id)}">${esc(m.nome)}</option>`).join('');
+      const def = M && p.variacao ? M.VARIACOES[p.variacao] : null;
+      const r = VC.percursoDe(p.percurso);
+      this.$('#gmViagemDica').textContent =
+        `${r.nome} (${r.resumo}): ${p.rota.km} km, ${p.rota.segundos} s de pista e ${p.rota.minutos} min do relógio. `
+        + (def ? `${def.nome}: ${def.resumo}.`
+          : 'Sete trechos diferentes (rodovia, serra, terra, noite, chuva, neblina, cidade). No sorteio, nunca sai o mesmo da viagem anterior.');
+    },
+    renderCarros() {
+      const box = this.$('#gmCarros'), V = root.Veiculos;
+      if (!box) return;
+      if (!V || !this.clues) { box.innerHTML = '<p class="gm-muted">O módulo dos veículos não está carregado nesta janela.</p>'; return; }
+      const cena = this.stage.scene?.id, sel = this.$('#gmCarroModelo');
+      if (sel && !sel.options.length) sel.innerHTML = opts(Object.values(V.MODELOS).map(M => [M.id, M.nome]), 'sedan_oficial');
+      const lista = cena ? this.clues.clues(cena).filter(k => k.type === 'veiculo') : [];
+      const fora = cena ? V.removidos(cena) : [];
+      box.innerHTML = lista.length || fora.length
+        ? [...lista.map(k => this.htmlCarro(k, cena)), ...fora.map(k => `<article class="gm-carro" data-carro="${esc(k.id)}" data-fora="true">
+            <div class="gm-clue-head"><canvas width="16" height="16" data-icon="carro" aria-hidden="true"></canvas><div><strong>${esc(k.name)}</strong><small>tirado desta cena · era da definição da cena</small></div><span class="gm-clue-state">removido</span></div>
+            <div class="gm-clue-actions"><button type="button" data-carro-acao="restaurar">Devolver à cena</button></div></article>`)].join('')
+        : `<p class="gm-muted">Nenhum carro em “${esc(SL().get(cena)?.name || '')}”. Escolha um modelo e ponha um: ele aparece perto do personagem, atrás dele, e você arrasta para o lugar.</p>`;
+      this.pedirMiniaturas(box);
+      for (const cv of box.querySelectorAll('canvas[data-mini-carro]')) {
+        const id = cv.dataset.miniCarro, clue = lista.find(k => k.id === id);
+        if (!clue) continue;
+        const d = V.dados(clue);
+        miniatura(cv, `carro:${d.modelo}:${d.cor}:${d.sujeira}:${d.dano}:${d.sentido}:${d.farois ? 1 : 0}:${d.pisca ? 1 : 0}`, () => V.miniatura(clue));
+      }
+      const todas = V.todas().filter(t => t.cena !== cena);
+      const alvo = this.$('#gmCarrosTodas');
+      if (alvo) alvo.innerHTML = todas.length
+        ? todas.map(t => `<button type="button" class="gm-chip" data-carro-cena="${esc(t.cena)}" title="Envia esta cena aos jogadores">${esc(t.nome)} · ${t.carros.map(k => esc(V.medidas(V.dados(k).modelo).nome)).join(', ')}</button>`).join('')
+        : '<span class="gm-muted">Nenhuma outra cena tem carro.</span>';
+    },
+    htmlCarro(k, cena) {
+      const V = root.Veiculos, d = V.dados(k), M = V.medidas(d.modelo);
+      const estado = k.enabled === false ? 'escondido' : 'na cena';
+      const dano = V.estadoDano(d.dano), pm = V.portaMalasDe(d.modelo), carga = V.carga(k);
+      const cores = [['', 'Original do modelo'], ...M.cores.map(c => [c, V.CORES[c]])];
+      const marca = (campo, rotulo) => `<label class="gm-check"><input type="checkbox" data-carro-campo="${campo}" ${d[campo] ? 'checked' : ''}> ${rotulo}</label>`;
+      return `<article class="gm-carro" data-carro="${esc(k.id)}" data-enabled="${k.enabled !== false}">
+        <div class="gm-clue-head"><canvas width="96" height="54" data-mini-carro="${esc(k.id)}" aria-hidden="true"></canvas>
+          <div><strong>${esc(k.name)}</strong><small>${esc(M.nome)} · placa ${esc(d.placa || '—')} · X ${d.X} · d ${d.d} · frente para ${d.sentido > 0 ? 'a direita' : 'a esquerda'}${k.builtIn ? '' : ' · posto por você'}</small></div>
+          <span class="gm-clue-state" data-ok="${k.enabled !== false}">${estado}</span></div>
+        <div class="gm-grid gm-grid3">
+          <label>Modelo<select data-carro-campo="modelo">${opts(Object.values(V.MODELOS).map(m => [m.id, m.nome]), d.modelo)}</select></label>
+          <label>Cor<select data-carro-campo="cor">${opts(cores, d.cor)}</select></label>
+          <label>Sujeira<select data-carro-campo="sujeira">${opts([['0', 'Lavado'], ['1', 'Poeira'], ['2', 'Barro'], ['3', 'Imundo']], String(d.sujeira))}</select></label>
+          <label>Placa<input data-carro-campo="placa" maxlength="8" value="${esc(d.placa)}" placeholder="ABC-1234"></label>
+          ${marca('farois', 'Faróis acesos')}${marca('pisca', 'Pisca-alerta')}${marca('motor', 'Motor ligado')}
+          ${M.moto ? marca('capacete', 'Piloto de capacete') : ''}
+        </div>
+        ${M.moto ? '<p class="gm-hint gm-left">Moto: quem pilota é o personagem, com a roupa, o cabelo e a pele dele — é assim que ela nasce. Marque o capacete e a cabeça fica protegida na batida, mas some quem está ali embaixo.</p>' : ''}
+        <label class="gm-slider">Lataria <output data-carro-saida="dano">${esc(dano.nome)} · ${esc(dano.resumo)}</output><input data-carro-campo="dano" type="range" min="0" max="100" step="5" value="${d.dano}"></label>
+        <div class="gm-clue-actions">
+          <button type="button" data-carro-acao="mover" class="gm-accent" ${cena === this.stage.scene?.id ? '' : 'disabled'}>Mover no palco</button>
+          <button type="button" data-carro-acao="virar">Virar</button>
+          <button type="button" data-carro-acao="olhar" title="A câmera vai até o carro e volta">Olhar</button>
+          <button type="button" data-carro-acao="usar" title="Testa o que acontece quando alguém entra no carro">Testar</button>
+          <button type="button" data-carro-acao="portamalas" title="Abre o porta-malas para os jogadores guardarem ou tirarem coisas">${esc(pm.nome)} (${carga.length})</button>
+          <button type="button" data-carro-acao="consertar" ${d.dano ? '' : 'disabled'} title="Zera o estrago da lataria">Consertar</button>
+          <button type="button" data-carro-acao="esconder" aria-pressed="${k.enabled === false}">${k.enabled === false ? 'Mostrar' : 'Esconder'}</button>
+          <button type="button" data-carro-acao="remover" class="gm-danger">Remover</button>
+        </div></article>`;
+    },
+    carroAcao(acao, id, botao) {
+      const V = root.Veiculos, cena = this.stage.scene?.id;
+      if (!V || !this.clues || !cena) return;
+      if (acao === 'restaurar') { V.restaurar(id, cena); this.save(); this.renderCarros(); return; }
+      const clue = this.clues.clue(id, cena);
+      if (!clue) return;
+      if (acao === 'mover') {
+        if (this.panel.hidden) this.open(true);
+        this.panel.classList.add('gm-placing');
+        V.moverNoPalco(id, {sceneId: cena});
+      } else if (acao === 'virar') { V.virar(id, cena); this.save(); }
+      else if (acao === 'olhar') this.stage.lookAt(clue, 3);
+      else if (acao === 'usar') root.ClueTypes.get('veiculo')?.activate(clue, this.clues, {source: 'mestre'});
+      else if (acao === 'portamalas') { root.PortaMalas?.abrir({veiculo: id, cena}); this.open(false); }
+      else if (acao === 'consertar') { V.consertar(id, cena); this.save(); }
+      else if (acao === 'esconder') { V.esconder(id, clue.enabled !== false, cena); this.save(); }
+      else if (acao === 'remover') {
+        if (!botao.dataset.confirm) { botao.dataset.confirm = '1'; botao.textContent = 'Confirmar?'; setTimeout(() => { if (botao.isConnected) { delete botao.dataset.confirm; botao.textContent = 'Remover'; } }, 2500); return; }
+        V.remover(id, cena); this.save();
+      }
+      this.renderCarros();
+    },
+    carroMudou(el) {
+      const V = root.Veiculos, art = el.closest('[data-carro]'), cena = this.stage.scene?.id;
+      if (!V || !art || !cena) return;
+      const campo = el.dataset.carroCampo;
+      const valor = el.type === 'checkbox' ? el.checked : campo === 'sujeira' || campo === 'dano' ? Number(el.value)
+        : campo === 'placa' ? el.value.toUpperCase().slice(0, 8) : el.value;
+      V.atualizar(art.dataset.carro, {[campo]: valor}, cena);
+      this.save();
+      /* Arrastar o cursor da lataria não pode repintar o bloco a cada pixel (o
+         cursor perderia o foco): só o rótulo do lado acompanha, e o resto espera. */
+      if (campo === 'dano') {
+        const saida = art.querySelector('[data-carro-saida="dano"]'), n = V.estadoDano(valor);
+        if (saida) saida.textContent = `${n.nome} · ${n.resumo}`;
+        return;
+      }
+      if (campo !== 'placa') this.renderCarros();
     },
 
     /* ---------------------------------------------------------- mapa de conexões */
@@ -724,6 +921,39 @@
         if (el.name === 'data.tipo' && el.value === 'elevador' && !root.parseAndares(dr.data.andares).length) dr.data.andares = root.formatAndares([{rotulo: 'TÉRREO', cena: dr.cena, chegada: dr.id || ''}]);
         this.renderPasEditor();
       });
+      on('#gmCarroNovo', 'click', () => {
+        const V = root.Veiculos;
+        if (!V || !this.clues) return;
+        const clue = V.adicionar(this.$('#gmCarroModelo')?.value || 'sedan_oficial', {sceneId: this.stage.scene?.id});
+        this.save();
+        this.renderCarros();
+        if (clue) V.moverNoPalco(clue.id);
+        if (clue) this.panel.classList.add('gm-placing');
+      });
+      const viagemPref = (sel, chave, ler) => on(sel, 'change', e => {
+        root.ViagemDeCarro?.definirPref(chave, ler(e.target));
+        this.save(); this.renderViagem();
+      });
+      viagemPref('#gmViagemModo', 'viagemMinigame', el => el.value);
+      viagemPref('#gmViagemVariacao', 'viagemVariacao', el => el.value);
+      viagemPref('#gmViagemPercurso', 'viagemPercurso', el => el.value);
+      viagemPref('#gmViagemDuracao', 'viagemDuracao', el => Math.max(8, Math.min(120, Number(el.value) || 26)));
+      viagemPref('#gmViagemMinutos', 'viagemMinutos', el => Math.max(0, Math.min(600, Number(el.value) || 0)));
+      viagemPref('#gmViagemConseq', 'viagemConsequencias', el => el.checked);
+      on('#gmViagemTeste', 'click', () => {
+        const VC = root.ViagemDeCarro;
+        if (!this.clues || !VC) return;
+        const p = VC.prefs();
+        // O teste roda o percurso padrão, para o mestre ver de verdade o tamanho que marcou.
+        this.clues.playCinematic('estrada', {carro: {data: {modelo: this.$('#gmViagemCarroTeste')?.value || 'sedan_oficial'}},
+          variacao: p.variacao || null, duracao: p.rota.segundos, km: p.rota.km,
+          percurso: p.rota.nome, minutos: 0, destinoNome: 'teste do mestre'});
+      });
+      on('#gmCarros', 'click', e => { const b = e.target.closest('[data-carro-acao]'); if (b && !b.disabled) this.carroAcao(b.dataset.carroAcao, b.closest('[data-carro]').dataset.carro, b); });
+      on('#gmCarros', 'change', e => { if (e.target.dataset.carroCampo) this.carroMudou(e.target); });
+      on('#gmCarros', 'input', e => { if (['placa', 'dano'].includes(e.target.dataset.carroCampo)) this.carroMudou(e.target); });
+      on('#gmCarrosTodas', 'click', e => { const b = e.target.closest('[data-carro-cena]'); if (!b) return; this.choosePreview(b.dataset.carroCena); this.goLive(b.dataset.carroCena); });
+      root.Veiculos?.on?.(() => this.agendarSecao('explorar'));
       const mapa = this.$('#gmMapa');
       if (mapa) {
         mapa.addEventListener('pointermove', e => { const n = this.noDoMapa(e); mapa.style.cursor = n ? 'pointer' : 'default'; mapa.title = n ? SL().get(n.id)?.name || '' : ''; });
@@ -754,6 +984,7 @@
         this.save();
       });
       this.clues?.listeners.add(kind => {
+        if (kind === 'dragTool') { this.panel.classList.toggle('gm-placing', !!this.clues.dragTool); if (!this.clues.dragTool) { this.save(); this.renderCarros(); } }
         if (kind === 'areas') this.$('#gmPasAreas')?.setAttribute('aria-pressed', String(!!this.clues.showAreas));
         if (kind === 'change' && this.session.tab === 'explorar' && !this.expl.quieto && !this.expl.draft) this.agendarSecao('explorar');
       });

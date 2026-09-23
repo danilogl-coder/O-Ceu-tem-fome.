@@ -132,6 +132,24 @@
       this.state.items.cabelo = 'cabelo.original'; this.state.dyes = {};
       this.apply();
     }
+    /* A PESSOA inteira, e não só a roupa: cabelo, barba, corpo, pele e olhos
+       vêm junto. É o que uma troca de personagem precisa carregar de um corpo
+       para o outro — `clothing()` abaixo dá só a trouxa que caberia na bolsa,
+       que é outra coisa. Sai e entra em cópia: dois personagens nunca podem
+       acabar apontando para o mesmo guarda-roupa. */
+    look() { return {items: JSON.parse(JSON.stringify(this.state.items)), dyes: {...this.state.dyes}}; }
+    vestirLook(look, {silent = true} = {}) {
+      if (!look || typeof look !== 'object') return;
+      for (const c of this.categories) this.state.items[c.id] = c.multi ? [] : null;
+      this.state.items.cabelo = 'cabelo.original';
+      this.state.dyes = {};
+      if (look.items) for (const c of this.categories)
+        if (look.items[c.id] !== undefined) this.state.items[c.id] = JSON.parse(JSON.stringify(look.items[c.id]));
+      if (look.dyes) Object.assign(this.state.dyes, look.dyes);
+      /* Calado de propósito: trocar de personagem não cria nem destrói a
+         trouxa de roupa dentro da bolsa, que é da mesa. */
+      this.silent = silent; this.apply(); this.silent = false;
+    }
     /* The clothes as a bundle the bag can hold: only what can be taken off —
        hair, beard, build, skin and eyes stay with the person. */
     static get CLOTHING() { return ['cabeca', 'torso', 'casaco', 'pernas', 'pes', 'extras']; }

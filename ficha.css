@@ -1,0 +1,26 @@
+/* A ficha por cima de tudo. Quando ela abre, o HUD sai da frente: o que
+   se quer ver é a ficha, não a fileira de botões. */
+#fichaOverlay{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;
+  background:#05030a;overflow:hidden}
+#fichaOverlay[hidden]{display:none}
+#fichaCanvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}
+/* Nada do jogo aparece por baixo nem rouba o clique. */
+body.ficha-aberta{overflow:hidden}
+body.ficha-aberta .health-toggle,
+body.ficha-aberta .bag-toggle,
+body.ficha-aberta .gm-toggle,
+body.ficha-aberta .wardrobe-toggle,
+body.ficha-aberta .gm-stage-badge,
+body.ficha-aberta .health-clock,
+body.ficha-aberta .touch-controls,
+body.ficha-aberta .health-panel,
+body.ficha-aberta .case-window,
+body.ficha-aberta .gm-window,
+body.ficha-aberta .health-tooltip,
+body.ficha-aberta header,
+body.ficha-aberta footer,
+body.ficha-aberta main{visibility:hidden!important;pointer-events:none!important}
+/* O guarda-roupa é a exceção: ele abre POR CIMA da ficha, porque criar
+   personagem é escolher o rosto junto com os números. */
+body.ficha-aberta .wardrobe-window{visibility:visible!important;pointer-events:auto!important;
+  position:fixed;z-index:9100;left:50%;top:50%;transform:translate(-50%,-50%)}

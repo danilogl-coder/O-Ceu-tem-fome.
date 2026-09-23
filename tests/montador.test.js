@@ -12,13 +12,13 @@ const context2d=()=>({fillRect(){},drawImage(){},putImageData(){},clearRect(){},
 global.document={createElement:()=>{const c={width:0,height:0,getContext:()=>c.ctx||(c.ctx=context2d()),toDataURL:()=>''};return c;}};
 require('../mestre/pixel-kit.js');
 const {SceneLibrary,makeRoom,buildRoomLayers}=require('../mestre/scene-engine.js');
-for(const f of ['sobreposicoes','cena-escritorio','cena-campo','pistas-ui','pistas','pistas-tipos','montador-paleta','montador','modulos-estrutura','modulos-casa','modulos-trabalho','modulos-comercio','modulos-saude','modulos-rua','interacoes-basicas','interacoes-jogos','exploracao','cenas-genericas','som-ambiente'])require(`../mestre/${f}.js`);
+for(const f of ['sobreposicoes','cena-escritorio','cena-campo','pistas-ui','pistas','pistas-tipos','montador-paleta','montador','modulos-estrutura','modulos-casa','modulos-trabalho','modulos-comercio','modulos-saude','modulos-rua','modulos-estrada','interacoes-basicas','interacoes-jogos','exploracao','cenas-genericas','cenas-estrada','som-ambiente'])require(`../mestre/${f}.js`);
 const {Montador:M,ClueTypes,TIPOS_PASSAGEM,EFEITOS,QUANDO,parseAndares,formatAndares,sugestoesPara,MapAmbience}=globalThis;
 const ids=list=>new Set(list.map(([id])=>id));
 
 // Peças: todas com nome, grupo e camada; as passagens com um tipo que a exploração conhece.
 const mods=M.modulos();
-assert(mods.length>=180,`pelo menos 180 peças (${mods.length})`);
+assert(mods.length>=190,`pelo menos 190 peças (${mods.length})`);
 const tiposPassagem=ids(TIPOS_PASSAGEM);
 for(const m of mods){
   assert(m.nome&&m.grupo,`${m.id}: nome e grupo`);
@@ -32,7 +32,7 @@ const PORTAS=new Set(mods.filter(m=>m.passagem&&m.camada==='parede').map(m=>m.id
 const efeitos=ids(EFEITOS),quando=ids(QUANDO),sons=ids(MapAmbience.SFX);
 const semId=R=>JSON.stringify({...R,id:0,criada:0,objetos:R.objetos.map(o=>({...o,id:0}))});
 const modelos=M.modelos();
-assert.equal(modelos.length,18,'18 modelos na biblioteca');
+assert.equal(modelos.length,25,'25 modelos na biblioteca: 18 de dentro da cidade e 7 beiras de estrada');
 for(const modelo of modelos){
   const a=M.gerar(modelo.id,{semente:4242}),b=M.gerar(modelo.id,{semente:4242}),c=M.gerar(modelo.id,{semente:77});
   assert.equal(semId(a),semId(b),`${modelo.id}: mesma semente, mesma sala`);
@@ -63,7 +63,7 @@ for(const modelo of modelos){
 assert.deepEqual(SceneLibrary.list().map(s=>s.id),['escritorio','campo'],'os modelos só entram na biblioteca quando usados');
 
 // Uma sala de cada tipo de luz vira camadas sem erro.
-for(const id of ['corredor','rua','estacionamento','hospital','predio_abandonado']){
+for(const id of ['corredor','rua','estacionamento','hospital','predio_abandonado','estrada_rodovia','estrada_serra','estrada_noite','estrada_chuva']){
   const R=M.criar(id,{semente:9}),def=SceneLibrary.get(R.id);
   const layers=buildRoomLayers(def,{preset:def.defaultPreset,weather:'limpo',props:new Set(def.props.filter(p=>p.default).map(p=>p.id))},global.document);
   assert(layers.wall&&layers.floor,`${id}: parede e chão`);

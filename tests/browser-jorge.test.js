@@ -35,7 +35,9 @@ const png=(file,dataUrl)=>fs.writeFileSync(path.join(output,file),Buffer.from(da
     let s=await P(()=>window.demo.state);
     assert.equal(s.scene.scene,'escritorio','the office is still the first scene');
     assert.equal(s.playerX,240,'the game still starts where it did');
-    assert.deepEqual(await P(()=>SceneLibrary.list().map(x=>x.id)),['escritorio','campo','jorge'],'Jorge’s office is the third scene of the library');
+    const lista=await P(()=>SceneLibrary.list().map(x=>x.id));
+    assert.deepEqual(lista.slice(0,3),['escritorio','campo','jorge'],'Jorge’s office is the third scene of the library');
+    for(const id of ['pref_corredor','pref_saguao','pref_praca','jorge_corredor','jorge_rua','campo_estrada'])assert(lista.includes(id),`a cena ${id} entrou na biblioteca`);
 
     // The master sends it with Shift+3; it arrives through the fade.
     await page.locator('#scene').focus();

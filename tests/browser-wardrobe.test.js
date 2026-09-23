@@ -82,9 +82,16 @@ fs.mkdirSync(output,{recursive:true});
     assert.deepEqual(state.wardrobe.items.extras,['extras.cinto'],'extras toggle one by one');
     // Walking preview with cloth physics: the skirt's strand has to move.
     await click('walk');
-    await page.waitForTimeout(900);
-    const moved=await page.evaluate(()=>{const w=demo.wardrobe;return w.previewMotion.strands.filter(s=>s.key==='skirt'||s.key==='tail').map(s=>s.displacement);});
-    assert(moved.some(d=>d>.3),`skirt or tail should swing while walking (${moved.map(d=>d.toFixed(2))})`);
+    /* Sample across a whole stride instead of one instant: the strand passes
+       through zero twice per step, and landing on one of those made this check
+       fail at random. What matters is the PEAK swing, not the swing right now. */
+    let moved=[0,0];
+    for(let k=0;k<14;k++){
+      await page.waitForTimeout(110);
+      const agora=await page.evaluate(()=>{const w=demo.wardrobe;return w.previewMotion.strands.filter(s=>s.key==='skirt'||s.key==='tail').map(s=>s.displacement);});
+      moved=agora.map((d,i)=>Math.max(d,moved[i]||0));
+    }
+    assert(moved.some(d=>d>.3),`skirt or tail should swing while walking (peak ${moved.map(d=>d.toFixed(2))})`);
     await page.screenshot({path:path.join(output,'04-andando.png')});
     await click('walk');
     // The game sprite keeps every worn slot through a clip change and a jump.

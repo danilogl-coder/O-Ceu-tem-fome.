@@ -7,7 +7,7 @@
   <style>
     :root{color-scheme:dark}
     html,body{margin:0;height:100%;background:#050308;overflow:hidden}
-    body{display:grid;place-items:center;font:12px Consolas,'Courier New',monospace;color:#f3b4e8}
+    body{display:flex;flex-direction:column;justify-content:center;align-items:center;font:12px Consolas,'Courier New',monospace;color:#f3b4e8}
     body[data-idle=true]{cursor:none}
     #tela{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#07040b}
     .barra{position:fixed;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;padding:6px 8px;background:#140619ee;border:2px solid #9c3e88;box-shadow:4px 4px #09020d;transition:opacity .3s;z-index:2;white-space:nowrap}
@@ -30,6 +30,13 @@
   <script src="mestre/sobreposicoes.js"></script>
   <script src="mestre/pistas-ui.js"></script>
   <script src="mestre/link.js"></script>
+  <script src="health.js"></script>
+  <script src="health-ui.js"></script>
+  <script src="mestre/tatico-regras.js"></script>
+  <script src="mestre/tatico-icons.js"></script>
+  <script src="mestre/ficha-arte.js"></script>
+  <script src="mestre/ficha-dado.js"></script>
+  <script src="mestre/tatico-hud.js"></script>
   <script src="mestre/jogadores.js"></script>
 </body>
 </html>

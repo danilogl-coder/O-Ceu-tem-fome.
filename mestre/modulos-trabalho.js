@@ -464,9 +464,16 @@
     id: 'bebedouro', nome: 'Bebedouro', grupo: 'Escritório', camada: 'parede',
     w: p => p.tipo === 'coluna' ? 13 : 14, h: p => p.tipo === 'coluna' ? 26 : 34,
     params: [{id: 'tipo', label: 'Tipo', opcoes: [['galao', 'De galão'], ['coluna', 'De coluna (inox)']], padrao: 'galao'}],
-    interacao: {tipo: 'exame', marca: 'discreta', dados: o => o.p.tipo === 'coluna'
-      ? {texto: 'Bebedouro de pressão, de inox. O jato sai forte demais e molha a camisa de todo mundo.', detalhe: 'Colado na lateral, um papel com letra caprichada: “NÃO BEBER DEPOIS DAS 18H”. Ninguém sabe quem colou.', item: 'agua'}
-      : {texto: 'Um bebedouro de galão. A água é gelada e tem um leve gosto de moeda.', detalhe: 'No fundo do galão, uma coisinha branca gira devagar. Parece um dente de leite.', item: 'agua'}},
+    /* Água de verdade: bebedouro de pressão ou de galão. */
+    interacao: o => (root.ClueTypes?.get('fonte_agua')
+      ? {tipo: 'fonte_agua', marca: 'discreta', dados: {estilo: o?.p?.tipo === 'coluna' ? 'bebedouro' : 'bebedouro_galao', qualidade: 'potavel', altura: 'media',
+        examinar: o?.p?.tipo === 'coluna'
+          ? 'Colado na lateral, um papel com letra caprichada: “NÃO BEBER DEPOIS DAS 18H”. Ninguém sabe quem colou.'
+          : 'No fundo do galão, uma coisinha branca gira devagar. Parece um dente de leite.',
+        mensagem: o?.p?.tipo === 'coluna' ? 'Bebedouro de pressão, de inox. O jato sai forte demais.' : 'Bebedouro de galão. A água é gelada e tem um leve gosto de moeda.'}}
+      : {tipo: 'exame', marca: 'discreta', dados: o?.p?.tipo === 'coluna'
+        ? {texto: 'Bebedouro de pressão, de inox. O jato sai forte demais e molha a camisa de todo mundo.', detalhe: 'Colado na lateral, um papel com letra caprichada: “NÃO BEBER DEPOIS DAS 18H”. Ninguém sabe quem colou.', item: 'agua'}
+        : {texto: 'Um bebedouro de galão. A água é gelada e tem um leve gosto de moeda.', detalhe: 'No fundo do galão, uma coisinha branca gira devagar. Parece um dente de leite.', item: 'agua'}}),
     pinta(b, o, c) {
       const {u} = o;
       if (o.p.tipo === 'coluna') {
@@ -520,9 +527,15 @@
   M.modulo({
     id: 'copiadora', nome: 'Copiadora', grupo: 'Escritório', camada: 'parede', w: 22, h: 32,
     params: [{id: 'ligada', label: 'Ligada', tipo: 'estado', padrao: true}],
-    interacao: {tipo: 'exame', marca: 'discreta', dados: () => ({
-      texto: 'A copiadora ronca baixinho. No visor: PAPEL PRESO — BANDEJA 2. Na bandeja de saída ficou uma cópia esquecida.',
-      detalhe: 'Você puxa a folha amassada: é a cópia de uma mão espalmada contra o vidro. Uma mão de seis dedos.'})},
+    interacao: {marca: 'discreta', tipo: () => (root.ClueTypes?.get?.('copiadora') ? 'copiadora' : 'exame'),
+      dados: o => (root.ClueTypes?.get?.('copiadora') ? {
+        titulo: 'Copiadora',
+        vidro: 'Ficou um original esquecido no vidro, de cabeça para baixo, com o canto dobrado de tanto passar por ali.',
+        copia: 'A cópia sai riscada no meio, mas dá para ver o que era: uma mão espalmada contra o vidro. Uma mão de seis dedos.',
+        bandeja: '', mostrador: 'PRONTA', atola: 'sim', quebrada: 'nao'
+      } : {
+        texto: 'A copiadora ronca baixinho. No visor: PAPEL PRESO — BANDEJA 2. Na bandeja de saída ficou uma cópia esquecida.',
+        detalhe: 'Você puxa a folha amassada: é a cópia de uma mão espalmada contra o vidro. Uma mão de seis dedos.'})},
     area: o => ({u: 0, v: 2, w: o.w, h: o.h - 2}),
     pinta(b, o, c) {
       const {u} = o, top = 30, on = c.estado(o, 'ligada') && c.energia, E = EMISSIVE;
@@ -889,8 +902,15 @@
     id: 'relogio_ponto', nome: 'Relógio de ponto', grupo: 'Escritório', camada: 'parede',
     w: 21, h: 21, v: 20, livreV: true, semSombra: true,
     params: [],
-    interacao: {tipo: 'exame', marca: 'discreta', dados: () => ({texto: 'Relógio de ponto e os cartões dos funcionários. Todos marcaram a saída às 18h de ontem.',
-      detalhe: 'Tem um cartão a mais, sem nome. Entrada: 03:10. Não marcou saída.'})},
+    interacao: {marca: 'discreta', tipo: () => (root.ClueTypes?.get?.('relogio_ponto') ? 'relogio_ponto' : 'exame'),
+      dados: () => (root.ClueTypes?.get?.('relogio_ponto') ? {
+        titulo: 'Relógio de ponto', hora: '03:17', bater: 'sim', aviso: 'BATER O PONTO É OBRIGATÓRIO',
+        cartoes: ['JUREMA S. | Limpeza | 05:02, 14:00 | A primeira a chegar, todo dia.',
+          'ALTAIR R. | Protocolo | 07:58, 12:02, 13:01, 18:00',
+          'M. CALDEIRA | Chefia | 09:30, 18:00',
+          'SEM NOME | — | 03:10 | Um cartão a mais na divisória. Entrou e não marcou saída.'].join('\n')
+      } : {texto: 'Relógio de ponto e os cartões dos funcionários. Todos marcaram a saída às 18h de ontem.',
+        detalhe: 'Tem um cartão a mais, sem nome. Entrada: 03:10. Não marcou saída.'})},
     pinta(b, o, c) {
       const {u, v} = o;
       b.rect(u + 1, v + 1, 10, 15, 'carvao', 1);
@@ -1018,7 +1038,13 @@
   M.modulo({
     id: 'prateleira_industrial', nome: 'Prateleira industrial', grupo: 'Depósito', camada: 'parede', w: 40, h: 44,
     params: [{id: 'conteudo', label: 'Conteúdo', opcoes: [['caixas', 'Caixas'], ['pecas', 'Peças e gavetinhas'], ['latas', 'Latas de tinta'], ['vazia', 'Vazia']], padrao: 'caixas'}],
-    interacao: {tipo: 'recipiente', marca: 'discreta', dados: o => ({titulo: 'Prateleira do depósito', estilo: 'caixa', tranca: 'nenhuma', compartimentos: (CONTEUDO_PRATELEIRA[o.p.conteudo] || CONTEUDO_PRATELEIRA.caixas).join('\n')})},
+    interacao: {marca: 'discreta', tipo: () => (root.ClueTypes?.get?.('estante_movel') ? 'estante_movel' : 'recipiente'),
+      dados: o => {
+        const linhas = (CONTEUDO_PRATELEIRA[o.p.conteudo] || CONTEUDO_PRATELEIRA.caixas).join('\n');
+        return {titulo: 'Prateleira do depósito', estilo: root.ClueTypes?.get?.('estante_movel') ? 'industrial' : 'caixa',
+          prateleiras: linhas, compartimentos: linhas, tranca: 'nenhuma',
+          aviso: 'NÃO EMPILHAR ACIMA DA LINHA AMARELA'};
+      }},
     pinta(b, o, c) {
       const {u} = o, top = 18, random = M.rngDe(o, 9), cont = o.p.conteudo, vigas = [top + 2, top + 14, top + 26, top + 38];
       b.shade(u + 2, top, 36, CHAO - top + 1, -1);

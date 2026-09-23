@@ -1,5 +1,6 @@
 (function(scope){
   'use strict';
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   // Frontal anatomical map; near/far keep their anatomical identity when the
   // game sprite is mirrored. Character's right is the viewer's left.
   const shapes={
@@ -24,8 +25,11 @@
     shin_near:'M24 105H28V109H27V117H28V120H24V117H25V109H24Z',shin_far:'M36 105H40V109H39V117H40V120H36V117H37V109H36Z',
     foot_near:'M24 123H28V127H20V129H18V126H24Z',foot_far:'M36 123H40V126H46V129H44V127H36Z'};
   class HealthPanel {
-    constructor(health,onInjury,clock,inventory,treatment){
+    constructor(health,onInjury,clock,inventory,treatment,needs){
       this.treatment=treatment||null;this.canUse=()=>'';
+      /* Fome e sede entram aqui: a aba de saúde mostra o metabolismo que elas
+         mandam para o corpo (cura, defesa contra infecção, reposição de sangue). */
+      this.needs=needs||null;this.needsStamp='';
       this.health=health;this.clock=clock;this.inv=inventory||null;this.selected='torso';this.last='';this.view='skin';this.drag=null;this.organSelected='heart';this.hovered=null;
       const $=s=>document.querySelector(s);this.panel=$('#healthPanel');this.toggle=$('#healthToggle');
       const map=$('#healthMap');
@@ -136,7 +140,7 @@
       if(p.infection>0)w.push(`Infecção ${Math.ceil(p.infection)}%`);
       if(p.necrosis>0)w.push(`Necrose ${Math.ceil(p.necrosis)}%`);
       if(p.treated)w.push('Tratamento aplicado');
-      if(name.startsWith('eye_')&&p.hp<100)w.push(p.hp===0?'Olho sem visão':'Visão prejudicada');
+      if(name.startsWith('eye_')&&p.hp<(p.maxHp>0?p.maxHp:100))w.push(p.hp<=0?'Olho sem visão':'Visão prejudicada');
       if(p.hp===0)w.push('Região sem função');
       return w.join(' · ')||'Sem ferimentos nesta região.';
     }
@@ -153,7 +157,7 @@
       const id=el.dataset.part||el.dataset.organ,isOrgan=!!el.dataset.organ,p=isOrgan?this.health.organs.get(id):this.health.parts.get(id);
       const title=isOrgan?ORGAN_DEFS[id].label:HEALTH_PARTS[id];
       const detail=isOrgan?(p.detached?'Órgão separado':p.hp<=0?'Órgão sem função':p.hp<100?'Órgão lesionado':'Órgão saudável'):this.woundText(id);
-      tip.textContent=`${title} · ${Math.ceil(p.hp)} / 100 PV\n${detail}`;tip.hidden=false;
+      tip.textContent=`${title} · ${Math.ceil(p.hp)} / ${isOrgan?100:(p.maxHp>0?p.maxHp:100)} PV\n${detail}`;tip.hidden=false;
       const r=el.getBoundingClientRect(),box=tip.getBoundingClientRect();
       let x=r.right+10;if(x+box.width>window.innerWidth-8)x=r.left-box.width-10;
       tip.style.left=Math.max(8,Math.min(window.innerWidth-box.width-8,x))+'px';tip.style.top=Math.max(8,Math.min(window.innerHeight-box.height-8,r.top))+'px';
@@ -204,6 +208,7 @@
       this.toggle.setAttribute('aria-label',`Saúde: ${h.status}, ${Math.ceil(h.vitality)}%. Abrir painel`);
       $('#healthBadge').textContent=Math.ceil(h.vitality)+'%';
       if(this.panel.hidden)return;
+      this.renderNeeds();
       const stamp=JSON.stringify([h.revision,this.inv?this.inv.revision:0,this.clock.running,Math.ceil(h.blood),Math.ceil(h.vitality),Math.ceil(prognosis?.remaining||0),this.selected,h.status,this.view,this.organSelected,Math.ceil(h.parts.get(this.selected).hp),Math.ceil(h.parts.get(this.selected).boneHp),[...h.parts.values()].map(p=>[Math.ceil(p.infection),Math.ceil(p.necrosis)])]);
       if(stamp===this.last)return;this.last=stamp;
       $('#healthStatus').textContent=h.status;
@@ -216,7 +221,7 @@
       $('#healthBleeding').textContent=h.bleeding?`Perdendo ${h.bleeding.toFixed(2)}% de sangue/s`:'Sem sangramento ativo';
       const p=h.parts.get(this.selected);
       $('#healthPartLife').value=p.hp;$('#healthPartLifeText').textContent=Math.ceil(p.hp)+' / '+p.maxHp;
-      $('#healthBoneLife').textContent=p.boneHp===null?'Sem osso':`Osso: ${Math.ceil(p.boneHp)} / 100`;
+      $('#healthBoneLife').textContent=p.boneHp===null?'Sem osso':`Osso: ${Math.ceil(p.boneHp)} / ${p.maxBoneHp>0?p.maxBoneHp:100}`;
       const infectionRisk=!p.missing&&(p.hp===0||p.cut>0||p.infection>0||p.necrosis>0);
       $('#healthInfectionWrap').hidden=!infectionRisk;
       $('#healthInfection').value=p.infection;$('#healthInfectionText').textContent=Math.ceil(p.infection)+'%';
@@ -265,7 +270,51 @@
           return `<g class="injury-marker" data-kind="${kind}" transform="translate(${Math.round(x)} ${Math.round(y)})">${injuryPixels(kind)}</g>`;
         }).join('');
     }
+    /* Fome e sede na aba de saúde: as mesmas necessidades do mapa do mestre,
+       vistas pelo lado do corpo — o que a falta está fazendo no corpo agora.
+       Redesenha só quando muda de verdade (o valor sobe todo quadro). */
+    renderNeeds(){
+      const box=document.querySelector('#healthNeeds');
+      if(!box)return;
+      const n=this.needs,h=this.health;
+      box.hidden=!n;
+      if(!n)return;
+      const marca=[Math.round(n.fome*2),Math.round(n.sede*2),n.efeitos.size,n.congelado.fome,n.congelado.sede,
+        h.suspended,h.dead,this.clock.running,Math.round(h.blood),Math.round((h.febre||0)*20),n.perdaDeVida.ativo].join('|');
+      if(marca===this.needsStamp)return;
+      this.needsStamp=marca;
+      const c=n.resumoClinico(),$=s=>document.querySelector(s);
+      const linha=(qual,row,bar,name,next)=>{
+        const l=c[qual];
+        row.dataset.estagio=String(l.estagio);
+        bar.value=l.valor;bar.setAttribute('aria-label',`${l.rotulo}: ${l.nome}`);
+        name.textContent=l.nome+(l.congelado?' · congelada':'');
+        const falta=l.minutos;
+        next.textContent=l.congelado?'Congelada pelo mestre.'
+          :l.estagio>=3?'Último estágio: o corpo se consome.'
+          :falta===null?'Parada: não piora sozinha.'
+          :`${l.proximo} em ${falta<1?'menos de 1':Math.ceil(falta)} min do relógio.`;
+      };
+      linha('fome',box.querySelector('[data-need=fome]'),$('#healthHunger'),$('#healthHungerName'),$('#healthHungerNext'));
+      linha('sede',box.querySelector('[data-need=sede]'),$('#healthThirst'),$('#healthThirstName'),$('#healthThirstNext'));
+      $('#healthNeedsClock').textContent=c.morto?'· sem sinais vitais':c.suspenso?'· piora suspensa':c.rodando?'':'· relógio pausado';
+      const bom=t=>/^Bem alimentada/.test(t);
+      $('#healthNeedsBody').innerHTML=c.corpo.length
+        ?c.corpo.map(t=>`<li${bom(t)?' data-bom="1"':''}>${esc(t)}</li>`).join('')
+        :'<li data-bom="1">Com comida e água em dia: o corpo cicatriza e repõe sangue no ritmo normal.</li>';
+      $('#healthNeedsEffects').textContent=c.efeitos.length
+        ?'Condições: '+c.efeitos.map(e=>`${e.label} (${Math.ceil(e.restante)} min)`).join(' · '):'';
+    }
     position(x,y){this.toggle.style.left=Math.max(4,Math.min(94,x/480*100))+'%';this.toggle.style.top=Math.max(5,Math.min(90,y/270*100))+'%';}
+    /* The badge floats over the scene; an interface drawn into the scene (a
+       clue, a machine, the stove, a cinematic, a scene change) covers the head,
+       so the badge steps aside until it closes. */
+    coveredByInterface(hide){
+      hide=!!hide;if(this.covered===hide)return;this.covered=hide;
+      this.toggle.classList.toggle('is-covered',hide);
+      this.toggle.setAttribute('aria-hidden',String(hide));this.toggle.tabIndex=hide?-1:0;
+      if(hide&&document.activeElement===this.toggle)this.toggle.blur();
+    }
   }
   class BloodEffects {
     constructor(){this.drops=[];this.stains=[];this.emission=new Map();this.serial=0;}
@@ -285,5 +334,6 @@
       ctx.fillStyle='#ad4145';for(const d of this.drops)ctx.fillRect(Math.round(d.x-camera),Math.round(d.y),1,2);
     }
   }
+  scope.HEALTH_ANATOMY=Object.freeze({shapes:Object.freeze(shapes),bones:Object.freeze(bones),width:64,height:132});
   scope.HealthPanel=HealthPanel;scope.BloodEffects=BloodEffects;
 })(globalThis);
